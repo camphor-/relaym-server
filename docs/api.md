@@ -317,13 +317,6 @@
   "id": "p1ass",
   "uri": "spotify:user:p1ass",
   "display_name": "p1ass",
-  "images": [
-    {
-      "height": null,
-      "url": "https://example.com/avatar",
-      "width": null
-    }
-  ],
   "is_premium": true
 }
 ```
