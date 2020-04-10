@@ -60,6 +60,7 @@
       "display_name": "p1ass"
     },
     "queue": {
+      "head": 0,
       "tracks": []
     }
   }
