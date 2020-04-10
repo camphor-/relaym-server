@@ -1,6 +1,8 @@
 # Relaym Server
 RelaymのサーバーサイドAPIを管理するリポジトリです。
 
+API仕様は[こちら](docs/api.md)
+
 ## 開発に参加するには？
 
 1. [CAMPHOR- Code of Conduct](https://github.com/camphor-/code-of-conduct)に同意してください。
