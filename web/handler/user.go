@@ -3,24 +3,38 @@ package handler
 import (
 	"net/http"
 
+	"github.com/camphor-/relaym-server/usecase"
+
 	"github.com/labstack/echo/v4"
 )
 
 // UserHandler は /users 以下のエンドポイントを管理するハンドラーです
 type UserHandler struct {
+	userUC *usecase.UserUseCase
 }
 
 // NewUserHandler はUserHandlerのポインタを生成する関数です。
-func NewUserHandler() *UserHandler {
-	return &UserHandler{}
+func NewUserHandler(userUC *usecase.UserUseCase) *UserHandler {
+	return &UserHandler{userUC: userUC}
 }
 
 // GetMe は GET /users/me に対応するハンドラーです。
 func (h *UserHandler) GetMe(c echo.Context) error {
-	return c.JSON(http.StatusOK, &userJSON{})
+	id := "userID" // TODO クッキーからユーザIDを取得する
+	user, err := h.userUC.GetByID(id)
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return c.JSON(http.StatusOK, &userRes{
+		ID:          user.ID(),
+		URI:         user.SpotifyURI(),
+		DisplayName: user.SpotifyUser.DisplayName,
+		IsPremium:   user.IsPremium(),
+	})
 }
 
-type userJSON struct {
+type userRes struct {
 	ID          string `json:"id"`
 	URI         string `json:"url"`
 	DisplayName string `json:"display_name"`

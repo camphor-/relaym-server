@@ -1,6 +1,8 @@
 package web
 
 import (
+	"github.com/camphor-/relaym-server/database"
+	"github.com/camphor-/relaym-server/usecase"
 	"github.com/camphor-/relaym-server/web/handler"
 
 	"github.com/labstack/echo/v4"
@@ -18,7 +20,7 @@ func NewRouter() *echo.Echo {
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
 	}))
 
-	userHandler := handler.NewUserHandler()
+	userHandler := handler.NewUserHandler(usecase.NewUserUseCase(database.NewUserRepository()))
 
 	v3 := e.Group("/api/v3")
 	user := v3.Group("/users")

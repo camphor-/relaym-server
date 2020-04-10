@@ -6,6 +6,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/camphor-/relaym-server/database"
+	"github.com/camphor-/relaym-server/usecase"
+
 	"github.com/labstack/echo/v4"
 
 	"github.com/google/go-cmp/cmp"
@@ -16,12 +19,17 @@ func TestUserHandler_GetMe(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		want    *userJSON
+		want    *userRes
 		wantErr bool
 	}{
 		{
-			name:    "",
-			want:    &userJSON{},
+			name: "正しくユーザが取得できる",
+			want: &userRes{
+				ID:          "userID",
+				URI:         "spotify:user:", // TODO : Spotifyの情報も正しく取ってこれるようにする
+				DisplayName: "",
+				IsPremium:   false,
+			},
 			wantErr: false,
 		},
 	}
@@ -33,11 +41,12 @@ func TestUserHandler_GetMe(t *testing.T) {
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 
-			h := &UserHandler{}
+			uc := usecase.NewUserUseCase(database.NewUserRepository())
+			h := &UserHandler{userUC: uc}
 			if err := h.GetMe(c); (err != nil) != tt.wantErr {
 				t.Errorf("GetMe() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			got := &userJSON{}
+			got := &userRes{}
 			err := json.Unmarshal(rec.Body.Bytes(), got)
 			if err != nil {
 				t.Fatal(err)
