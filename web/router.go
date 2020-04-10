@@ -1,6 +1,8 @@
 package web
 
 import (
+	"github.com/camphor-/relaym-server/web/handler"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -15,5 +17,11 @@ func NewRouter() *echo.Echo {
 		AllowOrigins: []string{"localhost.local:3000"}, // TODO : 環境変数から読み込むようにする
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
 	}))
+
+	userHandler := handler.NewUserHandler()
+
+	v3 := e.Group("/api/v3")
+	user := v3.Group("/users")
+	user.GET("/me", userHandler.GetMe)
 	return e
 }
