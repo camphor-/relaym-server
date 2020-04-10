@@ -123,7 +123,7 @@
 
 ### レスポンス
   
-```json
+```json5
 {
   "id": "xxxxxxxxxxxxxxxxxxxxxxx",
   "name": "CAMPHOR- HOUSE",
@@ -242,7 +242,7 @@
 
 ### リクエスト
 
-```json
+```json5
 {
   "state": "PLAY" // 再生の状態: PLAY または PAUSE または STOP
 }
@@ -384,7 +384,7 @@ Spotifyで曲の検索を行います。
 
 ### レスポンス
    
-```json
+```json5
 {
   "tracks": [
     { 
@@ -495,7 +495,8 @@ Spotifyの本体アプリ側で操作されて、Relaym側との同期が取れ�
 TODO : クライアント側で時間を進めるだけなので消したい
 
 曲の再生位置を伝達するイベントです。5秒に1回送信されます。
-```json
+
+```json5
 {
   "type": "PROGRESS",
     "length": "12345", // trackの全長 (ms)
