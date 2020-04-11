@@ -15,6 +15,8 @@ API仕様は[こちら](docs/api.md)
 
 詳しくはこちらのリンクを参照してください。(TODO : サービスの説明リンクを貼る)
 
+単語の定義も[docs/definition.md](definition.md)からご覧ください。
+
 ### STEP2 アーキテクチャを理解する
 
 APIリクエストはHTTPで受け付けています。曲の操作に[Spotify Web API](https://developer.spotify.com/documentation/web-api/)を使用しています。
