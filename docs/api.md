@@ -477,20 +477,6 @@ Spotifyの本体アプリ側で操作されて、Relaym側との同期が取れ�
 }
 ```
 
-#### PROGRESS 
-TODO : クライアント側で時間を進めるだけなので消したい
-
-曲の再生位置を伝達するイベントです。5秒に1回送信されます。
-
-```json5
-{
-  "type": "PROGRESS",
-    "length": "12345", // trackの全長 (ms)
-    "progress": "10000", // 再生位置 (ms)
-    "remaining": "2345" // 再生残り時間 (ms)
-}
-```
-
 ### エラー 
     
 | code | message | 補足 |
