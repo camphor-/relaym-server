@@ -60,7 +60,9 @@
       "display_name": "p1ass"
     },
     "playback": {
-      "state": "STOP",
+    "state": {
+      "tyoe": "STOP",
+    },
       "device": null
     },
     "queue": {
@@ -107,7 +109,12 @@
     "display_name": "p1ass"
   },
   "playback": {
-    "state": "PLAY",
+    "state": {
+      "tyoe": "PLAY",
+      "length": "12345", // trackの全長 (ms)
+      "progress": "10000", // 再生位置 (ms)
+      "remaining": "2345", // 再生残り時間 (ms)
+    },
     "device": {
       "id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
       "is_restricted": false,
