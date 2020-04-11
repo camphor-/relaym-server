@@ -132,10 +132,6 @@
     "id": "p1ass",
     "display_name": "p1ass"
   },
-  "delegate": { // 再生者の情報、セッションを再生していないときはnull TODO : なくしたい
-    "id": "p1ass",
-    "display_name": "p1ass"
-  },
   "playback": { // 再生状態の情報、曲がプレイヤーセットされていないときはnull TODO : なくしたい
     "paused": false,
     "device": {
