@@ -133,56 +133,52 @@
     "display_name": "p1ass"
   },
   "playback": { // 再生状態の情報、曲がプレイヤーセットされていないときはnull TODO : なくしたい
-    "paused": false,
+    "state": "PLAY",
     "device": {
       "id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
       "is_restricted": false,
       "name": "my-device",
-    },
-    "track": {
-      "uri" : "spotify:track:7zHq5ayXLxpJ89392EYm1L",
-      "id": "7zHq5ayXLxpJ89392EYm1L",
-      "name" : "Pixel Galaxy",
-      "duration_ms": 254165,
-      "artists": [{"name": "Snail's House"}],
-      "external_urls": {
-        "spotify": "https://open.spotify.com/track/7zHq5ayXLxpJ89392EYm1L"
-      },
-      "album": {
-        "name": "Pixel Galaxy",
-        "images" : [
-          {
-            "url" : "https://i.scdn.co/image/ab67616d0000b273ee9b82c65c9a4195f653f063",
-            "height" : 640,
-            "width" : 640
-          }, 
-          {
-            "url" : "https://i.scdn.co/image/ab67616d00001e02ee9b82c65c9a4195f653f063",
-            "height" : 300,
-            "width" : 300
-          }, {
-            "url" : "https://i.scdn.co/image/ab67616d00004851ee9b82c65c9a4195f653f063",
-            "height" : 64,
-            "width" : 64
-          } 
-        ],
-      },
     },
   },
   "queue": {
     "head": 1, // 0-indexedなプレイヤーにセットされている曲の番号
     "tracks": [
       { // 0番目: 再生済み
-        "uri": "spotify:track:7zHq5ayXLxpJ89392EYm1",
-        // 以下省略; playbackにあるtrackと同様．
+        "uri" : "spotify:track:7zHq5ayXLxpJ89392EYm1L",
+        "id": "7zHq5ayXLxpJ89392EYm1L",
+        "name" : "Pixel Galaxy",
+        "duration_ms": 254165,
+        "artists": [{"name": "Snail's House"}],
+        "external_urls": {
+          "spotify": "https://open.spotify.com/track/7zHq5ayXLxpJ89392EYm1L"
+        },
+        "album": {
+          "name": "Pixel Galaxy",
+          "images" : [
+            {
+              "url" : "https://i.scdn.co/image/ab67616d0000b273ee9b82c65c9a4195f653f063",
+              "height" : 640,
+              "width" : 640
+            }, 
+            {
+              "url" : "https://i.scdn.co/image/ab67616d00001e02ee9b82c65c9a4195f653f063",
+              "height" : 300,
+              "width" : 300
+            }, {
+              "url" : "https://i.scdn.co/image/ab67616d00004851ee9b82c65c9a4195f653f063",
+              "height" : 64,
+              "width" : 64
+            } 
+          ],
+        },
       },
       { // 1番目: プレイヤーにセット
         "uri": "spotify:track:7zHq5ayXLxpJ89392EYm1",
-        // 以下省略; playbackにあるtrackと同様．
+        // 以下省略
       },
       { // 2番目: 未再生
         "uri": "spotify:track:7zHq5ayXLxpJ89392EYm1",
-        // 以下省略; playbackにあるtrackと同様．
+        // 以下省略
       },
     ]
   }
