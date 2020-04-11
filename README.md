@@ -38,7 +38,7 @@ RelaymではMySQLとRedisをデータベースとして採用しています。
 
 ### STEP5 アプリケーションアーキテクチャを理解する
 
-Clean Architectureライクなアーキテクチャを採用しています。
+DDDやClean Architectureライクなアーキテクチャを採用しています。
 
 詳しくは [docs/application_architecture.md](docs/application_architecture.md)をご覧ください。
 
