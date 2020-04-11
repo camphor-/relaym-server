@@ -59,8 +59,12 @@
       "id": "p1ass",
       "display_name": "p1ass"
     },
+    "playback": {
+      "state": "STOP",
+      "device": null
+    },
     "queue": {
-      "head": -1,
+      "head": 0,
       "tracks": []
     }
   }
@@ -102,7 +106,7 @@
     "id": "p1ass",
     "display_name": "p1ass"
   },
-  "playback": { // 再生状態の情報、曲がプレイヤーセットされていないときはnull TODO : なくしたい
+  "playback": {
     "state": "PLAY",
     "device": {
       "id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
