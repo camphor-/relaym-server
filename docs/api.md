@@ -60,7 +60,7 @@
       "display_name": "p1ass"
     },
     "queue": {
-      "head": 0,
+      "head": -1,
       "tracks": []
     }
   }
@@ -78,36 +78,6 @@
 | 400 | empty name | セッション名がリクエストに含まれていない | 
 | 403 | already entered other session    | 既に他のセッションに参加している |
 
-
-## POST /sessions/:id/members
-
-### 概要
-
-指定されたidのセッションに参加します。
-
-### パスパラメータ
-
-| key | 説明 |
-| --- | ------- |
-| :id | 参加するsessionのID |
-
-
-### レスポンス
-空
-
-| code  |   補足    |
-| ----- | -------- | 
-| 204   |          |
-
-注: ユーザが参加しようとしているsessionに既に参加している場合も204を返します。
-
-### エラー
-
-| code | message | 補足 |
-| ---- | -------- | -------- |
-| 400 | empty name | セッション名がリクエストに含まれていない | 
-| 403 | already entered other session  | 既に他のセッションに参加している |
-| 404 | session not found | 指定されたidのセッションが存在しない |
 
 
 ## GET /sessions/:id
