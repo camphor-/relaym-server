@@ -12,7 +12,7 @@ type UserUseCase struct {
 	userRepo repository.User
 }
 
-// NewUserUseCase はUseUseCaseのポインタを生成する関数です。
+// NewUserUseCase はUserUseCaseのポインタを生成する関数です。
 func NewUserUseCase(userRepo repository.User) *UserUseCase {
 	return &UserUseCase{userRepo: userRepo}
 }
