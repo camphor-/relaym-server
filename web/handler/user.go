@@ -8,7 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// UserHandler は /users 以下のエンドポイントを管理する構造体です
+// UserHandler は /users 以下のエンドポイントを管理する構造体です。
 type UserHandler struct {
 	userUC *usecase.UserUseCase
 }
