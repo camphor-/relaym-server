@@ -6,12 +6,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/camphor-/relaym-server/database"
+	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/usecase"
 
-	"github.com/labstack/echo/v4"
-
 	"github.com/google/go-cmp/cmp"
+	"github.com/labstack/echo/v4"
 )
 
 func TestUserHandler_GetMe(t *testing.T) {
@@ -41,7 +40,8 @@ func TestUserHandler_GetMe(t *testing.T) {
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 
-			uc := usecase.NewUserUseCase(database.NewUserRepository())
+			// TODO モックは自動生成したい
+			uc := usecase.NewUserUseCase(&fakeUserRepository{})
 			h := &UserHandler{userUC: uc}
 			if err := h.GetMe(c); (err != nil) != tt.wantErr {
 				t.Errorf("GetMe() error = %v, wantErr %v", err, tt.wantErr)
@@ -57,4 +57,11 @@ func TestUserHandler_GetMe(t *testing.T) {
 			}
 		})
 	}
+}
+
+type fakeUserRepository struct {
+}
+
+func (f fakeUserRepository) FindByID(id string) (*entity.User, error) {
+	return entity.NewUser(id), nil
 }

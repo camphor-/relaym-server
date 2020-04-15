@@ -7,6 +7,7 @@ type (
 		SpotifyUser SpotifyUser
 	}
 
+	// SpotifyUser はSpotifyのアカウントに関連するユーザ情報を表します。
 	SpotifyUser struct {
 		id          string
 		product     string

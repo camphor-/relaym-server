@@ -1,7 +1,6 @@
 package web
 
 import (
-	"github.com/camphor-/relaym-server/database"
 	"github.com/camphor-/relaym-server/usecase"
 	"github.com/camphor-/relaym-server/web/handler"
 
@@ -9,8 +8,8 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-// NewRouter はミドルウェアやハンドラーが登録されたechoのルータを返します。
-func NewRouter() *echo.Echo {
+// NewServer はミドルウェアやハンドラーが登録されたechoの構造体を返します。
+func NewServer(userUC *usecase.UserUseCase) *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
@@ -20,7 +19,7 @@ func NewRouter() *echo.Echo {
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
 	}))
 
-	userHandler := handler.NewUserHandler(usecase.NewUserUseCase(database.NewUserRepository()))
+	userHandler := handler.NewUserHandler(userUC)
 
 	v3 := e.Group("/api/v3")
 	user := v3.Group("/users")
