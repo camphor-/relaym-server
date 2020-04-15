@@ -2,6 +2,13 @@
 
 データベースにはMySQL 8.0を使用しています。
 
+## Goの構造体へのマッピングライブラリ
+
+マッピングライブラリは[gorp](https://github.com/go-gorp/gorp)を使用しています。選定理由は@p1assの[ブログ](https://blog.p1ass.com/posts/go-database-sql-wrapper/)をご覧ください。
+
+クエリのSQL文を作る際はGoのファイル上で書くより、GUIのツールで書くと便利です。
+Golandを使用しているなら[データベースツール](https://pleiades.io/help/go/relational-databases.html)が使いやすいです。
+
 ## スキーマの管理
 
 [skeema](https://github.com/skeema/skeema)というCLIツールを使って管理しています。
