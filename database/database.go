@@ -6,7 +6,7 @@ import (
 
 	"github.com/camphor-/relaym-server/config"
 
-	"gopkg.in/gorp.v1"
+	"github.com/go-gorp/gorp/v3"
 )
 
 // NewDB はMySQLへ接続し、gorpのマッピングオブジェクトを生成します。

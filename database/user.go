@@ -3,7 +3,7 @@ package database
 import (
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/repository"
-	"gopkg.in/gorp.v1"
+	"github.com/go-gorp/gorp/v3"
 )
 
 var _ repository.User = &UserRepository{}
