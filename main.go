@@ -2,31 +2,49 @@ package main
 
 import (
 	"context"
+	"log"
 	"os"
 	"os/signal"
 	"time"
 
+	"github.com/camphor-/relaym-server/database"
+	"github.com/camphor-/relaym-server/usecase"
 	"github.com/camphor-/relaym-server/web"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
-	e := web.NewRouter()
+	dbMap, err := database.NewDB()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func() {
+		err := dbMap.Db.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	userUC := usecase.NewUserUseCase(database.NewUserRepository(dbMap))
+
+	s := web.NewServer(userUC)
 
 	// シグナルを受け取れるようにgoroutine内でサーバを起動する
 	go func() {
-		if err := e.Start(":8080"); err != nil { // TODO : ポート番号を環境変数から読み込む
-			e.Logger.Infof("shutting down the server with error: %v", err)
+		if err := s.Start(":8080"); err != nil { // TODO : ポート番号を環境変数から読み込む
+			s.Logger.Infof("shutting down the server with error: %v", err)
 		}
 	}()
 
 	// Graceful Shutdown
 	quit := make(chan os.Signal)
 	signal.Notify(quit, os.Interrupt)
-	e.Logger.Infof("SIGNAL %d received, then shutting down...\n", <-quit)
+	s.Logger.Infof("SIGNAL %d received, then shutting down...\n", <-quit)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if err := e.Shutdown(ctx); err != nil {
-		e.Logger.Fatal(err)
+	if err := s.Shutdown(ctx); err != nil {
+		s.Logger.Fatal(err)
 	}
 }

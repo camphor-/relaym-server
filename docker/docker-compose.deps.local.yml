@@ -1,0 +1,8 @@
+version: "3.7"
+services:
+  relaym-mysql:
+    container_name: relaym-mysql-local
+    ports:
+      - "3306:3306" #localなのでポートを空けているが、本番では空けないように注意
+    environment:
+      -  MYSQL_ALLOW_EMPTY_PASSWORD=yes

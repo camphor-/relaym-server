@@ -1,0 +1,19 @@
+version: "3.7"
+services:
+  relaym-mysql:
+    image: mysql:8.0
+    restart: always
+    volumes:
+      - relaym-mysql-data:/var/lib/mysql
+      - ../mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+    networks:
+      - relaym-network
+    environment:
+      - MYSQL_DATABASE=${DB_DATABASE}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+volumes:
+  relaym-mysql-data:
+networks:
+  relaym-network:
+    driver: bridge
