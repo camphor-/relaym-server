@@ -31,8 +31,10 @@ func main() {
 	spotifyCFG := config.NewSpotify()
 	spotifyCli := spotify.NewClient(spotifyCFG)
 
-	userUC := usecase.NewUserUseCase(database.NewUserRepository(dbMap))
-	authUC := usecase.NewAuthUseCase(spotifyCli)
+	authRepo := database.NewAuthRepository(dbMap)
+	userRepo := database.NewUserRepository(dbMap)
+	userUC := usecase.NewUserUseCase(userRepo)
+	authUC := usecase.NewAuthUseCase(spotifyCli, authRepo)
 	s := web.NewServer(authUC, userUC)
 
 	// シグナルを受け取れるようにgoroutine内でサーバを起動する

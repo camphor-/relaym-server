@@ -21,8 +21,14 @@ func NewAuthHandler(authUC *usecase.AuthUseCase, frontendURL string) *AuthHandle
 // Login は POST /login に対応するハンドラーです。
 func (h *AuthHandler) Login(c echo.Context) error {
 	redirectURL := c.QueryParam("redirect_url")
-
-	url := h.authUC.GetAuthURL(redirectURL)
+	if redirectURL == "" {
+		redirectURL = h.frontendURL
+	}
+	url, err := h.authUC.GetAuthURL(redirectURL)
+	if err != nil {
+		c.Logger().Errorf("failed to get auth url: %w", err)
+		return c.Redirect(http.StatusFound, h.frontendURL+"?err=spotifyAuthFailed")
+	}
 
 	return c.Redirect(http.StatusFound, url)
 }
