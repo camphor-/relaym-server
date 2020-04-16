@@ -15,7 +15,7 @@ API仕様は[こちら](docs/api.md)
 
 詳しくはこちらのリンクを参照してください。(TODO : サービスの説明リンクを貼る)
 
-単語の定義も[docs/definition.md](definition.md)からご覧ください。
+単語の定義も[docs/definition.md](docs/definition.md)からご覧ください。
 
 ### STEP2 アーキテクチャを理解する
 
@@ -29,14 +29,8 @@ RelaymではMySQLとRedisをデータベースとして採用しています。
 
 詳しくは [docs/database.md](docs/database.md)をご覧ください。
 
-### STEP4 開発環境を理解する
 
-ローカル開発環境では、GoとDockerを必要とします。本番環境ではDockerのみを必要をします。
-
-詳しくは [docs/environment.md](docs/environment.md)をご覧ください。
-
-
-### STEP5 アプリケーションアーキテクチャを理解する
+### STEP4 アプリケーションアーキテクチャを理解する
 
 DDDやClean Architectureライクなアーキテクチャを採用しています。
 
