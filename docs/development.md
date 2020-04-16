@@ -35,7 +35,7 @@ $ GO111MODULE=off go get -u github.com/skeema/skeema
 2. マイグレート
 
 ```bash
-$ skeema push loacl -p
+$ skeema push local -p
 ```
 
 ## サーバを起動する
