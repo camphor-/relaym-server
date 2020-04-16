@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/camphor-/relaym-server/database"
+	"github.com/camphor-/relaym-server/spotify"
 	"github.com/camphor-/relaym-server/usecase"
 	"github.com/camphor-/relaym-server/web"
 
@@ -26,9 +27,11 @@ func main() {
 		}
 	}()
 
-	userUC := usecase.NewUserUseCase(database.NewUserRepository(dbMap))
+	spotifyCli := spotify.NewClient(os.Getenv("SPOTIFY_CLIENT_ID"), os.Getenv("SPOTIFY_CLIENT_SECRET"))
 
-	s := web.NewServer(userUC)
+	userUC := usecase.NewUserUseCase(database.NewUserRepository(dbMap))
+	authUC := usecase.NewAuthUseCase(spotifyCli)
+	s := web.NewServer(authUC, userUC)
 
 	// シグナルを受け取れるようにgoroutine内でサーバを起動する
 	go func() {

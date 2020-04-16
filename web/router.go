@@ -1,9 +1,6 @@
 package web
 
 import (
-	"os"
-
-	"github.com/camphor-/relaym-server/spotify"
 	"github.com/camphor-/relaym-server/usecase"
 	"github.com/camphor-/relaym-server/web/handler"
 
@@ -12,7 +9,7 @@ import (
 )
 
 // NewServer はミドルウェアやハンドラーが登録されたechoの構造体を返します。
-func NewServer(userUC *usecase.UserUseCase) *echo.Echo {
+func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase) *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
@@ -23,10 +20,9 @@ func NewServer(userUC *usecase.UserUseCase) *echo.Echo {
 	}))
 
 	userHandler := handler.NewUserHandler(userUC)
-	spotifyCli := spotify.NewClient(os.Getenv("SPOTIFY_CLIENT_ID"), os.Getenv("SPOTIFY_CLIENT_SECRET"))
 
 	// TODO フロントエンドのURLを環境変数で指定する
-	authHandler := handler.NewAuthHandler(usecase.NewAuthUseCase(spotifyCli), "http://localhost.local:3000")
+	authHandler := handler.NewAuthHandler(authUC, "http://localhost.local:3000")
 
 	v3 := e.Group("/api/v3")
 	v3.GET("/login", authHandler.Login)
