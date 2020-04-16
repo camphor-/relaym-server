@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/camphor-/relaym-server/config"
 	"github.com/camphor-/relaym-server/database"
 	"github.com/camphor-/relaym-server/spotify"
 	"github.com/camphor-/relaym-server/usecase"
@@ -27,7 +28,8 @@ func main() {
 		}
 	}()
 
-	spotifyCli := spotify.NewClient(os.Getenv("SPOTIFY_CLIENT_ID"), os.Getenv("SPOTIFY_CLIENT_SECRET"))
+	spotifyCFG := config.NewSpotify()
+	spotifyCli := spotify.NewClient(spotifyCFG)
 
 	userUC := usecase.NewUserUseCase(database.NewUserRepository(dbMap))
 	authUC := usecase.NewAuthUseCase(spotifyCli)

@@ -5,6 +5,8 @@ ENV_TEST = $(shell cat $(ENV_TEST_FILE))
 
 ENV_SECRET_FILE = env.secret
 ENV_SECRET = $(shell cat $(ENV_SECRET_FILE))
+ENV_SECRET_EXAMPLE_FILE = env.secret.example
+ENV_SECRET_EXAMPLE = $(shell cat $(ENV_SECRET_EXAMPLE_FILE))
 
 .PHONY:serve
 serve:
@@ -12,7 +14,7 @@ serve:
 
 .PHONY:test
 test:
-	$(ENV_TEST) $(ENV_SECRET) go test -v ./... -count=1
+	$(ENV_TEST) $(ENV_SECRET_EXAMPLE) go test -v ./... -count=1
 
 .PHONY: run-db-local
 run-db-local:

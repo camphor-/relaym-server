@@ -3,6 +3,8 @@ package spotify
 import (
 	"fmt"
 
+	"github.com/camphor-/relaym-server/config"
+
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
 )
@@ -13,10 +15,9 @@ type Client struct {
 }
 
 // NewClient はClientのポインタを生成する関数です。
-func NewClient(clientID, secretKey string) *Client {
-	// TODO : 環境変数でcallbackのURLを切り替える
-	auth := spotify.NewAuthenticator("http://localhost.local:8080/api/v3/callback", spotify.ScopeUserReadPrivate)
-	auth.SetAuthInfo(clientID, secretKey)
+func NewClient(cfg *config.Spotify) *Client {
+	auth := spotify.NewAuthenticator(cfg.RedirectURL(), spotify.ScopeUserReadPrivate)
+	auth.SetAuthInfo(cfg.ClientID(), cfg.ClientSecret())
 	return &Client{auth: auth}
 }
 
