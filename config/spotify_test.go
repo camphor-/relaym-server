@@ -16,7 +16,7 @@ func TestNewSpotify(t *testing.T) {
 			want: &Spotify{
 				clientID:     "INPUT_YOUR_CLIENT_ID",
 				clientSecret: "INPUT_YOUR_CLIENT_SECRET",
-				redirectURL:  "http://localhost.local:8080/api/v3/callback",
+				redirectURL:  "http://relaym.local:8080/api/v3/callback",
 			},
 		},
 	}

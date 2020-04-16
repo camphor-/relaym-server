@@ -61,6 +61,17 @@ $ ${EDITOR} env.secret
 $ make test
 ```
 
+## `/etc/hosts` を修正する
+
+`localhost` ではクッキーを使えないので、別名を割り当てる必要があります。
+
+ ```bash
+$ sudo vim /etc/hosts
+
+127.0.0.1 relaym.local # これを追加
+ ```
+
+
 ## サーバを起動する
 
 ```bash
