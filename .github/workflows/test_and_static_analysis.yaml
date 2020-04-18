@@ -56,5 +56,4 @@ jobs:
 
     - name: lint
       run: |
-        $(go env GOPATH)/bin/golangci-lint linters
-        $(go env GOPATH)/bin/golangci-lint run
+        $(go env GOPATH)/bin/golangci-lint run --disable-all --enable=goimports --enable=golint --enable=govet
