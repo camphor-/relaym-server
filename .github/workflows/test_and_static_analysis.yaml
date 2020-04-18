@@ -43,7 +43,6 @@ jobs:
       run: |
         GO111MODULE=off go get -u github.com/skeema/skeema
         curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.18.0
-        export PATH=$PATH:$(go env GOPATH)/bin
 
     - name: migrate
       run: |
@@ -56,4 +55,6 @@ jobs:
       run: make test
 
     - name: lint
-      run: golangci-lint run
+      run: |
+        $(go env GOPATH)/bin/golangci-lint linters
+        $(go env GOPATH)/bin/golangci-lint run
