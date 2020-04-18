@@ -40,7 +40,7 @@ jobs:
 
     - name: migrate
       run: |
-        skeema push local -p
+        $GOPATH/bin/skeema push local -p
 
     - name: Build
       run: go build -v .
