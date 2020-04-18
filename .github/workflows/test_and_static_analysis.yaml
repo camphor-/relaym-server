@@ -13,7 +13,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
     - name: Set up Go 1.13
       uses: actions/setup-go@v1
       with:
@@ -27,7 +26,7 @@ jobs:
       run: |
         go mod download
 
-     - name: set up mysql
+    - name: set up mysql
       run: |
         make run-db-local
         sleep 30 #mysql立ち上げ待ち
