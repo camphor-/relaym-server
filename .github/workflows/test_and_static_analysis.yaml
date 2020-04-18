@@ -26,16 +26,17 @@ jobs:
 
     - name: Get dependencies
       run: |
-        go get -v -t -d ./...
-        if [ -f Gopkg.toml ]; then
-            curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-            dep ensure
-        fi
+        go mod download
 
     - name: set up mysql
       run: |
         make run-db-local
-        sleep 30
+        sleep 30 #mysql立ち上げ待ち
+
+    - name: migrate
+      run: |
+        GO111MODULE=off go get -u github.com/skeema/skeema
+        skeema push local -p
 
     - name: Build
       run: go build -v .
