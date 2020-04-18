@@ -11,6 +11,11 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: password
 
     steps:
 
@@ -27,20 +32,13 @@ jobs:
       run: |
         go mod download
 
-    - name: set up mysql
-      run: |
-        make run-db-local
-        sleep 30 #mysql立ち上げ待ち
-
     - name: Get tools
       run: |
         GO111MODULE=off go get -u github.com/skeema/skeema
         export PATH=$PATH:$(go env GOPATH)/bin
-        echo $PATH
 
     - name: migrate
       run: |
-        echo $PATH
         $(go env GOPATH)/bin/skeema push local -p=Password
 
     - name: Build
