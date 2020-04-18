@@ -11,6 +11,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+
     steps:
 
     - name: Set up Go 1.13
@@ -22,14 +23,6 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
 
-    - name: cache
-      uses: actions/cache@v1
-      with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
-
     - name: Get dependencies
       run: |
         go get -v -t -d ./...
@@ -38,5 +31,13 @@ jobs:
             dep ensure
         fi
 
+    - name: set up mysql
+      run: |
+        make run-db-local
+        sleep 30
+
     - name: Build
       run: go build -v .
+
+    - name: Test
+      run: go test ./... -v
