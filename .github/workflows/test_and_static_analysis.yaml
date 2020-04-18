@@ -5,6 +5,7 @@ on:
     types: [opened, synchronize]
     branches:
       - 'master'
+      - 'make_able_go_test_on_git_actions' #お試し. merge前に消す
 
 jobs:
 
