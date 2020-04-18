@@ -29,6 +29,7 @@ jobs:
     - name: set up mysql
       run: |
         make run-db-local
+        sleep 20 #mysql立ち上げ待ち
 
     - name: Get tools
       run: |
