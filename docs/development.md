@@ -2,7 +2,13 @@
 
 ## Goの環境を準備する
 
-[goenv](https://github.com/syndbg/goenv)がオススメです。
+[goenv](https://github.com/syndbg/goenv) がオススメです。
+
+## Dockerを準備する
+
+Docker及びDocker Composeを準備してください。
+
+https://www.docker.com/get-started
 
 ## MySQLを起動する
 
@@ -38,6 +44,36 @@ $ GO111MODULE=off go get -u github.com/skeema/skeema
 $ skeema push local -p
 ```
 
+## 環境変数の準備
+
+Spotify Web APIのトークンが必要です。[こちら](https://developer.spotify.com/dashboard) から作成してください。
+
+作成後、 `env.secret` に取得したトークンを設定してください。
+
+```bash
+$ cp env.secret.example env.secret
+$ ${EDITOR} env.secret
+```
+
+## テストの実行
+
+```bash
+$ make test
+```
+
+## `/etc/hosts` を修正する
+
+`localhost` ではクッキーを使えないので、別名を割り当てる必要があります。
+
+ ```bash
+$ sudo vim /etc/hosts
+
+127.0.0.1 relaym.local # これを追加
+ ```
+
+
 ## サーバを起動する
 
-TBD
+```bash
+$ make serve
+```

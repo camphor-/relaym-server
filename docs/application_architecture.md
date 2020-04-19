@@ -5,13 +5,17 @@
 ```bash
 $ tree
 .
+├── config # 環境変数から読み込む設定を管理。
 ├── database # DBへのクエリの実行を行う。repositoryのインターフェースを満たす。
 ├── docs # ドキュメント。
 ├── domain 
 │   ├── entity # ドメインのエンティティモデルやロジック。
 │   └── repository # 永続化を責務とするリポジトリのインターフェース。
 │   └── service # エンティティ単体では表せないロジック。
+│   └── spotify # Spotify Web APIのインターフェース。
 ├── main.go # エントリーポイント。
+├── mysql # MySQLのスキーマを管理。
+├── spotify # Spitfy Web APIのクライアント。
 ├── usecase # 複数のドメインロジックを組み合わせて、実現したい一連の動作を行う。エンドポイントと1対1対応する。
 └── web
     ├── handler # HTTPリクエスト・レスポンスが責務。ロジックは持たない。
