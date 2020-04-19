@@ -26,7 +26,7 @@ func NewAuthUseCase(authCli spotify.Auth, repo repository.Auth) *AuthUseCase {
 // CSRF対策のためにstateを保存しておいて、callbackを受け取った時に正当性を確認する必要がある。
 func (u *AuthUseCase) GetAuthURL(redirectURL string) (string, error) {
 	state := uuid.New().String()
-	st := &entity.StateTemp{
+	st := &entity.AuthState{
 		State:       state,
 		RedirectURL: redirectURL,
 	}

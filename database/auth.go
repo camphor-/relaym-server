@@ -21,25 +21,25 @@ func NewAuthRepository(dbMap *gorp.DbMap) *AuthRepository {
 	return &AuthRepository{dbMap: dbMap}
 }
 
-// Store はStateTempを保存します。
-func (r AuthRepository) Store(state *entity.StateTemp) error {
+// Store はauthStateを保存します。
+func (r AuthRepository) Store(authState *entity.AuthState) error {
 	dto := &stateDTO{
-		State:       state.State,
-		RedirectURL: state.RedirectURL,
+		State:       authState.State,
+		RedirectURL: authState.RedirectURL,
 	}
 	if err := r.dbMap.Insert(dto); err != nil {
-		return fmt.Errorf("insert auth state: %w", err)
+		return fmt.Errorf("insert auth authState: %w", err)
 	}
 	return nil
 }
 
 // FindStateByState はstateをキーしてStateTempを取得する。
-func (r AuthRepository) FindStateByState(state string) (*entity.StateTemp, error) {
+func (r AuthRepository) FindStateByState(state string) (*entity.AuthState, error) {
 	var dto stateDTO
 	if err := r.dbMap.SelectOne(&dto, "SELECT state, redirect_url from auth_states WHERE state=?", state); err != nil {
 		return nil, fmt.Errorf("select auth state state=%s: %w", state, err)
 	}
-	return &entity.StateTemp{
+	return &entity.AuthState{
 		State:       dto.State,
 		RedirectURL: dto.RedirectURL,
 	}, nil

@@ -131,12 +131,12 @@ func (f fakeSpotifyAuth) Exchange(code string) (*oauth2.Token, error) {
 
 type fakeAuthRepository struct{}
 
-func (f fakeAuthRepository) Store(state *entity.StateTemp) error {
+func (f fakeAuthRepository) Store(state *entity.AuthState) error {
 	return nil
 }
 
-func (f fakeAuthRepository) FindStateByState(state string) (*entity.StateTemp, error) {
-	return &entity.StateTemp{
+func (f fakeAuthRepository) FindStateByState(state string) (*entity.AuthState, error) {
+	return &entity.AuthState{
 		State:       "state",
 		RedirectURL: "https://example.com",
 	}, nil

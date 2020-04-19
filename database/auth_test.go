@@ -13,12 +13,12 @@ import (
 func TestAuthRepository_Store(t *testing.T) {
 	tests := []struct {
 		name    string
-		state   *entity.StateTemp
+		state   *entity.AuthState
 		wantErr bool
 	}{
 		{
 			name: "正しく保存できる",
-			state: &entity.StateTemp{
+			state: &entity.AuthState{
 				State:       uuid.New().String(),
 				RedirectURL: "https://example.com",
 			},
@@ -55,13 +55,13 @@ func TestAuthRepository_FindStateByState(t *testing.T) {
 	tests := []struct {
 		name    string
 		state   string
-		want    *entity.StateTemp
+		want    *entity.AuthState
 		wantErr bool
 	}{
 		{
 			name:  "存在するStateを正しく取得できる",
 			state: "state",
-			want: &entity.StateTemp{
+			want: &entity.AuthState{
 				State:       "state",
 				RedirectURL: "https://example.com",
 			},
@@ -82,7 +82,7 @@ func TestAuthRepository_FindStateByState(t *testing.T) {
 
 	// Prepare
 	truncateTable(t, dbMap)
-	if err := r.Store(&entity.StateTemp{
+	if err := r.Store(&entity.AuthState{
 		State:       "state",
 		RedirectURL: "https://example.com",
 	}); err != nil {
@@ -130,7 +130,7 @@ func TestAuthRepository_Delete(t *testing.T) {
 
 	// Prepare
 	truncateTable(t, dbMap)
-	if err := r.Store(&entity.StateTemp{
+	if err := r.Store(&entity.AuthState{
 		State:       "state",
 		RedirectURL: "https://example.com",
 	}); err != nil {
