@@ -1,0 +1,57 @@
+name: test_and_lint
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Set up Go 1.14
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.14
+      id: go
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+
+    - name: Restore cache
+      uses: actions/cache@v1
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Get dependencies
+      run: |
+        go mod download
+
+    - name: set up mysql
+      run: |
+        make run-db-local
+        eval "$(cat env.local <(echo) <(declare -x))"
+        until mysql -u${DB_USER} -p${DB_PASSWORD} -h${DB_HOST} -P${DB_PORT} -e "SELECT 1"; do sleep 1; done
+
+    - name: Get tools
+      run: |
+        GO111MODULE=off go get -u github.com/skeema/skeema
+        curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.24.0
+
+    - name: migrate
+      run: |
+        $(go env GOPATH)/bin/skeema push local
+
+    - name: Build
+      run: go build -v .
+
+    - name: Test
+      run: make test
+
+    - name: lint
+      run: |
+        $(go env GOPATH)/bin/golangci-lint run --disable-all --enable=goimports --enable=golint --enable=govet
