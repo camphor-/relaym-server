@@ -1,4 +1,4 @@
-name: test_and_static_analysis
+name: test_and_lint
 
 on:
   pull_request:
