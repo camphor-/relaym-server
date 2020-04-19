@@ -35,7 +35,8 @@ jobs:
     - name: set up mysql
       run: |
         make run-db-local
-        eval "$(cat .env.local <(echo) <(declare -x))"
+        ls -a
+        eval "$(cat env.local <(echo) <(declare -x))"
         until mysql -u${DB_USER} -p${DB_PASSWORD} -h${DB_HOST} -P${DB_PORT} -e "SELECT 1"; do sleep 1; done
 
     - name: Get tools
