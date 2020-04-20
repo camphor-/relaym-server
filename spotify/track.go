@@ -9,8 +9,7 @@ import (
 )
 
 func (c *Client) Search(q string) ([]*entity.Track, error) {
-	cli := c.auth.NewClient(c.token)
-	result, err := cli.Search(q, spotify.SearchTypeTrack)
+	result, err := c.cli.Search(q, spotify.SearchTypeTrack)
 	if err != nil {
 		return nil, fmt.Errorf("serach q=%s: %w", q, err)
 	}

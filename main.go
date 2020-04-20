@@ -29,7 +29,7 @@ func main() {
 	}()
 
 	spotifyCFG := config.NewSpotify()
-	spotifyCli := spotify.NewClient(spotifyCFG)
+	spotifyCli := spotify.NewAuthenticater(spotifyCFG)
 
 	authRepo := database.NewAuthRepository(dbMap)
 	userRepo := database.NewUserRepository(dbMap)
