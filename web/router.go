@@ -20,6 +20,7 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase) *echo.E
 	}))
 
 	userHandler := handler.NewUserHandler(userUC)
+	trackHandler := handler.NewTrackHandler()
 
 	// TODO フロントエンドのURLを環境変数で指定する
 	authHandler := handler.NewAuthHandler(authUC, "http://relaym.local:3000")
@@ -27,6 +28,8 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase) *echo.E
 	v3 := e.Group("/api/v3")
 	v3.GET("/login", authHandler.Login)
 	v3.GET("/callback", authHandler.Callback)
+
+	v3.GET("/search", trackHandler.SearchTracks)
 
 	user := v3.Group("/users", NewAuthMiddleware(authUC).Authenticate)
 	user.GET("/me", userHandler.GetMe)
