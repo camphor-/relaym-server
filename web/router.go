@@ -9,7 +9,7 @@ import (
 )
 
 // NewServer はミドルウェアやハンドラーが登録されたechoの構造体を返します。
-func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase) *echo.Echo {
+func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, trackUC *usecase.TrackUseCase) *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
@@ -20,7 +20,7 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase) *echo.E
 	}))
 
 	userHandler := handler.NewUserHandler(userUC)
-	trackHandler := handler.NewTrackHandler()
+	trackHandler := handler.NewTrackHandler(trackUC)
 
 	// TODO フロントエンドのURLを環境変数で指定する
 	authHandler := handler.NewAuthHandler(authUC, "http://relaym.local:3000")
