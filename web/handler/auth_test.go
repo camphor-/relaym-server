@@ -131,7 +131,15 @@ func (f fakeSpotifyAuth) Exchange(code string) (*oauth2.Token, error) {
 
 type fakeAuthRepository struct{}
 
-func (f fakeAuthRepository) Store(state *entity.AuthState) error {
+func (f fakeAuthRepository) StoreORUpdateToken(spotifyUserID string, token *oauth2.Token) error {
+	panic("implement me")
+}
+
+func (f fakeAuthRepository) GetTokenBySpotifyUserID(spotifyUserID string) (*oauth2.Token, error) {
+	panic("implement me")
+}
+
+func (f fakeAuthRepository) StoreState(state *entity.AuthState) error {
 	return nil
 }
 
