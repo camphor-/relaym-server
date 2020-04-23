@@ -61,7 +61,7 @@ func (r AuthRepository) StoreSession(sessionID, userID string) error {
 	return nil
 }
 
-// GetSession はセッションIDからユーザIDを取得します。
+// GetUserIDFromSession はセッションIDからユーザIDを取得します。
 func (r AuthRepository) GetUserIDFromSession(sessionID string) (string, error) {
 	if userID, ok := sessionStore[sessionID]; ok {
 		return userID, nil

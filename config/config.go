@@ -2,7 +2,7 @@ package config
 
 import "os"
 
-// IsLocalはローカル環境がどうか返します。
+// IsLocal はローカル環境がどうか返します。
 func IsLocal() bool {
 	return os.Getenv("ENV") == "local"
 }
