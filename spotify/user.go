@@ -9,7 +9,6 @@ import (
 )
 
 // GetMe は自分の情報をSpotify APIから取得します。
-// 返すUserのidは存在しないので注意
 func (c *Client) GetMe(ctx context.Context) (*entity.SpotifyUser, error) {
 	token, ok := service.GetTokenFromContext(ctx)
 	if !ok {
