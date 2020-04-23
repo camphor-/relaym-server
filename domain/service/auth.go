@@ -25,7 +25,7 @@ func SetTokenToContext(ctx context.Context, token *oauth2.Token) context.Context
 
 }
 
-// GetUserIDFromUserID はContextからユーザIDを取得します。
+// GetUserIDFromContext はContextからユーザIDを取得します。
 func GetUserIDFromContext(ctx context.Context) (string, bool) {
 	v := ctx.Value(userIDKey)
 	userID, ok := v.(string)

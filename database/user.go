@@ -49,7 +49,7 @@ func (r *UserRepository) FindBySpotifyUserID(spotifyUserID string) (*entity.User
 	}, nil
 }
 
-// StoreORUpdate はユーザを新規保存します。
+// Store はユーザを新規保存します。
 func (r *UserRepository) Store(user *entity.User) error {
 	dto := &userDTO{
 		ID:            user.ID,
