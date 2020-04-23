@@ -57,7 +57,7 @@ func TestUser_SpotifyURI(t *testing.T) {
 	}{
 		{
 			name: "正しくURIが構築できる",
-			user: &User{SpotifyUser: SpotifyUser{id: "spotifyUserID"}},
+			user: &User{spotifyUserID: "spotifyUserID"},
 			want: "spotify:user:spotifyUserID",
 		},
 	}

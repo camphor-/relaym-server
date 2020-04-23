@@ -1,17 +1,20 @@
 package entity
 
+import "golang.org/x/oauth2"
+
 type (
 	// User はログインしているユーザを表します。
 	User struct {
-		id          string // IDは外部のパッケージで書き換えられると困るのでprivateにする
-		SpotifyUser SpotifyUser
+		id            string // IDは外部のパッケージで書き換えられると困るのでprivateにする
+		spotifyUserID string
+		DisplayName   string
+		SpotifyUser   SpotifyUser
 	}
 
-	// SpotifyUser はSpotifyのアカウントに関連するユーザ情報を表します。
+	// SpotifyUser はDBに保存していないSpotify側のユーザ情報を表します。
 	SpotifyUser struct {
-		id          string
-		product     string
-		DisplayName string
+		product string
+		token   *oauth2.Token
 	}
 )
 
@@ -32,5 +35,5 @@ func (u *User) IsPremium() bool {
 
 // SpotifyURI はユーザを一位に識別するURLを返します。
 func (u *User) SpotifyURI() string {
-	return "spotify:user:" + u.SpotifyUser.id
+	return "spotify:user:" + u.spotifyUserID
 }

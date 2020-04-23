@@ -29,7 +29,7 @@ func (h *UserHandler) GetMe(c echo.Context) error {
 	return c.JSON(http.StatusOK, &userRes{
 		ID:          user.ID(),
 		URI:         user.SpotifyURI(),
-		DisplayName: user.SpotifyUser.DisplayName,
+		DisplayName: user.DisplayName,
 		IsPremium:   user.IsPremium(),
 	})
 }
