@@ -92,11 +92,17 @@ func (u *AuthUseCase) createUserIfNotExists(ctx context.Context) (string, error)
 		return "", fmt.Errorf("get my info from Spotify: %w", err)
 	}
 
-	user := entity.NewUser(spotifyUser.SpotifyUserID, spotifyUser.DisplayName)
+	spotifyUserID := spotifyUser.SpotifyUserID
+
+	user := entity.NewUser(spotifyUserID, spotifyUser.DisplayName)
 
 	if err := u.userRepo.Store(user); err != nil {
 		if errors.Is(err, entity.ErrUserAlreadyExisted) {
-			return user.ID, nil
+			existing, err := u.userRepo.FindBySpotifyUserID(spotifyUserID)
+			if err != nil {
+				return "", fmt.Errorf("find already existing user spotifyUserID=%s: %w", spotifyUserID, err)
+			}
+			return existing.ID, nil
 		}
 		return "", fmt.Errorf("store user though repo userID=%s: %w", user.ID, err)
 	}

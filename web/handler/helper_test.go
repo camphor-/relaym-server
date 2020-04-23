@@ -62,6 +62,10 @@ func (f fakeAuthRepository) Delete(state string) error {
 type fakeUserRepository struct {
 }
 
+func (f fakeUserRepository) FindBySpotifyUserID(spotifyUserID string) (*entity.User, error) {
+	return &entity.User{}, nil
+}
+
 func (f fakeUserRepository) Store(user *entity.User) error {
 	return nil
 }

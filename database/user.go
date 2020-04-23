@@ -1,6 +1,8 @@
 package database
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/camphor-/relaym-server/domain/entity"
@@ -28,6 +30,23 @@ func (r *UserRepository) FindByID(id string) (*entity.User, error) {
 	return &entity.User{
 		ID: id,
 	}, nil // TODO : 実際にDBから取得する
+}
+
+// FindBySpotifyUserID はspotifyUserIDを持つユーザを取得します。
+func (r *UserRepository) FindBySpotifyUserID(spotifyUserID string) (*entity.User, error) {
+	var dto userDTO
+
+	if err := r.dbMap.SelectOne(&dto, "SELECT id, spotify_user_id, display_name FROM users WHERE spotify_user_id = ?", spotifyUserID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("select user: %w", entity.ErrUserNotFound)
+		}
+		return nil, fmt.Errorf("select user: %w", err)
+	}
+	return &entity.User{
+		ID:            dto.ID,
+		SpotifyUserID: dto.SpotifyUserID,
+		DisplayName:   dto.DisplayName,
+	}, nil
 }
 
 // StoreORUpdate はユーザを新規保存します。
