@@ -76,8 +76,11 @@ func (u *AuthUseCase) Authorization(state, code string) (string, error) {
 
 // GetTokenByUserID は対応したユーザのアクセストークンを取得します。
 func (u *AuthUseCase) GetTokenByUserID(userID string) (*oauth2.Token, error) {
-	// TODO ユーザIDからspotifyUserIDを取得する処理を追加
-	spotifyUserID := "spotifyUserID"
+	user, err := u.userRepo.FindByID(userID)
+	if err != nil {
+		return nil, fmt.Errorf("get user userID=%s: %w", userID, err)
+	}
+	spotifyUserID := user.SpotifyUserID
 	token, err := u.repo.GetTokenBySpotifyUserID(spotifyUserID)
 	if err != nil {
 		return nil, fmt.Errorf("get oauth token spotifyUserID=%s: %w", spotifyUserID, err)

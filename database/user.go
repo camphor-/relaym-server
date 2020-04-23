@@ -27,9 +27,18 @@ func NewUserRepository(dbMap *gorp.DbMap) *UserRepository {
 
 // FindByID は指定されたIDを持つユーザをDBから取得します
 func (r *UserRepository) FindByID(id string) (*entity.User, error) {
+	var dto userDTO
+	if err := r.dbMap.SelectOne(&dto, "SELECT id, spotify_user_id, display_name FROM users WHERE id = ?", id); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("select user: %w", entity.ErrUserNotFound)
+		}
+		return nil, fmt.Errorf("select user: %w", err)
+	}
 	return &entity.User{
-		ID: id,
-	}, nil // TODO : 実際にDBから取得する
+		ID:            dto.ID,
+		SpotifyUserID: dto.SpotifyUserID,
+		DisplayName:   dto.DisplayName,
+	}, nil
 }
 
 // FindBySpotifyUserID はspotifyUserIDを持つユーザを取得します。

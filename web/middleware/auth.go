@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/camphor-/relaym-server/domain/service"
-
 	"github.com/camphor-/relaym-server/usecase"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -20,6 +20,7 @@ func NewAuth(uc *usecase.AuthUseCase) *Auth {
 }
 
 // Authenticate は認証が必要なAPIで認証情報があるかチェックします。
+// TODO テストを書く
 func (m *Auth) Authenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// TODO ユーザIDをセッションから取得する
