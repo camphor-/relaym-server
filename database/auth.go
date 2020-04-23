@@ -27,7 +27,7 @@ func NewAuthRepository(dbMap *gorp.DbMap) *AuthRepository {
 
 // StoreORUpdateToken は既にトークンが存在する場合は更新し、存在しない場合は新規に保存します。
 func (r AuthRepository) StoreORUpdateToken(spotifyUserID string, token *oauth2.Token) error {
-	query := `INSERT INTO spotify_auth (spotify_user_id, access_token, refresh_token, expiry)
+	query := `INSERT INTO spotify_auth (user_id, access_token, refresh_token, expiry)
 				VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE 
 				access_token = VALUES(access_token), refresh_token = VALUES(refresh_token), expiry = VALUES(expiry)`
 	if _, err := r.dbMap.Exec(query, spotifyUserID, token.AccessToken, token.RefreshToken, token.Expiry); err != nil {
@@ -39,7 +39,7 @@ func (r AuthRepository) StoreORUpdateToken(spotifyUserID string, token *oauth2.T
 // GetTokenBySpotifyUserID は与えられたユーザのOAuth2のトークンを取得します。
 func (r AuthRepository) GetTokenBySpotifyUserID(spotifyUserID string) (*oauth2.Token, error) {
 	var dto spotifyAuthDTO
-	query := "SELECT spotify_user_id, access_token, refresh_token, expiry from spotify_auth WHERE spotify_user_id=?"
+	query := "SELECT user_id, access_token, refresh_token, expiry from spotify_auth WHERE user_id=?"
 	if err := r.dbMap.SelectOne(&dto, query, spotifyUserID); err != nil {
 		return nil, fmt.Errorf("select spotify auth: %w", err)
 	}
@@ -89,8 +89,8 @@ type stateDTO struct {
 }
 
 type spotifyAuthDTO struct {
-	SpotifyUserID string    `db:"spotify_user_id"`
-	AccessToken   string    `db:"access_token"`
-	RefreshToken  string    `db:"refresh_token"`
-	Expiry        time.Time `db:"expiry"`
+	UserID       string    `db:"user_id"`
+	AccessToken  string    `db:"access_token"`
+	RefreshToken string    `db:"refresh_token"`
+	Expiry       time.Time `db:"expiry"`
 }
