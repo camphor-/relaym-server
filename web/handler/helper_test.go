@@ -31,11 +31,19 @@ func (f fakeSpotifyAuth) Exchange(code string) (*oauth2.Token, error) {
 
 type fakeAuthRepository struct{}
 
+func (f fakeAuthRepository) StoreSession(sessionID, userID string) error {
+	return nil
+}
+
+func (f fakeAuthRepository) GetUserIDFromSession(sessionID string) (string, error) {
+	return "sessionID", nil
+}
+
 func (f fakeAuthRepository) StoreORUpdateToken(spotifyUserID string, token *oauth2.Token) error {
 	return nil
 }
 
-func (f fakeAuthRepository) GetTokenBySpotifyUserID(spotifyUserID string) (*oauth2.Token, error) {
+func (f fakeAuthRepository) GetTokenByUserID(spotifyUserID string) (*oauth2.Token, error) {
 	return &oauth2.Token{
 		AccessToken:  "access_token",
 		TokenType:    "Bearer",

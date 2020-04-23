@@ -43,47 +43,47 @@ func (u *AuthUseCase) GetAuthURL(redirectURL string) (string, error) {
 }
 
 // Authorization はcodeを使って認可をチェックします。
-// 認可に成功した場合はフロントエンドのリダイレクトURLを返します。
-func (u *AuthUseCase) Authorization(state, code string) (string, error) {
+// 認可に成功した場合はフロントエンドのリダイレクトURLとセッションIDを返します。
+func (u *AuthUseCase) Authorization(state, code string) (string, string, error) {
 	storedState, err := u.repo.FindStateByState(state)
 	if err != nil {
-		return "", fmt.Errorf("find temp state state=%s: %w", state, err)
+		return "", "", fmt.Errorf("find temp state state=%s: %w", state, err)
 	}
 
 	token, err := u.authCli.Exchange(code)
 	if err != nil {
-		return "", fmt.Errorf("exchange and get oauth2 token: %w", err)
+		return "", "", fmt.Errorf("exchange and get oauth2 token: %w", err)
 	}
 
 	ctx := service.SetTokenToContext(context.Background(), token)
 	userID, err := u.createUserIfNotExists(ctx)
 	if err != nil {
-		return "", fmt.Errorf("get or create user: %w", err)
+		return "", "", fmt.Errorf("get or create user: %w", err)
 	}
 
 	if err := u.repo.StoreORUpdateToken(userID, token); err != nil {
-		return "", fmt.Errorf("store or update oauth token though repo userID=%s: %w", userID, err)
+		return "", "", fmt.Errorf("store or update oauth token though repo userID=%s: %w", userID, err)
+	}
+
+	sessionID := uuid.New().String()
+	if err := u.repo.StoreSession(sessionID, userID); err != nil {
+		return "", "", fmt.Errorf("store session sessionID=%s userID=%s : %w", sessionID, userID, err)
 	}
 
 	// Stateを削除するのが失敗してもログインは成功しているので、エラーを返さない
 	if err := u.repo.Delete(state); err != nil {
 		log.Printf("Failed to delete state state=%s: %v\n", state, err)
-		return storedState.RedirectURL, nil
+		return storedState.RedirectURL, sessionID, nil
 	}
 
-	return storedState.RedirectURL, nil
+	return storedState.RedirectURL, sessionID, nil
 }
 
 // GetTokenByUserID は対応したユーザのアクセストークンを取得します。
 func (u *AuthUseCase) GetTokenByUserID(userID string) (*oauth2.Token, error) {
-	user, err := u.userRepo.FindByID(userID)
+	token, err := u.repo.GetTokenByUserID(userID)
 	if err != nil {
-		return nil, fmt.Errorf("get user userID=%s: %w", userID, err)
-	}
-	spotifyUserID := user.SpotifyUserID
-	token, err := u.repo.GetTokenBySpotifyUserID(spotifyUserID)
-	if err != nil {
-		return nil, fmt.Errorf("get oauth token spotifyUserID=%s: %w", spotifyUserID, err)
+		return nil, fmt.Errorf("get oauth token userID=%s: %w", userID, err)
 	}
 	return token, nil
 }
@@ -111,4 +111,13 @@ func (u *AuthUseCase) createUserIfNotExists(ctx context.Context) (string, error)
 	}
 
 	return user.ID, nil
+}
+
+// GetUserIDFromSession はセッションIDから対応するユーザIDを返します。
+func (u *AuthUseCase) GetUserIDFromSession(sessionID string) (string, error) {
+	userID, err := u.repo.GetUserIDFromSession(sessionID)
+	if err != nil {
+		return "", fmt.Errorf("get user from session sessionID=%s: %w", sessionID, err)
+	}
+	return userID, nil
 }

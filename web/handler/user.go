@@ -20,8 +20,9 @@ func NewUserHandler(userUC *usecase.UserUseCase) *UserHandler {
 
 // GetMe は GET /users/me に対応するハンドラーです。
 func (h *UserHandler) GetMe(c echo.Context) error {
-	id := "userID" // TODO クッキーからユーザIDを取得する
-	user, err := h.userUC.GetByID(id)
+	ctx := c.Request().Context()
+
+	user, err := h.userUC.GetMe(ctx)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)

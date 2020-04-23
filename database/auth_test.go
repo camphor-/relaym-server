@@ -39,14 +39,14 @@ func TestAuthRepository_StoreORUpdateToken(t *testing.T) {
 	}
 
 	tests := []struct {
-		name          string
-		spotifyUserID string
-		token         *oauth2.Token
-		wantErr       bool
+		name    string
+		userID  string
+		token   *oauth2.Token
+		wantErr bool
 	}{
 		{
-			name:          "新規ユーザのトークンを保存できる",
-			spotifyUserID: "new_user",
+			name:   "新規ユーザのトークンを保存できる",
+			userID: "new_user",
 			token: &oauth2.Token{
 				AccessToken:  "new_user_access_token",
 				TokenType:    "Bearer",
@@ -57,8 +57,8 @@ func TestAuthRepository_StoreORUpdateToken(t *testing.T) {
 		},
 
 		{
-			name:          "既存ユーザのトークンを更新できる",
-			spotifyUserID: "existing_user",
+			name:   "既存ユーザのトークンを更新できる",
+			userID: "existing_user",
 			token: &oauth2.Token{
 				AccessToken:  "update_user_access_token",
 				TokenType:    "Bearer",
@@ -72,12 +72,12 @@ func TestAuthRepository_StoreORUpdateToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := AuthRepository{dbMap: dbMap}
-			if err := r.StoreORUpdateToken(tt.spotifyUserID, tt.token); (err != nil) != tt.wantErr {
+			if err := r.StoreORUpdateToken(tt.userID, tt.token); (err != nil) != tt.wantErr {
 				t.Errorf("StoreORUpdateToken() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
 			if !tt.wantErr {
-				got, err := r.GetTokenBySpotifyUserID(tt.spotifyUserID)
+				got, err := r.GetTokenByUserID(tt.userID)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -139,14 +139,14 @@ func TestAuthRepository_GetTokenBySpotifyUserID(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := AuthRepository{dbMap: dbMap}
-			got, err := r.GetTokenBySpotifyUserID(tt.spotifyUserID)
+			got, err := r.GetTokenByUserID(tt.spotifyUserID)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("GetTokenBySpotifyUserID() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("GetTokenByUserID() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			opt := cmpopts.IgnoreUnexported(oauth2.Token{})
 			if !cmp.Equal(got, tt.want, opt) {
-				t.Errorf("GetTokenBySpotifyUserID() diff=%v", cmp.Diff(tt.want, got, opt))
+				t.Errorf("GetTokenByUserID() diff=%v", cmp.Diff(tt.want, got, opt))
 			}
 		})
 	}

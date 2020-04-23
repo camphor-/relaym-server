@@ -3,9 +3,13 @@ package handler
 import (
 	"net/http"
 
+	"github.com/camphor-/relaym-server/config"
+
 	"github.com/camphor-/relaym-server/usecase"
 	"github.com/labstack/echo/v4"
 )
+
+const sevenDays = 60 * 60 * 24 * 7
 
 // AuthHandler はログインに関連するのエンドポイントを管理する構造体です。
 type AuthHandler struct {
@@ -52,11 +56,21 @@ func (h *AuthHandler) Callback(c echo.Context) error {
 		return c.Redirect(http.StatusFound, h.frontendURL+"?err=spotifyAuthFailed")
 	}
 
-	redirectURL, err := h.authUC.Authorization(state, code)
+	redirectURL, sessionID, err := h.authUC.Authorization(state, code)
 	if err != nil {
 		c.Logger().Errorf("spotify auth failed: %v", err)
 		return c.Redirect(http.StatusFound, h.frontendURL+"?err=%spotify auth failed")
 	}
+
+	c.SetCookie(&http.Cookie{
+		Name:     "session",
+		Value:    sessionID,
+		Path:     "/",
+		MaxAge:   sevenDays,
+		Secure:   !config.IsLocal(),
+		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
+	})
 
 	return c.Redirect(http.StatusFound, redirectURL)
 }
