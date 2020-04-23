@@ -9,6 +9,7 @@ import (
 	"github.com/camphor-/relaym-server/domain/spotify"
 
 	"github.com/google/uuid"
+	"golang.org/x/oauth2"
 )
 
 // AuthUseCase は認証・認可に関するユースケースです。
@@ -62,4 +63,15 @@ func (u *AuthUseCase) Authorization(state, code string) (string, error) {
 	}
 
 	return storedState.RedirectURL, nil
+}
+
+// GetTokenByUserID は対応したユーザのアクセストークンを取得します。
+func (u *AuthUseCase) GetTokenByUserID(userID string) (*oauth2.Token, error) {
+	// TODO ユーザIDからspotifyUserIDを取得する処理を追加
+	spotifyUserID := "spotifyUserID"
+	token, err := u.repo.GetTokenBySpotifyUserID(spotifyUserID)
+	if err != nil {
+		return nil, fmt.Errorf("get oauth token spotifyUserID=%s: %w", spotifyUserID, err)
+	}
+	return token, nil
 }
