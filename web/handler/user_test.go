@@ -6,7 +6,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/usecase"
 
 	"github.com/google/go-cmp/cmp"
@@ -56,11 +55,4 @@ func TestUserHandler_GetMe(t *testing.T) {
 			}
 		})
 	}
-}
-
-type fakeUserRepository struct {
-}
-
-func (f fakeUserRepository) FindByID(id string) (*entity.User, error) {
-	return entity.NewUser(id), nil
 }

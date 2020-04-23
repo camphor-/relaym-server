@@ -5,13 +5,10 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"testing"
-	"time"
 
-	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/usecase"
 
 	"github.com/labstack/echo/v4"
-	"golang.org/x/oauth2"
 )
 
 func TestAuthHandler_Callback(t *testing.T) {
@@ -87,7 +84,7 @@ func TestAuthHandler_Callback(t *testing.T) {
 			c := e.NewContext(req, rec)
 
 			// TODO モックは自動生成したい
-			uc := usecase.NewAuthUseCase(&fakeSpotifyAuth{}, &fakeAuthRepository{})
+			uc := usecase.NewAuthUseCase(&fakeSpotifyAuth{}, &fakeSpotifyUser{}, &fakeAuthRepository{}, &fakeUserRepository{})
 			h := &AuthHandler{
 				authUC:      uc,
 				frontendURL: tt.frontendURL,
@@ -112,49 +109,4 @@ func TestAuthHandler_Callback(t *testing.T) {
 
 		})
 	}
-}
-
-type fakeSpotifyAuth struct{}
-
-func (f fakeSpotifyAuth) GetAuthURL(state string) string {
-	return ""
-}
-
-func (f fakeSpotifyAuth) Exchange(code string) (*oauth2.Token, error) {
-	return &oauth2.Token{
-		AccessToken:  "token",
-		TokenType:    "Bearer",
-		RefreshToken: "refresh",
-		Expiry:       time.Now().Add(1 * time.Hour),
-	}, nil
-}
-
-type fakeAuthRepository struct{}
-
-func (f fakeAuthRepository) StoreORUpdateToken(spotifyUserID string, token *oauth2.Token) error {
-	return nil
-}
-
-func (f fakeAuthRepository) GetTokenBySpotifyUserID(spotifyUserID string) (*oauth2.Token, error) {
-	return &oauth2.Token{
-		AccessToken:  "access_token",
-		TokenType:    "Bearer",
-		RefreshToken: "refresh_token",
-		Expiry:       time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
-	}, nil
-}
-
-func (f fakeAuthRepository) StoreState(state *entity.AuthState) error {
-	return nil
-}
-
-func (f fakeAuthRepository) FindStateByState(state string) (*entity.AuthState, error) {
-	return &entity.AuthState{
-		State:       "state",
-		RedirectURL: "https://example.com",
-	}, nil
-}
-
-func (f fakeAuthRepository) Delete(state string) error {
-	return nil
 }

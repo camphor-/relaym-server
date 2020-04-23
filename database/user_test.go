@@ -17,9 +17,11 @@ func TestUserRepository_FindByID(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "指定したidのユーザを取得できる",
-			id:      "userID",
-			want:    entity.NewUser("userID"),
+			name: "指定したidのユーザを取得できる",
+			id:   "userID",
+			want: &entity.User{
+				ID: "userID",
+			},
 			wantErr: false,
 		},
 	}

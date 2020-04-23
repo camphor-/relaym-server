@@ -23,7 +23,12 @@ func TestAuthRepository_StoreORUpdateToken(t *testing.T) {
 		t.Fatal(err)
 	}
 	dbMap.AddTableWithName(spotifyAuthDTO{}, "spotify_auth")
+	dbMap.AddTableWithName(userDTO{}, "users")
 	truncateTable(t, dbMap)
+	if err := dbMap.Insert(&userDTO{ID: "existing_user", SpotifyUserID: "existing_user_spotify"},
+		&userDTO{ID: "new_user", SpotifyUserID: "new_user_spotify"}); err != nil {
+		t.Fatal(err)
+	}
 	if err := dbMap.Insert(&spotifyAuthDTO{
 		UserID:       "existing_user",
 		AccessToken:  "existing_access_token",
@@ -91,8 +96,12 @@ func TestAuthRepository_GetTokenBySpotifyUserID(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	dbMap.AddTableWithName(userDTO{}, "users")
 	dbMap.AddTableWithName(spotifyAuthDTO{}, "spotify_auth")
 	truncateTable(t, dbMap)
+	if err := dbMap.Insert(&userDTO{ID: "get_user", SpotifyUserID: "get_user_spotify"}); err != nil {
+		t.Fatal(err)
+	}
 	if err := dbMap.Insert(&spotifyAuthDTO{
 		UserID:       "get_user",
 		AccessToken:  "get_access_token",

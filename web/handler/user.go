@@ -27,10 +27,10 @@ func (h *UserHandler) GetMe(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return c.JSON(http.StatusOK, &userRes{
-		ID:          user.ID(),
+		ID:          user.ID,
 		URI:         user.SpotifyURI(),
 		DisplayName: user.DisplayName,
-		IsPremium:   user.IsPremium(),
+		IsPremium:   false, // TODO : 正しくPremium情報を取得する
 	})
 }
 
