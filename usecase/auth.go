@@ -51,7 +51,7 @@ func (u *AuthUseCase) Authorization(state, code string) (string, error) {
 	// TODO : SpotifyUserIDを取得する
 	spotifyUserID := "spotifyUserID"
 	if err := u.repo.StoreORUpdateToken(spotifyUserID, token); err != nil {
-		return "", fmt.Errorf("store or update oauth token though repo spotifyUserID=%s: %w", spotifyUserID, err)
+		return "", fmt.Errorf("store or update oauth token through repo spotifyUserID=%s: %w", spotifyUserID, err)
 	}
 	fmt.Printf("%#v\n", token)
 
