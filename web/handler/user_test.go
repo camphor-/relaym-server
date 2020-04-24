@@ -39,7 +39,6 @@ func TestUserHandler_GetMe(t *testing.T) {
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
-
 			// TODO モックは自動生成したい
 			uc := usecase.NewUserUseCase(&fakeUserRepository{})
 			h := &UserHandler{userUC: uc}

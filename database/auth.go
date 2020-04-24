@@ -2,6 +2,9 @@ package database
 
 import (
 	"fmt"
+	"time"
+
+	"golang.org/x/oauth2"
 
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/repository"
@@ -18,11 +21,38 @@ type AuthRepository struct {
 // NewAuthRepository はAuthRepositoryのポインタを生成する関数です
 func NewAuthRepository(dbMap *gorp.DbMap) *AuthRepository {
 	dbMap.AddTableWithName(stateDTO{}, "auth_states")
+	dbMap.AddTableWithName(spotifyAuthDTO{}, "spotify_auth")
 	return &AuthRepository{dbMap: dbMap}
 }
 
-// Store はauthStateを保存します。
-func (r AuthRepository) Store(authState *entity.AuthState) error {
+// StoreORUpdateToken は既にトークンが存在する場合は更新し、存在しない場合は新規に保存します。
+func (r AuthRepository) StoreORUpdateToken(spotifyUserID string, token *oauth2.Token) error {
+	query := `INSERT INTO spotify_auth (spotify_user_id, access_token, refresh_token, expiry)
+				VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE 
+				access_token = VALUES(access_token), refresh_token = VALUES(refresh_token), expiry = VALUES(expiry)`
+	if _, err := r.dbMap.Exec(query, spotifyUserID, token.AccessToken, token.RefreshToken, token.Expiry); err != nil {
+		return fmt.Errorf("insert to spotify_auth table: %w", err)
+	}
+	return nil
+}
+
+// GetTokenBySpotifyUserID は与えられたユーザのOAuth2のトークンを取得します。
+func (r AuthRepository) GetTokenBySpotifyUserID(spotifyUserID string) (*oauth2.Token, error) {
+	var dto spotifyAuthDTO
+	query := "SELECT spotify_user_id, access_token, refresh_token, expiry from spotify_auth WHERE spotify_user_id=?"
+	if err := r.dbMap.SelectOne(&dto, query, spotifyUserID); err != nil {
+		return nil, fmt.Errorf("select spotify auth: %w", err)
+	}
+	return &oauth2.Token{
+		AccessToken:  dto.AccessToken,
+		TokenType:    "Bearer",
+		RefreshToken: dto.RefreshToken,
+		Expiry:       dto.Expiry,
+	}, nil
+}
+
+// StoreState はauthStateを保存します。
+func (r AuthRepository) StoreState(authState *entity.AuthState) error {
 	dto := &stateDTO{
 		State:       authState.State,
 		RedirectURL: authState.RedirectURL,
@@ -56,4 +86,11 @@ func (r AuthRepository) Delete(state string) error {
 type stateDTO struct {
 	State       string `db:"state"`
 	RedirectURL string `db:"redirect_url"`
+}
+
+type spotifyAuthDTO struct {
+	SpotifyUserID string    `db:"spotify_user_id"`
+	AccessToken   string    `db:"access_token"`
+	RefreshToken  string    `db:"refresh_token"`
+	Expiry        time.Time `db:"expiry"`
 }

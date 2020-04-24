@@ -131,7 +131,20 @@ func (f fakeSpotifyAuth) Exchange(code string) (*oauth2.Token, error) {
 
 type fakeAuthRepository struct{}
 
-func (f fakeAuthRepository) Store(state *entity.AuthState) error {
+func (f fakeAuthRepository) StoreORUpdateToken(spotifyUserID string, token *oauth2.Token) error {
+	return nil
+}
+
+func (f fakeAuthRepository) GetTokenBySpotifyUserID(spotifyUserID string) (*oauth2.Token, error) {
+	return &oauth2.Token{
+		AccessToken:  "access_token",
+		TokenType:    "Bearer",
+		RefreshToken: "refresh_token",
+		Expiry:       time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+	}, nil
+}
+
+func (f fakeAuthRepository) StoreState(state *entity.AuthState) error {
 	return nil
 }
 

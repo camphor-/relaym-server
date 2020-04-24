@@ -30,7 +30,7 @@ func (u *AuthUseCase) GetAuthURL(redirectURL string) (string, error) {
 		State:       state,
 		RedirectURL: redirectURL,
 	}
-	if err := u.repo.Store(st); err != nil {
+	if err := u.repo.StoreState(st); err != nil {
 		return "", fmt.Errorf("store state for authorization: %w", err)
 	}
 	return u.authCli.GetAuthURL(state), nil
@@ -48,7 +48,11 @@ func (u *AuthUseCase) Authorization(state, code string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("exchange and get oauth2 token: %w", err)
 	}
-	// TODO : 手に入れたアクセストークンをDBに保存する
+	// TODO : SpotifyUserIDを取得する
+	spotifyUserID := "spotifyUserID"
+	if err := u.repo.StoreORUpdateToken(spotifyUserID, token); err != nil {
+		return "", fmt.Errorf("store or update oauth token through repo spotifyUserID=%s: %w", spotifyUserID, err)
+	}
 	fmt.Printf("%#v\n", token)
 
 	// Stateを削除するのが失敗してもログインは成功しているので、エラーを返さない
