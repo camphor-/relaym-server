@@ -10,14 +10,17 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// TrackHandler は/search を管理する構造体です。
 type TrackHandler struct {
 	trackUC *usecase.TrackUseCase
 }
 
+// NewTrackHandler はTrackHandlerのポインタを生成する関数です。
 func NewTrackHandler(trackUC *usecase.TrackUseCase) *TrackHandler {
 	return &TrackHandler{trackUC: trackUC}
 }
 
+// SearchTracks は GET /search に対応するハンドラーです。
 func (h *TrackHandler) SearchTracks(c echo.Context) error {
 	q := c.QueryParam("q")
 	ctx := c.Request().Context()
