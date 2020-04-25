@@ -9,11 +9,11 @@ import (
 
 // AuthUseCase は認証・認可に関するユースケースです。
 type TrackUseCase struct {
-	track spotify.Track
+	track spotify.TrackClient
 }
 
 // NewAuthUseCase はAuthUseCaseのポインタを生成します。
-func NewTrackUseCase(track spotify.Track) *TrackUseCase {
+func NewTrackUseCase(track spotify.TrackClient) *TrackUseCase {
 	return &TrackUseCase{track: track}
 }
 
