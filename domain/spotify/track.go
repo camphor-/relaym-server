@@ -6,6 +6,6 @@ import (
 	"github.com/camphor-/relaym-server/domain/entity"
 )
 
-type Track interface {
+type TrackClient interface {
 	Search(ctx context.Context, q string) ([]*entity.Track, error)
 }
