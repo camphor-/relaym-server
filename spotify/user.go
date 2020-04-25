@@ -17,7 +17,7 @@ func (c *Client) GetMe(ctx context.Context) (*entity.SpotifyUser, error) {
 	cli := c.auth.NewClient(token)
 	user, err := cli.CurrentUser()
 	if err != nil {
-		return nil, fmt.Errorf("get private user though spotiry api: %w", err)
+		return nil, fmt.Errorf("get private user through spotiry api: %w", err)
 	}
 	return &entity.SpotifyUser{
 		SpotifyUserID: user.ID,
