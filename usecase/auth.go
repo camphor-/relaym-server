@@ -107,7 +107,7 @@ func (u *AuthUseCase) createUserIfNotExists(ctx context.Context) (string, error)
 			}
 			return existing.ID, nil
 		}
-		return "", fmt.Errorf("store user though repo userID=%s: %w", user.ID, err)
+		return "", fmt.Errorf("store user through repo userID=%s: %w", user.ID, err)
 	}
 
 	return user.ID, nil
