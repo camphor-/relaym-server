@@ -27,7 +27,7 @@ func NewUser(spotifyUserID, displayName string) *User {
 	}
 }
 
-// SpotifyURI はユーザを一位に識別するURLを返します。
+// SpotifyURI はユーザを一位に識別するURIを返します。
 func (u *User) SpotifyURI() string {
 	return "spotify:user:" + u.SpotifyUserID
 }
