@@ -22,4 +22,4 @@ run-db-local:
 
 .PHONY:generate
 generate:
-	go generate
+	go generate ./...
