@@ -26,80 +26,80 @@ func (h *TrackHandler) SearchTracks(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "query is empty")
 	}
 	return c.JSON(http.StatusOK, &tracksRes{
-		Tracks: toTrackJson(tracks),
+		Tracks: toTrackJSON(tracks),
 	})
 }
 
-func toTrackJson(tracks []*entity.Track) []*trackJson {
-	trackJsonArray := make([]*trackJson, len(tracks))
+func toTrackJSON(tracks []*entity.Track) []*trackJSON {
+	trackJSONArray := make([]*trackJSON, len(tracks))
 
 	for i, track := range tracks {
-		trackJsonArray[i] = &trackJson{
+		trackJSONArray[i] = &trackJSON{
 			URI:      track.URI,
 			ID:       track.ID,
 			Name:     track.Name,
 			Duration: track.Duration,
-			Artists:  toArtistJson(track),
+			Artists:  toArtistJSON(track),
 			URL:      track.URL,
-			Album: &albumJson{
+			Album: &albumJSON{
 				Name:   track.Album.Name,
-				Images: toAlbumImageJson(track),
+				Images: toAlbumImageJSON(track),
 			},
 		}
 	}
 
-	return trackJsonArray
+	return trackJSONArray
 }
 
-func toArtistJson(track *entity.Track) []*artistJson {
-	artistJsonArray := make([]*artistJson, len(track.Artists))
+func toArtistJSON(track *entity.Track) []*artistJSON {
+	artistJSONArray := make([]*artistJSON, len(track.Artists))
 	for i, artist := range track.Artists {
-		artistJsonArray[i] = &artistJson{
+		artistJSONArray[i] = &artistJSON{
 			Name: artist.Name,
 		}
 	}
 
-	return artistJsonArray
+	return artistJSONArray
 }
 
-func toAlbumImageJson(track *entity.Track) []*albumImageJson {
-	albumImageJsonArray := make([]*albumImageJson, len(track.Album.Images))
+func toAlbumImageJSON(track *entity.Track) []*albumImageJSON {
+	albumImageJSONArray := make([]*albumImageJSON, len(track.Album.Images))
 	for i, albumImage := range track.Album.Images {
-		albumImageJsonArray[i] = &albumImageJson{
+		albumImageJSONArray[i] = &albumImageJSON{
 			URL:    albumImage.URL,
 			Height: albumImage.Height,
 			Width:  albumImage.Width,
 		}
 	}
 
-	return albumImageJsonArray
+	return albumImageJSONArray
 }
 
 type tracksRes struct {
-	Tracks []*trackJson `json:"tracks"`
+	Tracks []*trackJSON `json:"tracks"`
 }
 
-type trackJson struct {
+type trackJSON struct {
 	URI      string        `json:"uri"`
 	ID       string        `json:"id"`
 	Name     string        `json:"name"`
 	Duration time.Duration `json:"duration_ms"`
-	Artists  []*artistJson `json:"artists"`
+	Artists  []*artistJSON `json:"artists"`
 	URL      string        `json:"external_urls"`
-	Album    *albumJson    `json:"album"`
+	Album    *albumJSON    `json:"album"`
 }
 
-type albumJson struct {
+type albumJSON struct {
 	Name   string            `json:"name"`
-	Images []*albumImageJson `json:"images"`
+	Images []*albumImageJSON `json:"images"`
 }
 
-type albumImageJson struct {
+type albumImageJSON struct {
 	URL    string `json:"url"`
 	Height int    `json:"height"`
 	Width  int    `json:"width"`
 }
 
-type artistJson struct {
+type artistJSON struct {
 	Name string `json:"name"`
 }
