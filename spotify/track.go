@@ -10,6 +10,7 @@ import (
 	"github.com/zmb3/spotify"
 )
 
+// Search はSpotify APIを通して、与えられたクエリを用い音楽を検索します。
 func (c *Client) Search(ctx context.Context, q string) ([]*entity.Track, error) {
 	token, ok := service.GetTokenFromContext(ctx)
 	if !ok {
