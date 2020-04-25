@@ -82,10 +82,10 @@ $ make serve
 
 repositoryやspotifyインタフェースのモックを生成して、テスタビリティの向上を図ります。
 
-1. mockgenをインストール
+1. [mockgen](https://github.com/golang/mock) をインストール
 
 ```bash
-$ GO111MODULE=off; go get github.com/golang/mock/mockgen
+$ GO111MODULE=on go get github.com/golang/mock/mockgen
 ```
 
 2. インターフェースに `go generate` の記述をする。
@@ -93,7 +93,7 @@ $ GO111MODULE=off; go get github.com/golang/mock/mockgen
 ```go
 //go:generate mockgen -source=$GOFILE -destination=../mock_$GOPACKAGE/$GOFILE
 package repository
-...
+// ...
 ```
 
 3. go generateする 
@@ -103,3 +103,5 @@ $ make generate
 ```
 
 ### 使い方
+
+[/web/handler/user_test.go](../web/handler/user_test.go)を参照。

@@ -28,7 +28,7 @@ func (u *UserUseCase) GetMe(ctx context.Context) (*entity.User, error) {
 	}
 	user, err := u.userRepo.FindByID(id)
 	if err != nil {
-		return nil, fmt.Errorf("find user from repo id=%s: %v", id, user)
+		return nil, fmt.Errorf("find user from repo id=%s: %w", id, err)
 	}
 	return user, nil
 }
