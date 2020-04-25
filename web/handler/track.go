@@ -34,10 +34,10 @@ func (h *TrackHandler) SearchTracks(c echo.Context) error {
 }
 
 func toTrackJSON(tracks []*entity.Track) []*trackJSON {
-	trackJSONArray := make([]*trackJSON, len(tracks))
+	trackJSONs := make([]*trackJSON, len(tracks))
 
 	for i, track := range tracks {
-		trackJSONArray[i] = &trackJSON{
+		trackJSONs[i] = &trackJSON{
 			URI:      track.URI,
 			ID:       track.ID,
 			Name:     track.Name,
@@ -51,31 +51,31 @@ func toTrackJSON(tracks []*entity.Track) []*trackJSON {
 		}
 	}
 
-	return trackJSONArray
+	return trackJSONs
 }
 
 func toArtistJSON(track *entity.Track) []*artistJSON {
-	artistJSONArray := make([]*artistJSON, len(track.Artists))
+	artistJSONs := make([]*artistJSON, len(track.Artists))
 	for i, artist := range track.Artists {
-		artistJSONArray[i] = &artistJSON{
+		artistJSONs[i] = &artistJSON{
 			Name: artist.Name,
 		}
 	}
 
-	return artistJSONArray
+	return artistJSONs
 }
 
 func toAlbumImageJSON(track *entity.Track) []*albumImageJSON {
-	albumImageJSONArray := make([]*albumImageJSON, len(track.Album.Images))
+	albumImageJSONs := make([]*albumImageJSON, len(track.Album.Images))
 	for i, albumImage := range track.Album.Images {
-		albumImageJSONArray[i] = &albumImageJSON{
+		albumImageJSONs[i] = &albumImageJSON{
 			URL:    albumImage.URL,
 			Height: albumImage.Height,
 			Width:  albumImage.Width,
 		}
 	}
 
-	return albumImageJSONArray
+	return albumImageJSONs
 }
 
 type tracksRes struct {
