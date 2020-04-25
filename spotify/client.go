@@ -10,13 +10,12 @@ import (
 )
 
 type Client struct {
-	cli spotify.Client
+	auth spotify.Authenticator
 }
 
-func NewClient(cfg *config.Spotify, token *oauth2.Token) *Client {
+func NewClient(cfg *config.Spotify) *Client {
 	auth := spotify.NewAuthenticator(cfg.RedirectURL(), spotify.ScopeUserReadPrivate)
-	cli := auth.NewClient(token)
-	return &Client{cli: cli}
+	return &Client{auth: auth}
 }
 
 // Authenticater はSpotifyのWeb APIをコールするクライアントです、
