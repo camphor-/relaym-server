@@ -29,9 +29,10 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, trackUC
 	v3.GET("/login", authHandler.Login)
 	v3.GET("/callback", authHandler.Callback)
 
-	v3.GET("/search", trackHandler.SearchTracks)
+	authed := v3.Group("", NewAuthMiddleware(authUC).Authenticate)
+	authed.GET("/search", trackHandler.SearchTracks)
 
-	user := v3.Group("/users", NewAuthMiddleware(authUC).Authenticate)
+	user := authed.Group("/users")
 	user.GET("/me", userHandler.GetMe)
 	return e
 }
