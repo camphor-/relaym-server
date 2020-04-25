@@ -20,7 +20,8 @@ func NewTrackHandler(trackUC *usecase.TrackUseCase) *TrackHandler {
 
 func (h *TrackHandler) SearchTracks(c echo.Context) error {
 	q := c.QueryParam("q")
-	tracks, err := h.trackUC.SearckTracks(q)
+	ctx := c.Request().Context()
+	tracks, err := h.trackUC.SearckTracks(ctx, q)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "query is empty")
 	}

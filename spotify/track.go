@@ -1,17 +1,25 @@
 package spotify
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	"github.com/camphor-/relaym-server/domain/entity"
+	"github.com/camphor-/relaym-server/domain/service"
 	"github.com/zmb3/spotify"
 )
 
-func (c *Client) Search(q string) ([]*entity.Track, error) {
-	result, err := c.cli.Search(q, spotify.SearchTypeTrack)
+func (c *Client) Search(ctx context.Context, q string) ([]*entity.Track, error) {
+	token, ok := service.GetTokenFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("token not found")
+	}
+
+	cli := c.auth.NewClient(token)
+	result, err := cli.Search(q, spotify.SearchTypeTrack)
 	if err != nil {
-		return nil, fmt.Errorf("serach q=%s: %w", q, err)
+		return nil, fmt.Errorf("search q=%s: %w", q, err)
 	}
 	return c.toTracks(result.Tracks.Tracks), nil
 }

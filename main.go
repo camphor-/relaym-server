@@ -30,12 +30,12 @@ func main() {
 
 	spotifyCFG := config.NewSpotify()
 	spotifyAuthenticater := spotify.NewAuthenticater(spotifyCFG)
-	spotifyCli := spotify.NewClient(spotifyCFG, "")
+	spotifyCli := spotify.NewClient(spotifyCFG)
 
 	authRepo := database.NewAuthRepository(dbMap)
 	userRepo := database.NewUserRepository(dbMap)
 	userUC := usecase.NewUserUseCase(userRepo)
-	authUC := usecase.NewAuthUseCase(spotifyCli, spotifyCli, authRepo, userRepo)
+	authUC := usecase.NewAuthUseCase(spotifyAuthenticater, spotifyCli, authRepo, userRepo)
 	trackUC := usecase.NewTrackUseCase(spotifyCli)
 
 	s := web.NewServer(authUC, userUC, trackUC)
