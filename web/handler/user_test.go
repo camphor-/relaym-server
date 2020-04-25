@@ -6,11 +6,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/camphor-/relaym-server/domain/entity"
+	"github.com/camphor-/relaym-server/domain/service"
 	"github.com/camphor-/relaym-server/usecase"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/labstack/echo/v4"
+	"golang.org/x/oauth2"
 )
 
 func TestUserHandler_GetMe(t *testing.T) {
@@ -39,6 +40,8 @@ func TestUserHandler_GetMe(t *testing.T) {
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
+			c = setToContext(c, "userID", nil)
+
 			// TODO モックは自動生成したい
 			uc := usecase.NewUserUseCase(&fakeUserRepository{})
 			h := &UserHandler{userUC: uc}
@@ -58,9 +61,10 @@ func TestUserHandler_GetMe(t *testing.T) {
 	}
 }
 
-type fakeUserRepository struct {
-}
-
-func (f fakeUserRepository) FindByID(id string) (*entity.User, error) {
-	return entity.NewUser(id), nil
+func setToContext(c echo.Context, userID string, token *oauth2.Token) echo.Context {
+	ctx := c.Request().Context()
+	ctx = service.SetUserIDToContext(ctx, userID)
+	ctx = service.SetTokenToContext(ctx, token)
+	c.SetRequest(c.Request().WithContext(ctx))
+	return c
 }

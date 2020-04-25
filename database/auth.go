@@ -1,6 +1,7 @@
 package database
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -12,6 +13,8 @@ import (
 )
 
 var _ repository.Auth = &AuthRepository{}
+
+var sessionStore = map[string]string{}
 
 // AuthRepository は repository.AuthRepository を満たす構造体です
 type AuthRepository struct {
@@ -27,7 +30,7 @@ func NewAuthRepository(dbMap *gorp.DbMap) *AuthRepository {
 
 // StoreORUpdateToken は既にトークンが存在する場合は更新し、存在しない場合は新規に保存します。
 func (r AuthRepository) StoreORUpdateToken(spotifyUserID string, token *oauth2.Token) error {
-	query := `INSERT INTO spotify_auth (spotify_user_id, access_token, refresh_token, expiry)
+	query := `INSERT INTO spotify_auth (user_id, access_token, refresh_token, expiry)
 				VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE 
 				access_token = VALUES(access_token), refresh_token = VALUES(refresh_token), expiry = VALUES(expiry)`
 	if _, err := r.dbMap.Exec(query, spotifyUserID, token.AccessToken, token.RefreshToken, token.Expiry); err != nil {
@@ -36,11 +39,11 @@ func (r AuthRepository) StoreORUpdateToken(spotifyUserID string, token *oauth2.T
 	return nil
 }
 
-// GetTokenBySpotifyUserID は与えられたユーザのOAuth2のトークンを取得します。
-func (r AuthRepository) GetTokenBySpotifyUserID(spotifyUserID string) (*oauth2.Token, error) {
+// GetTokenByUserID は与えられたユーザのOAuth2のトークンを取得します。
+func (r AuthRepository) GetTokenByUserID(userID string) (*oauth2.Token, error) {
 	var dto spotifyAuthDTO
-	query := "SELECT spotify_user_id, access_token, refresh_token, expiry from spotify_auth WHERE spotify_user_id=?"
-	if err := r.dbMap.SelectOne(&dto, query, spotifyUserID); err != nil {
+	query := "SELECT user_id, access_token, refresh_token, expiry from spotify_auth WHERE user_id=?"
+	if err := r.dbMap.SelectOne(&dto, query, userID); err != nil {
 		return nil, fmt.Errorf("select spotify auth: %w", err)
 	}
 	return &oauth2.Token{
@@ -49,6 +52,21 @@ func (r AuthRepository) GetTokenBySpotifyUserID(spotifyUserID string) (*oauth2.T
 		RefreshToken: dto.RefreshToken,
 		Expiry:       dto.Expiry,
 	}, nil
+}
+
+// StoreSession はセッション情報を保存します。
+// TODO セッションの保存をMySQLにするかRedisにするか決めてないので一旦インメモリで持つ。
+func (r AuthRepository) StoreSession(sessionID, userID string) error {
+	sessionStore[sessionID] = userID
+	return nil
+}
+
+// GetUserIDFromSession はセッションIDからユーザIDを取得します。
+func (r AuthRepository) GetUserIDFromSession(sessionID string) (string, error) {
+	if userID, ok := sessionStore[sessionID]; ok {
+		return userID, nil
+	}
+	return "", errors.New("session not found")
 }
 
 // StoreState はauthStateを保存します。
@@ -89,8 +107,8 @@ type stateDTO struct {
 }
 
 type spotifyAuthDTO struct {
-	SpotifyUserID string    `db:"spotify_user_id"`
-	AccessToken   string    `db:"access_token"`
-	RefreshToken  string    `db:"refresh_token"`
-	Expiry        time.Time `db:"expiry"`
+	UserID       string    `db:"user_id"`
+	AccessToken  string    `db:"access_token"`
+	RefreshToken string    `db:"refresh_token"`
+	Expiry       time.Time `db:"expiry"`
 }

@@ -20,17 +20,18 @@ func NewUserHandler(userUC *usecase.UserUseCase) *UserHandler {
 
 // GetMe は GET /users/me に対応するハンドラーです。
 func (h *UserHandler) GetMe(c echo.Context) error {
-	id := "userID" // TODO クッキーからユーザIDを取得する
-	user, err := h.userUC.GetByID(id)
+	ctx := c.Request().Context()
+
+	user, err := h.userUC.GetMe(ctx)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return c.JSON(http.StatusOK, &userRes{
-		ID:          user.ID(),
+		ID:          user.ID,
 		URI:         user.SpotifyURI(),
-		DisplayName: user.SpotifyUser.DisplayName,
-		IsPremium:   user.IsPremium(),
+		DisplayName: user.DisplayName,
+		IsPremium:   false, // TODO : 正しくPremium情報を取得する
 	})
 }
 

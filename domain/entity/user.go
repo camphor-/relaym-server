@@ -1,36 +1,33 @@
 package entity
 
+import "github.com/google/uuid"
+
 type (
 	// User はログインしているユーザを表します。
 	User struct {
-		id          string // IDは外部のパッケージで書き換えられると困るのでprivateにする
-		SpotifyUser SpotifyUser
+		ID            string // IDは外部のパッケージで書き換えられると困るのでprivateにする
+		SpotifyUserID string
+		DisplayName   string
 	}
 
-	// SpotifyUser はSpotifyのアカウントに関連するユーザ情報を表します。
+	// SpotifyUser はSpotify APIのユーザ情報を表します。
 	SpotifyUser struct {
-		id          string
-		product     string
-		DisplayName string
+		SpotifyUserID string
+		DisplayName   string
+		Product       string
 	}
 )
 
 // NewUser はUserのポインタを生成する関数です。
-func NewUser(id string) *User {
-	return &User{id: id}
+func NewUser(spotifyUserID, displayName string) *User {
+	return &User{
+		ID:            uuid.New().String(),
+		SpotifyUserID: spotifyUserID,
+		DisplayName:   displayName,
+	}
 }
 
-// ID はユーザIDを返します。
-func (u *User) ID() string {
-	return u.id
-}
-
-// IsPremium はユーザがプレミアム会員かどうかチェックします。
-func (u *User) IsPremium() bool {
-	return u.SpotifyUser.product == "premium"
-}
-
-// SpotifyURI はユーザを一位に識別するURLを返します。
+// SpotifyURI はユーザを一位に識別するURIを返します。
 func (u *User) SpotifyURI() string {
-	return "spotify:user:" + u.SpotifyUser.id
+	return "spotify:user:" + u.SpotifyUserID
 }

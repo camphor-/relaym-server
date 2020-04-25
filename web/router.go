@@ -28,7 +28,7 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase) *echo.E
 	v3.GET("/login", authHandler.Login)
 	v3.GET("/callback", authHandler.Callback)
 
-	user := v3.Group("/users")
+	user := v3.Group("/users", NewAuthMiddleware(authUC).Authenticate)
 	user.GET("/me", userHandler.GetMe)
 	return e
 }
