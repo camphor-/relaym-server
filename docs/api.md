@@ -60,9 +60,9 @@
       "display_name": "p1ass"
     },
     "playback": {
-    "state": {
-      "tyoe": "STOP",
-    },
+      "state": {
+        "tye": "STOP",
+      },
       "device": null
     },
     "queue": {
