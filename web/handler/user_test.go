@@ -79,7 +79,7 @@ func TestUserHandler_GetMe(t *testing.T) {
 				t.Errorf("GetMe() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			// ステータスコードのチェック
-			if er, ok := err.(*echo.HTTPError); ok && rec.Code != tt.wantCode && er.Code != tt.wantCode {
+			if er, ok := err.(*echo.HTTPError); (ok && er.Code != tt.wantCode) || (!ok && rec.Code != tt.wantCode) {
 				t.Errorf("GetMe() code = %d, want = %d", rec.Code, tt.wantCode)
 			}
 

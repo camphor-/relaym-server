@@ -108,8 +108,8 @@ func TestAuthHandler_Login(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Login() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if er, ok := err.(*echo.HTTPError); ok && rec.Code != tt.wantCode && er.Code != tt.wantCode {
-				t.Errorf("GetMe() code = %d, want = %d", rec.Code, tt.wantCode)
+			if er, ok := err.(*echo.HTTPError); (ok && er.Code != tt.wantCode) || (!ok && rec.Code != tt.wantCode) {
+				t.Errorf("Login() code = %d, want = %d", rec.Code, tt.wantCode)
 			}
 
 			u, err := rec.Result().Location()
@@ -329,8 +329,8 @@ func TestAuthHandler_Callback(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Callback() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if er, ok := err.(*echo.HTTPError); ok && rec.Code != tt.wantCode && er.Code != tt.wantCode {
-				t.Errorf("GetMe() code = %d, want = %d", rec.Code, tt.wantCode)
+			if er, ok := err.(*echo.HTTPError); (ok && er.Code != tt.wantCode) || (!ok && rec.Code != tt.wantCode) {
+				t.Errorf("Callback() code = %d, want = %d", rec.Code, tt.wantCode)
 			}
 
 			u, err := rec.Result().Location()
