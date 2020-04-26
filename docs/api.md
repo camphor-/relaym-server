@@ -130,9 +130,7 @@
         "name" : "Pixel Galaxy",
         "duration_ms": 254165,
         "artists": [{"name": "Snail's House"}],
-        "external_urls": {
-          "spotify": "https://open.spotify.com/track/7zHq5ayXLxpJ89392EYm1L"
-        },
+        "external_url": "https://open.spotify.com/track/7zHq5ayXLxpJ89392EYm1L"
         "album": {
           "name": "Pixel Galaxy",
           "images" : [
