@@ -61,7 +61,7 @@
     },
     "playback": {
       "state": {
-        "tye": "STOP",
+        "type": "STOP",
       },
       "device": null
     },
@@ -110,7 +110,7 @@
   },
   "playback": {
     "state": {
-      "tyoe": "PLAY",
+      "type": "PLAY",
       "length": "12345", // trackの全長 (ms)
       "progress": "10000", // 再生位置 (ms)
       "remaining": "2345", // 再生残り時間 (ms)
