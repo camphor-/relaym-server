@@ -71,7 +71,7 @@ func (u *AuthUseCase) Authorization(state, code string) (string, string, error) 
 	}
 
 	// Stateを削除するのが失敗してもログインは成功しているので、エラーを返さない
-	if err := u.repo.Delete(state); err != nil {
+	if err := u.repo.DeleteState(state); err != nil {
 		log.Printf("Failed to delete state state=%s: %v\n", state, err)
 		return storedState.RedirectURL, sessionID, nil
 	}

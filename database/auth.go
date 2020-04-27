@@ -29,11 +29,11 @@ func NewAuthRepository(dbMap *gorp.DbMap) *AuthRepository {
 }
 
 // StoreORUpdateToken は既にトークンが存在する場合は更新し、存在しない場合は新規に保存します。
-func (r AuthRepository) StoreORUpdateToken(spotifyUserID string, token *oauth2.Token) error {
+func (r AuthRepository) StoreORUpdateToken(userID string, token *oauth2.Token) error {
 	query := `INSERT INTO spotify_auth (user_id, access_token, refresh_token, expiry)
 				VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE 
 				access_token = VALUES(access_token), refresh_token = VALUES(refresh_token), expiry = VALUES(expiry)`
-	if _, err := r.dbMap.Exec(query, spotifyUserID, token.AccessToken, token.RefreshToken, token.Expiry); err != nil {
+	if _, err := r.dbMap.Exec(query, userID, token.AccessToken, token.RefreshToken, token.Expiry); err != nil {
 		return fmt.Errorf("insert to spotify_auth table: %w", err)
 	}
 	return nil
@@ -93,8 +93,8 @@ func (r AuthRepository) FindStateByState(state string) (*entity.AuthState, error
 	}, nil
 }
 
-// Delete はstateをキーにしてStateTempを削除します。
-func (r AuthRepository) Delete(state string) error {
+// DeleteState はstateをキーにしてStateTempを削除します。
+func (r AuthRepository) DeleteState(state string) error {
 	if _, err := r.dbMap.Exec("DELETE FROM auth_states where state=?", state); err != nil {
 		return fmt.Errorf("delete state id=%s: %w", state, err)
 	}

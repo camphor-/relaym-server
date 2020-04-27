@@ -1,3 +1,5 @@
+//go:generate mockgen -source=$GOFILE -destination=../mock_$GOPACKAGE/$GOFILE
+
 package spotify
 
 import "golang.org/x/oauth2"
