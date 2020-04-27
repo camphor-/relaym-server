@@ -88,7 +88,7 @@ type trackJSON struct {
 	Name     string        `json:"name"`
 	Duration time.Duration `json:"duration_ms"`
 	Artists  []*artistJSON `json:"artists"`
-	URL      string        `json:"external_urls"`
+	URL      string        `json:"external_url"`
 	Album    *albumJSON    `json:"album"`
 }
 
