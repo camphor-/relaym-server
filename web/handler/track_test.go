@@ -2,7 +2,7 @@ package handler
 
 import (
 	"encoding/json"
-	//"errors"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -92,6 +92,20 @@ func TestTrackHandler_SearchTracks(t *testing.T) {
 			},
 			wantErr:  false,
 			wantCode: http.StatusOK,
+		},
+		{
+			name: "qが存在しないときStatusCodeで400が返る",
+			prepareQueryFn: func() url.Values {
+				q := url.Values{}
+				q.Set("q", "")
+				return q
+			},
+			prepareMockTrackSpoFn: func(mock *mock_spotify.MockTrackClient) {
+				mock.EXPECT().Search(gomock.Any(), "").Return(nil, errors.New("token not found"))
+			},
+			want:     nil,
+			wantErr:  true,
+			wantCode: http.StatusBadRequest,
 		},
 	}
 	for _, tt := range tests {
