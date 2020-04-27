@@ -281,8 +281,8 @@ func TestAuthRepository_Delete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := r.Delete(tt.state); (err != nil) != tt.wantErr {
-				t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
+			if err := r.DeleteState(tt.state); (err != nil) != tt.wantErr {
+				t.Errorf("DeleteState() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
