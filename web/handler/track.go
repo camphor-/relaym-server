@@ -2,7 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/usecase"
@@ -45,7 +44,7 @@ func toTrackJSON(tracks []*entity.Track) []*trackJSON {
 			URI:      track.URI,
 			ID:       track.ID,
 			Name:     track.Name,
-			Duration: track.Duration,
+			Duration: track.Duration.Milliseconds(),
 			Artists:  toArtistJSON(track),
 			URL:      track.URL,
 			Album: &albumJSON{
@@ -90,7 +89,7 @@ type trackJSON struct {
 	URI      string        `json:"uri"`
 	ID       string        `json:"id"`
 	Name     string        `json:"name"`
-	Duration time.Duration `json:"duration_ms"`
+	Duration int64         `json:"duration_ms"`
 	Artists  []*artistJSON `json:"artists"`
 	URL      string        `json:"external_url"`
 	Album    *albumJSON    `json:"album"`

@@ -35,7 +35,7 @@ func TestTrackHandler_SearchTracks(t *testing.T) {
 		URI:      "spotify:track:06QTSGUEgcmKwiEJ0IMPig",
 		ID:       "06QTSGUEgcmKwiEJ0IMPig",
 		Name:     "Borderland",
-		Duration: 213066000000,
+		Duration: 213066,
 		Artists:  artistJSONs,
 		URL:      "https://open.spotify.com/track/06QTSGUEgcmKwiEJ0IMPig",
 		Album: &albumJSON{
