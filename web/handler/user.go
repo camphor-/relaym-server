@@ -36,6 +36,7 @@ func (h *UserHandler) GetMe(c echo.Context) error {
 	})
 }
 
+// GetActiveDevices は GET /users/me/devices に対応するハンドラーです。
 func (h *UserHandler) GetActiveDevices(c echo.Context) error {
 	ctx := c.Request().Context()
 
