@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/usecase"
 
 	"github.com/labstack/echo/v4"
@@ -36,7 +37,39 @@ func (h *UserHandler) GetMe(c echo.Context) error {
 }
 
 func (h *UserHandler) GetActiveDevices(c echo.Context) error {
-	return nil
+	ctx := c.Request().Context()
+
+	devices, err := h.userUC.GetActiveDevices(ctx)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return c.JSON(http.StatusOK, &devicesRes{
+		Devices: toDeviceJSON(devices),
+	},
+	)
+}
+
+func toDeviceJSON(devices []*entity.Device) []*deviceJSON {
+	deviceJSONs := make([]*deviceJSON, len(devices))
+
+	for i, device := range devices {
+		deviceJSONs[i] = &deviceJSON{
+			ID:           device.ID,
+			IsRestricted: device.IsRestricted,
+			Name:         device.Name,
+		}
+	}
+	return deviceJSONs
+}
+
+type devicesRes struct {
+	Devices []*deviceJSON `json:"devices"`
+}
+
+type deviceJSON struct {
+	ID           string `json:"id"`
+	IsRestricted bool   `json:"is_restricted"`
+	Name         string `json:"name"`
 }
 
 type userRes struct {
