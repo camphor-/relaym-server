@@ -17,29 +17,32 @@ import (
 )
 
 func TestTrackHandler_SearchTracks(t *testing.T) {
-	albumImageJSONs := make([]*albumImageJSON, 1)
-	albumImageJSONs[0] = &albumImageJSON{
-		URL:    "https://i.scdn.co/image/ab67616d0000b273b48630d6efcebca2596120c4",
-		Height: 640,
-		Width:  640,
+	albumImageJSONs := []*albumImageJSON{
+		{
+			URL:    "https://i.scdn.co/image/ab67616d0000b273b48630d6efcebca2596120c4",
+			Height: 640,
+			Width:  640,
+		},
 	}
 
-	artistJSONs := make([]*artistJSON, 1)
-	artistJSONs[0] = &artistJSON{
-		Name: "MONOEYES",
+	artistJSONs := []*artistJSON{
+		{
+			Name: "MONOEYES",
+		},
 	}
 
-	trackJSONs := make([]*trackJSON, 1)
-	trackJSONs[0] = &trackJSON{
-		URI:      "spotify:track:06QTSGUEgcmKwiEJ0IMPig",
-		ID:       "06QTSGUEgcmKwiEJ0IMPig",
-		Name:     "Borderland",
-		Duration: 213066,
-		Artists:  artistJSONs,
-		URL:      "https://open.spotify.com/track/06QTSGUEgcmKwiEJ0IMPig",
-		Album: &albumJSON{
-			Name:   "Interstate 46 E.P.",
-			Images: albumImageJSONs,
+	trackJSONs := []*trackJSON{
+		{
+			URI:      "spotify:track:06QTSGUEgcmKwiEJ0IMPig",
+			ID:       "06QTSGUEgcmKwiEJ0IMPig",
+			Name:     "Borderland",
+			Duration: 213066,
+			Artists:  artistJSONs,
+			URL:      "https://open.spotify.com/track/06QTSGUEgcmKwiEJ0IMPig",
+			Album: &albumJSON{
+				Name:   "Interstate 46 E.P.",
+				Images: albumImageJSONs,
+			},
 		},
 	}
 
@@ -59,29 +62,32 @@ func TestTrackHandler_SearchTracks(t *testing.T) {
 				return q
 			},
 			prepareMockTrackSpoFn: func(mock *mock_spotify.MockTrackClient) {
-				artists := make([]*entity.Artist, 1)
-				artists[0] = &entity.Artist{
-					Name: "MONOEYES",
+				artists := []*entity.Artist{
+					{
+						Name: "MONOEYES",
+					},
 				}
 
-				albumImages := make([]*entity.AlbumImage, 1)
-				albumImages[0] = &entity.AlbumImage{
-					URL:    "https://i.scdn.co/image/ab67616d0000b273b48630d6efcebca2596120c4",
-					Height: 640,
-					Width:  640,
+				albumImages := []*entity.AlbumImage{
+					{
+						URL:    "https://i.scdn.co/image/ab67616d0000b273b48630d6efcebca2596120c4",
+						Height: 640,
+						Width:  640,
+					},
 				}
 
-				tracks := make([]*entity.Track, 1)
-				tracks[0] = &entity.Track{
-					URI:      "spotify:track:06QTSGUEgcmKwiEJ0IMPig",
-					ID:       "06QTSGUEgcmKwiEJ0IMPig",
-					Name:     "Borderland",
-					Duration: 213066000000,
-					Artists:  artists,
-					URL:      "https://open.spotify.com/track/06QTSGUEgcmKwiEJ0IMPig",
-					Album: &entity.Album{
-						Name:   "Interstate 46 E.P.",
-						Images: albumImages,
+				tracks := []*entity.Track{
+					{
+						URI:      "spotify:track:06QTSGUEgcmKwiEJ0IMPig",
+						ID:       "06QTSGUEgcmKwiEJ0IMPig",
+						Name:     "Borderland",
+						Duration: 213066000000,
+						Artists:  artists,
+						URL:      "https://open.spotify.com/track/06QTSGUEgcmKwiEJ0IMPig",
+						Album: &entity.Album{
+							Name:   "Interstate 46 E.P.",
+							Images: albumImages,
+						},
 					},
 				}
 				mock.EXPECT().Search(gomock.Any(), "MONOEYES").Return(tracks, nil)
