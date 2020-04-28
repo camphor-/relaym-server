@@ -35,6 +35,10 @@ func (h *UserHandler) GetMe(c echo.Context) error {
 	})
 }
 
+func (h *UserHandler) GetActiveDevices(c echo.Context) error {
+	return nil
+}
+
 type userRes struct {
 	ID          string `json:"id"`
 	URI         string `json:"url"`
