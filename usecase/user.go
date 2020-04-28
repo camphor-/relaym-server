@@ -13,11 +13,12 @@ import (
 // UserUseCase はユーザに関係するアプリケーションロジックを担当する構造体です。
 type UserUseCase struct {
 	userRepo repository.User
+	userCli  spotify.User
 }
 
 // NewUserUseCase はUserUseCaseのポインタを生成する関数です。
-func NewUserUseCase(userRepo repository.User) *UserUseCase {
-	return &UserUseCase{userRepo: userRepo}
+func NewUserUseCase(userRepo repository.User, userCli spotify.User) *UserUseCase {
+	return &UserUseCase{userRepo: userRepo, userCli: userCli}
 }
 
 // GetMe はログインしているユーザを取得します。

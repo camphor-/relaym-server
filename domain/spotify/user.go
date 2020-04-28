@@ -11,4 +11,5 @@ import (
 // User はSpotifyのユーザに関連したAPIを呼び出すためのインターフェイスです。
 type User interface {
 	GetMe(ctx context.Context) (*entity.SpotifyUser, error)
+	GetActiveDevices(ctx context.Context) (*entity.Devices, error)
 }
