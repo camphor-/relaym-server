@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -109,6 +110,20 @@ func TestTrackHandler_SearchTracks(t *testing.T) {
 			want:                  nil,
 			wantErr:               true,
 			wantCode:              http.StatusBadRequest,
+		},
+		{
+			name: "spotify.Searchが失敗した時StatusCodeで500が返る",
+			prepareQueryFn: func() url.Values {
+				q := url.Values{}
+				q.Set("q", "falilv")
+				return q
+			},
+			prepareMockTrackSpoFn: func(mock *mock_spotify.MockTrackClient) {
+				mock.EXPECT().Search(gomock.Any(), "falilv").Return(nil, errors.New("unknown error"))
+			},
+			want:     nil,
+			wantErr:  true,
+			wantCode: http.StatusInternalServerError,
 		},
 	}
 	for _, tt := range tests {
