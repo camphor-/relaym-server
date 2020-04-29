@@ -27,7 +27,7 @@ func (c *Client) GetMe(ctx context.Context) (*entity.SpotifyUser, error) {
 	}, nil
 }
 
-// GetActiveDevices はSpotify APIを通して、ログインしているユーザがSpotifyを起動している端末を取得できます
+// GetActiveDevices はSpotify APIを通して、ログインしているユーザがSpotifyを起動している端末を取得します。
 func (c *Client) GetActiveDevices(ctx context.Context) ([]*entity.Device, error) {
 	token, ok := service.GetTokenFromContext(ctx)
 	if !ok {
