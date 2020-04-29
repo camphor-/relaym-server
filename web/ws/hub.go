@@ -87,7 +87,7 @@ func (h *Hub) unregister(cli *Client) {
 }
 
 func (h *Hub) push(pushMsg *event.PushMessage) {
-	for cli, _ := range h.clientsPerSession[pushMsg.SessionID] {
+	for cli := range h.clientsPerSession[pushMsg.SessionID] {
 		cli.ws.SetWriteDeadline(time.Now().Add(writeWait))
 		if err := cli.ws.WriteJSON(pushMsg.Msg); err != nil {
 			fmt.Printf("failed to WriteJSON: %v\n", err)
