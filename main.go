@@ -35,7 +35,9 @@ func main() {
 	userRepo := database.NewUserRepository(dbMap)
 	userUC := usecase.NewUserUseCase(userRepo)
 	authUC := usecase.NewAuthUseCase(spotifyCli, spotifyCli, authRepo, userRepo)
-	s := web.NewServer(authUC, userUC)
+	trackUC := usecase.NewTrackUseCase(spotifyCli)
+
+	s := web.NewServer(authUC, userUC, trackUC)
 
 	// シグナルを受け取れるようにgoroutine内でサーバを起動する
 	go func() {

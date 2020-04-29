@@ -9,7 +9,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// Client はSpotifyのWeb APIをコールするクライアントです、
+// Client はSpotifyのWeb APIをコールするクライアントです。
 type Client struct {
 	auth spotify.Authenticator
 }
