@@ -36,7 +36,7 @@ func (c *Client) GetActiveDevices(ctx context.Context) ([]*entity.Device, error)
 	cli := c.auth.NewClient(token)
 	devices, err := cli.PlayerDevices()
 	if err != nil {
-		return nil, fmt.Errorf("PlayerDevices information about available devices for the current user: %w", err)
+		return nil, fmt.Errorf("playerDevices information about available devices for the current user: %w", err)
 	}
 	return c.toDevices(devices), nil
 }
