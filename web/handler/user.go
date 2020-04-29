@@ -36,6 +36,13 @@ func (h *UserHandler) GetMe(c echo.Context) error {
 	})
 }
 
+type userRes struct {
+	ID          string `json:"id"`
+	URI         string `json:"url"`
+	DisplayName string `json:"display_name"`
+	IsPremium   bool   `json:"is_premium"`
+}
+
 // GetActiveDevices は GET /users/me/devices に対応するハンドラーです。
 func (h *UserHandler) GetActiveDevices(c echo.Context) error {
 	ctx := c.Request().Context()
@@ -71,11 +78,4 @@ type deviceJSON struct {
 	ID           string `json:"id"`
 	IsRestricted bool   `json:"is_restricted"`
 	Name         string `json:"name"`
-}
-
-type userRes struct {
-	ID          string `json:"id"`
-	URI         string `json:"url"`
-	DisplayName string `json:"display_name"`
-	IsPremium   bool   `json:"is_premium"`
 }
