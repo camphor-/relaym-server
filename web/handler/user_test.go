@@ -131,6 +131,15 @@ func TestUserHandler_GetActiveDevices(t *testing.T) {
 			wantErr:  false,
 			wantCode: http.StatusOK,
 		},
+		{
+			name: "spotify.GetActiveDevicesが失敗した時にInternalServerErrorが返る",
+			prepareMockUserSpo: func(mock *mock_spotify.MockUser) {
+				mock.EXPECT().GetActiveDevices(gomock.Any()).Return(nil, errors.New("unknown error"))
+			},
+			want:     nil,
+			wantErr:  true,
+			wantCode: http.StatusInternalServerError,
+		},
 	}
 
 	for _, tt := range tests {
