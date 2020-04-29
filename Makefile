@@ -14,7 +14,7 @@ serve:
 
 .PHONY:test
 test:
-	$(ENV_TEST) $(ENV_SECRET_EXAMPLE) go test -v ./... -count=1
+	$(ENV_TEST) $(ENV_SECRET_EXAMPLE) go test -v ./... -count=1 -race
 
 .PHONY: run-db-local
 run-db-local:
