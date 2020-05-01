@@ -37,7 +37,7 @@ func NewClient(sessionID string, ws *websocket.Conn, notifyClosedCh chan<- *Clie
 }
 
 // PushLoop 一つのWebSocketコネクションに対してメッセージを送信するループです。
-// 一つのWebSocketコネクションに対して一つのgoroutineでPingLoop()が実行されます。
+// 一つのWebSocketコネクションに対して一つのgoroutineでPushLoop()が実行されます。
 // 接続が切れた場合はnotifyClosedChを通じてHubに登録されているwsConnを削除してメモリリークを防ぎます。
 func (c *Client) PushLoop() {
 	ticker := time.NewTicker(pingPeriod)
