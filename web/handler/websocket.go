@@ -43,7 +43,7 @@ func (h *WebSocketHandler) WebSocket(c echo.Context) error {
 	wsCli := ws.NewClient(sessionID, wsConn, h.hub.UnregisterCh())
 	h.hub.Register(wsCli)
 
-	go wsCli.PingLoop()
+	go wsCli.PushLoop()
 
 	time.Sleep(100 * time.Millisecond)
 

@@ -13,7 +13,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func TestClient_PingLoop(t *testing.T) {
+func TestClient_PushLoop(t *testing.T) {
 	// WebSocketのコネクションを準備
 	s := &testWSServer{}
 	ts := httptest.NewServer(s)
@@ -55,13 +55,13 @@ func TestClient_PingLoop(t *testing.T) {
 				ws:             tt.ws,
 				notifyClosedCh: tt.notifyClosedCh,
 			}
-			go c.PingLoop()
+			go c.PushLoop()
 
 			cli := <-ch
 
 			opts := []cmp.Option{cmp.AllowUnexported(Client{}), cmpopts.IgnoreUnexported(websocket.Conn{})}
 			if !cmp.Equal(c, cli, opts...) {
-				t.Errorf("PingLoop() notifyClosedCh diff=%v", cmp.Diff(c, ch, opts...))
+				t.Errorf("PushLoop() notifyClosedCh diff=%v", cmp.Diff(c, ch, opts...))
 
 			}
 
