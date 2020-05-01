@@ -2,7 +2,10 @@ package handler
 
 import (
 	"net/http"
+	"time"
 
+	"github.com/camphor-/relaym-server/domain/entity"
+	"github.com/camphor-/relaym-server/domain/event"
 	"github.com/camphor-/relaym-server/web/ws"
 
 	"github.com/gorilla/websocket"
@@ -41,6 +44,16 @@ func (h *WebSocketHandler) WebSocket(c echo.Context) error {
 	h.hub.Register(wsCli)
 
 	go wsCli.PingLoop()
+
+	time.Sleep(100 * time.Millisecond)
+
+	// TODO テスト用に置いとくだけで後で消す
+	h.hub.Push(&event.PushMessage{
+		SessionID: "sessionID",
+		Msg: &entity.Event{
+			Type: "CONNECTED",
+		},
+	})
 
 	return nil
 }

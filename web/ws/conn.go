@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/camphor-/relaym-server/domain/entity"
+
 	"github.com/gorilla/websocket"
 )
 
@@ -20,16 +22,22 @@ var (
 type Client struct {
 	sessionID      string
 	ws             *websocket.Conn
+	pushCh         chan *entity.Event
 	notifyClosedCh chan<- *Client // HubのunregisterWSConnChをもらう
 }
 
 // NewClient は Clientのポインタを生成します。
 func NewClient(sessionID string, ws *websocket.Conn, notifyClosedCh chan<- *Client) *Client {
-	return &Client{sessionID: sessionID, ws: ws, notifyClosedCh: notifyClosedCh}
+	return &Client{
+		sessionID:      sessionID,
+		ws:             ws,
+		pushCh:         make(chan *entity.Event, 256),
+		notifyClosedCh: notifyClosedCh,
+	}
 }
 
 // PingLoop はWebSocketの接続が切れないように定期的にpingを送るループです。
-// goroutineとして実行されることを想定しています。
+// 一つのWebSocketコネクションに対して一つのgoroutineでPingLoop()が実行されます。
 // 接続が切れた場合はnotifyClosedChを通じてHubに登録されているwsConnを削除してメモリリークを防ぎます。
 func (c *Client) PingLoop() {
 	ticker := time.NewTicker(pingPeriod)
@@ -40,6 +48,19 @@ func (c *Client) PingLoop() {
 	}()
 	for {
 		select {
+		case msg, ok := <-c.pushCh:
+			if !ok {
+				c.ws.SetWriteDeadline(time.Now().Add(writeWait))
+				if err := c.ws.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
+					fmt.Printf("failed to write close message: %v\n", err)
+					return
+				}
+			}
+
+			if err := c.ws.WriteJSON(msg); err != nil {
+				fmt.Printf("failed to WriteJSON: %v\n", err)
+				return
+			}
 		case <-ticker.C:
 			c.ws.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.ws.WriteMessage(websocket.PingMessage, nil); err != nil {

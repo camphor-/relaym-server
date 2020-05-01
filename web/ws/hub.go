@@ -2,7 +2,6 @@ package ws
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/camphor-/relaym-server/domain/event"
 )
@@ -78,7 +77,6 @@ func (h *Hub) register(cli *Client) {
 }
 
 func (h *Hub) unregister(cli *Client) {
-	fmt.Println("unregister")
 	sessionID := cli.sessionID
 	if _, ok := h.clientsPerSession[sessionID][cli]; ok {
 		delete(h.clientsPerSession[sessionID], cli)
@@ -88,10 +86,6 @@ func (h *Hub) unregister(cli *Client) {
 
 func (h *Hub) push(pushMsg *event.PushMessage) {
 	for cli := range h.clientsPerSession[pushMsg.SessionID] {
-		cli.ws.SetWriteDeadline(time.Now().Add(writeWait))
-		if err := cli.ws.WriteJSON(pushMsg.Msg); err != nil {
-			fmt.Printf("failed to WriteJSON: %v\n", err)
-			h.Unregister(cli)
-		}
+		cli.pushCh <- pushMsg.Msg
 	}
 }
