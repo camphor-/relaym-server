@@ -2,7 +2,7 @@ package entity
 
 import "time"
 
-// Trackは曲を表す構造体です。
+// Track は曲を表す構造体です。
 type Track struct {
 	URI      string
 	ID       string

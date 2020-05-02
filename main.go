@@ -12,6 +12,7 @@ import (
 	"github.com/camphor-/relaym-server/spotify"
 	"github.com/camphor-/relaym-server/usecase"
 	"github.com/camphor-/relaym-server/web"
+	"github.com/camphor-/relaym-server/web/ws"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -28,6 +29,9 @@ func main() {
 		}
 	}()
 
+	hub := ws.NewHub()
+	go hub.Run()
+
 	spotifyCFG := config.NewSpotify()
 	spotifyCli := spotify.NewClient(spotifyCFG)
 
@@ -37,7 +41,7 @@ func main() {
 	authUC := usecase.NewAuthUseCase(spotifyCli, spotifyCli, authRepo, userRepo)
 	trackUC := usecase.NewTrackUseCase(spotifyCli)
 
-	s := web.NewServer(authUC, userUC, trackUC)
+	s := web.NewServer(authUC, userUC, trackUC, hub)
 
 	// シグナルを受け取れるようにgoroutine内でサーバを起動する
 	go func() {
