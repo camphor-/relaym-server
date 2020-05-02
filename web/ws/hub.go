@@ -1,8 +1,6 @@
 package ws
 
 import (
-	"fmt"
-
 	"github.com/camphor-/relaym-server/domain/event"
 )
 
@@ -43,7 +41,6 @@ func (h *Hub) Register(client *Client) {
 // スレッドセーフになるようにチャネルを通じて登録解除されます。
 // 実際の作業は Run() で行われます。
 func (h *Hub) Unregister(client *Client) {
-	fmt.Println("Unregister")
 	h.unregisterCh <- client
 }
 

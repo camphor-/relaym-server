@@ -48,7 +48,7 @@ func TestHub_Register(t *testing.T) {
 		ws:        &websocket.Conn{},
 	}
 	sameCli := &Client{
-		sessionID: "newSessionID",
+		sessionID: "sessionID",
 		ws:        &websocket.Conn{},
 	}
 	existingCli := &Client{
@@ -106,7 +106,7 @@ func TestHub_Unregister(t *testing.T) {
 		ws:        &websocket.Conn{},
 	}
 	sameCli := &Client{
-		sessionID: "newSessionID",
+		sessionID: "sessionID",
 		ws:        &websocket.Conn{},
 	}
 	existingCli := &Client{
@@ -167,7 +167,9 @@ func TestHub_Push(t *testing.T) {
 	ts := httptest.NewServer(s)
 	url := strings.Replace(ts.URL, "http://", "ws://", 1)
 
-	closedConn, _, err := websocket.DefaultDialer.Dial(url, nil)
+	closedHeader := http.Header{}
+	closedHeader.Add("X-CONNECTION-STATUS-FOR-TEST", "Closed")
+	closedConn, _, err := websocket.DefaultDialer.Dial(url, closedHeader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -179,14 +181,10 @@ func TestHub_Push(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cli := &Client{
-		sessionID: "sessionID",
-		ws:        conn,
-	}
-	invalidCli := &Client{
-		sessionID: "sessionID",
-		ws:        closedConn,
-	}
+	cli := NewClient("sessionID", conn, nil)
+	invalidCli := NewClient("sessionID", closedConn, nil)
+	go cli.PushLoop()
+	go invalidCli.PushLoop()
 
 	tests := []struct {
 		name              string
@@ -226,12 +224,17 @@ func TestHub_Push(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			h := &Hub{
 				clientsPerSession: tt.clientsPerSession,
-				unregisterCh:      tt.unregisterCh,
 				pushMsgCh:         tt.pushMsgCh,
+				registerCh:        make(chan *Client),
+				unregisterCh:      tt.unregisterCh,
 			}
+
+			cli.notifyClosedCh = h.UnregisterCh()
+			invalidCli.notifyClosedCh = h.UnregisterCh()
 
 			go h.Run()
 			h.Push(tt.pushMsg)
+
 			time.Sleep(100 * time.Millisecond)
 			if !cmp.Equal(tt.want, h.clientsPerSession) {
 				t.Errorf("Push() diff=%v", cmp.Diff(tt.want, h.clientsPerSession))
@@ -262,6 +265,9 @@ func (s *testWSServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 	ws, _ := upgrader.Upgrade(w, r, nil)
+
+	if r.Header.Get("X-CONNECTION-STATUS-FOR-TEST") == "Closed" {
+		return
+	}
 	s.ws = ws
-	return
 }
