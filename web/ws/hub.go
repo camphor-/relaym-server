@@ -47,8 +47,8 @@ func (h *Hub) Unregister(client *Client) {
 	h.unregisterCh <- client
 }
 
-// Push はpushMegをチャネルに流して、接続されているクライアントに送信します。
-// event.Puhser インターフェースを満たしています。
+// Push はpushMsgをチャネルに流して、接続されているクライアントに送信します。
+// event.Pusher インターフェースを満たしています。
 func (h *Hub) Push(pushMsg *event.PushMessage) {
 	h.pushMsgCh <- pushMsg
 }
