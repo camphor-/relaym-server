@@ -17,7 +17,7 @@ type Hub struct {
 	unregisterCh      chan *Client
 }
 
-// NewHub はHubのポインタをを生成します。
+// NewHub はHubのポインタを生成します。
 func NewHub() *Hub {
 	return &Hub{
 		clientsPerSession: map[string]map[*Client]struct{}{},
