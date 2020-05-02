@@ -11,7 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// WebSocketHandler は /users 以下のエンドポイントを管理する構造体です。
+// WebSocketHandler は /ws 以下のエンドポイントを管理する構造体です。
 type WebSocketHandler struct {
 	hub      *ws.Hub
 	upgrader websocket.Upgrader
