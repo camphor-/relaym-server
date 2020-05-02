@@ -23,7 +23,7 @@ type Client struct {
 	sessionID      string
 	ws             *websocket.Conn
 	pushCh         chan *entity.Event
-	notifyClosedCh chan<- *Client // HubのunregisterWSConnChをもらう
+	notifyClosedCh chan<- *Client // HubのunregisterChをもらう
 }
 
 // NewClient は Clientのポインタを生成します。
