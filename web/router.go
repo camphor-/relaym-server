@@ -40,5 +40,6 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, trackUC
 
 	user := authed.Group("/users")
 	user.GET("/me", userHandler.GetMe)
+	user.GET("/me/devices", userHandler.GetActiveDevices)
 	return e
 }

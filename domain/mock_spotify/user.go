@@ -48,3 +48,18 @@ func (mr *MockUserMockRecorder) GetMe(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMe", reflect.TypeOf((*MockUser)(nil).GetMe), ctx)
 }
+
+// GetActiveDevices mocks base method
+func (m *MockUser) GetActiveDevices(ctx context.Context) ([]*entity.Device, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetActiveDevices", ctx)
+	ret0, _ := ret[0].([]*entity.Device)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetActiveDevices indicates an expected call of GetActiveDevices
+func (mr *MockUserMockRecorder) GetActiveDevices(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetActiveDevices", reflect.TypeOf((*MockUser)(nil).GetActiveDevices), ctx)
+}
