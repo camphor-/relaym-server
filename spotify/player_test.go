@@ -21,7 +21,7 @@ func TestClient_CurrentlyPlaying(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "再生中ではないときfalseが変える",
+			name:    "再生中ではないときfalse",
 			want:    false,
 			wantErr: false,
 		},
