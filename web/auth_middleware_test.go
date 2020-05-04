@@ -7,24 +7,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp/cmpopts"
-
-	"github.com/google/go-cmp/cmp"
-
-	"github.com/camphor-/relaym-server/domain/service"
-
-	"golang.org/x/oauth2"
-
 	"github.com/camphor-/relaym-server/config"
-
-	"github.com/camphor-/relaym-server/domain/mock_spotify"
-
+	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/mock_repository"
+	"github.com/camphor-/relaym-server/domain/mock_spotify"
+	"github.com/camphor-/relaym-server/domain/service"
+	"github.com/camphor-/relaym-server/usecase"
 
 	"github.com/golang/mock/gomock"
-
-	"github.com/camphor-/relaym-server/usecase"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/labstack/echo/v4"
+	"golang.org/x/oauth2"
 )
 
 func TestAuthMiddleware_Authenticate(t *testing.T) {
@@ -85,6 +79,28 @@ func TestAuthMiddleware_Authenticate(t *testing.T) {
 			prepareAuthRepo: func(r *mock_repository.MockAuth) {
 				r.EXPECT().GetUserIDFromSession("sessionID").Return("userID", nil)
 				r.EXPECT().GetTokenByUserID("userID").Return(nil, errors.New("unknown error"))
+			},
+			prepareAuthCli: func(c *mock_spotify.MockAuth) {},
+			next:           nil,
+			wantErr:        true,
+			wantCode:       http.StatusInternalServerError,
+		},
+		{
+			name: "DBからアクセストークンが存在しないと401",
+			prepareRequest: func(req *http.Request) {
+				req.AddCookie(&http.Cookie{
+					Name:     "session",
+					Value:    "sessionID",
+					Path:     "/",
+					MaxAge:   60 * 60 * 24 * 7,
+					Secure:   !config.IsLocal(),
+					HttpOnly: true,
+					SameSite: http.SameSiteNoneMode,
+				})
+			},
+			prepareAuthRepo: func(r *mock_repository.MockAuth) {
+				r.EXPECT().GetUserIDFromSession("sessionID").Return("userID", nil)
+				r.EXPECT().GetTokenByUserID("userID").Return(nil, entity.ErrTokenNotFound)
 			},
 			prepareAuthCli: func(c *mock_spotify.MockAuth) {},
 			next:           nil,

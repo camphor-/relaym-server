@@ -1,8 +1,10 @@
 package web
 
 import (
+	"errors"
 	"net/http"
 
+	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/service"
 	"github.com/camphor-/relaym-server/usecase"
 
@@ -21,7 +23,6 @@ func NewAuthMiddleware(uc *usecase.AuthUseCase) *AuthMiddleware {
 }
 
 // Authenticate は認証が必要なAPIで認証情報があるかチェックします。
-// TODO テストを書く
 func (m *AuthMiddleware) Authenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		sessCookie, err := c.Cookie("session")
@@ -37,8 +38,11 @@ func (m *AuthMiddleware) Authenticate(next echo.HandlerFunc) echo.HandlerFunc {
 
 		token, err := m.uc.GetTokenByUserID(userID)
 		if err != nil {
+			if errors.Is(err, entity.ErrTokenNotFound) {
+				return echo.NewHTTPError(http.StatusUnauthorized)
+			}
 			c.Logger().Errorf("failed to get token userID=%s err=%v", userID, err)
-			return echo.NewHTTPError(http.StatusUnauthorized)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 
 		if !token.Valid() {

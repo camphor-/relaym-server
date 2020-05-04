@@ -1,6 +1,7 @@
 package database
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"time"
@@ -44,6 +45,9 @@ func (r AuthRepository) GetTokenByUserID(userID string) (*oauth2.Token, error) {
 	var dto spotifyAuthDTO
 	query := "SELECT user_id, access_token, refresh_token, expiry from spotify_auth WHERE user_id=?"
 	if err := r.dbMap.SelectOne(&dto, query, userID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("select spotify auth: %w", entity.ErrTokenNotFound)
+		}
 		return nil, fmt.Errorf("select spotify auth: %w", err)
 	}
 	return &oauth2.Token{
