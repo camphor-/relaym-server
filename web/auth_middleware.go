@@ -45,15 +45,12 @@ func (m *AuthMiddleware) Authenticate(next echo.HandlerFunc) echo.HandlerFunc {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 
-		if !token.Valid() {
-			c.Logger().Infof("token refresh: userID: %s", userID)
-			newToken, err := m.uc.RefreshAccessToken(userID, token)
-			if err != nil {
-				c.Logger().Errorf("failed to refresh access token: %v", err)
-				return echo.NewHTTPError(http.StatusInternalServerError)
-			}
-			token = newToken
+		newToken, err := m.uc.RefreshAccessToken(userID, token)
+		if err != nil {
+			c.Logger().Errorf("failed to refresh access token: %v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
+		token = newToken
 
 		c = setToContext(c, userID, token)
 		return next(c)
