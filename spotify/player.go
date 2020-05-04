@@ -31,6 +31,7 @@ func (c *Client) CurrentlyPlaying(ctx context.Context) (bool, error) {
 // Play は曲を再生し始めるか現在再生途中の曲の再生を再開するAPIです。
 // APIが非同期で処理がされるため、リクエストが返ってきても再生が開始しているとは限りません。
 // 設定が反映されたか確認するには CurrentlyPlaying() を叩く必要があります。
+// プレミアム会員必須
 func (c *Client) Play(ctx context.Context) error {
 	token, ok := service.GetTokenFromContext(ctx)
 	if !ok {
@@ -50,6 +51,7 @@ func (c *Client) Play(ctx context.Context) error {
 // Pause は再生を一時停止します。
 // APIが非同期で処理がされるため、リクエストが返ってきても再生が一時停止されているとは限りません。
 // 設定が反映されたか確認するには CurrentlyPlaying() を叩く必要があります。
+// プレミアム会員必須
 func (c *Client) Pause(ctx context.Context) error {
 	token, ok := service.GetTokenFromContext(ctx)
 	if !ok {
@@ -69,6 +71,7 @@ func (c *Client) Pause(ctx context.Context) error {
 // AddToQueue は曲を「次に再生される曲」に追加するAPIです。
 // APIが非同期で処理がされるため、リクエストが返ってきても曲の追加が完了しているとは限りません。
 // 設定が反映されたか確認するには CurrentlyPlaying() を叩く必要があります。
+// プレミアム会員必須
 func (c *Client) AddToQueue(ctx context.Context, trackID string) error {
 	token, ok := service.GetTokenFromContext(ctx)
 	if !ok {
@@ -88,6 +91,7 @@ func (c *Client) AddToQueue(ctx context.Context, trackID string) error {
 // SetRepeatMode はリピートモードの設定を変更するAPIです。
 // APIが非同期で処理がされるため、リクエストが返ってきてもリピートモードの設定が完了しているとは限りません。
 // 設定が反映されたか確認するには CurrentlyPlaying() を叩く必要があります。
+// プレミアム会員必須
 func (c *Client) SetRepeatMode(ctx context.Context, on bool) error {
 	token, ok := service.GetTokenFromContext(ctx)
 	if !ok {
@@ -118,7 +122,6 @@ func (c *Client) convertPlayerError(err error) error {
 			return nil
 		case e.Status == http.StatusForbidden:
 			return fmt.Errorf("%s: %w", e.Message, entity.ErrNonPremium)
-
 		case e.Status == http.StatusNotFound:
 			return fmt.Errorf("%s: %w", e.Message, entity.ErrActiveDeviceNotFound)
 		}
