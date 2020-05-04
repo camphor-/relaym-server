@@ -1,17 +1,24 @@
 package web
 
 import (
+	"github.com/camphor-/relaym-server/config"
 	"github.com/camphor-/relaym-server/usecase"
 	"github.com/camphor-/relaym-server/web/handler"
 	"github.com/camphor-/relaym-server/web/ws"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/gommon/log"
 )
 
 // NewServer はミドルウェアやハンドラーが登録されたechoの構造体を返します。
 func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, trackUC *usecase.TrackUseCase, hub *ws.Hub) *echo.Echo {
 	e := echo.New()
+	e.Logger.SetLevel(log.INFO)
+	if config.IsLocal() {
+		e.Logger.SetLevel(log.DEBUG)
+	}
+
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CSRF())
