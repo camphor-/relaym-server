@@ -108,7 +108,7 @@ func TestAuthMiddleware_Authenticate(t *testing.T) {
 			wantCode:       http.StatusUnauthorized,
 		},
 		{
-			name: "DBから取得したアクセストークンを正しくContextにセットされる",
+			name: "DBから取得したアクセストークンが正しくContextにセットされる",
 			prepareRequest: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{
 					Name:     "session",
@@ -158,7 +158,7 @@ func TestAuthMiddleware_Authenticate(t *testing.T) {
 			wantCode: http.StatusOK,
 		},
 		{
-			name: "アクセストークンの有効期限が切れているときは更新処理が走って正しく新しいトークンが保存される",
+			name: "アクセストークンの有効期限が切れているときに更新処理が走って正しく新しいトークンが保存される",
 			prepareRequest: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{
 					Name:     "session",
