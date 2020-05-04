@@ -43,7 +43,7 @@ func TestAuthMiddleware_Authenticate(t *testing.T) {
 			wantCode:        http.StatusUnauthorized,
 		},
 		{
-			name: "DBからセッションの取得に失敗と401",
+			name: "DBからセッションの取得に失敗すると401",
 			prepareRequest: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{
 					Name:     "session",
