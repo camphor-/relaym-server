@@ -86,7 +86,7 @@ func TestAuthMiddleware_Authenticate(t *testing.T) {
 			wantCode:       http.StatusInternalServerError,
 		},
 		{
-			name: "DBからアクセストークンが存在しないと401",
+			name: "DBにアクセストークンが存在しないと401",
 			prepareRequest: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{
 					Name:     "session",
