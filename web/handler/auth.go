@@ -30,7 +30,7 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	}
 	url, err := h.authUC.GetAuthURL(redirectURL)
 	if err != nil {
-		c.Logger().Errorf("failed to get auth url: %w", err)
+		c.Logger().Errorf("failed to get auth url: %v", err)
 		return c.Redirect(http.StatusFound, h.frontendURL+"?err=spotifyAuthFailed")
 	}
 

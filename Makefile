@@ -16,6 +16,10 @@ serve:
 test:
 	$(ENV_TEST) $(ENV_SECRET_EXAMPLE) go test -v ./... -count=1
 
+.PHONY: integration-test
+integration-test:
+	$(ENV_TEST) $(ENV_SECRET) go test -v ./... -tags integration -count=1
+
 .PHONY: run-db-local
 run-db-local:
 	$(ENV_LOCAL) docker-compose -f docker/docker-compose.deps.base.yml -f docker/docker-compose.deps.local.yml -p local up -d
