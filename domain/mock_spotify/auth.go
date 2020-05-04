@@ -61,3 +61,18 @@ func (mr *MockAuthMockRecorder) Exchange(code interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Exchange", reflect.TypeOf((*MockAuth)(nil).Exchange), code)
 }
+
+// Refresh mocks base method
+func (m *MockAuth) Refresh(token *oauth2.Token) (*oauth2.Token, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Refresh", token)
+	ret0, _ := ret[0].(*oauth2.Token)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Refresh indicates an expected call of Refresh
+func (mr *MockAuthMockRecorder) Refresh(token interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Refresh", reflect.TypeOf((*MockAuth)(nil).Refresh), token)
+}

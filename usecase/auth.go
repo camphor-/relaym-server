@@ -121,3 +121,19 @@ func (u *AuthUseCase) GetUserIDFromSession(sessionID string) (string, error) {
 	}
 	return userID, nil
 }
+
+// RefreshAccessToken はリフレッシュトークンを使用してアクセストークンを更新し保存します。
+func (u *AuthUseCase) RefreshAccessToken(userID string, token *oauth2.Token) (*oauth2.Token, error) {
+	if token.Valid() {
+		return token, nil
+	}
+	newToken, err := u.authCli.Refresh(token)
+	if err != nil {
+		return nil, fmt.Errorf("refresh access token through spotify client: %w", err)
+	}
+
+	if err := u.repo.StoreORUpdateToken(userID, newToken); err != nil {
+		return nil, fmt.Errorf("update new token: %w", err)
+	}
+	return newToken, nil
+}
