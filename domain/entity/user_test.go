@@ -24,3 +24,35 @@ func TestUser_SpotifyURI(t *testing.T) {
 		})
 	}
 }
+
+func TestSpotifyUser_Premium(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		su   *SpotifyUser
+		want bool
+	}{
+		{
+			name: "プレミアム会員",
+			su: &SpotifyUser{
+				Product: "premium",
+			},
+			want: true,
+		},
+		{
+			name: "一般会員",
+			su: &SpotifyUser{
+				Product: "free",
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.su.Premium(); got != tt.want {
+				t.Errorf("Premium() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
