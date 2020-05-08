@@ -48,7 +48,8 @@ Relaymはみんなで一つのSpotifyのプレイリストを共有して、一�
 
 ### カラーパレット
 
-<a href='https://coolors.co/dc4a5e-14213d-707070-eeeeee-ffffff'><span style='background: #dc4a5e;'>　　　</span><span style='background: #14213d;'>　　　</span><span style='background: #707070;'>　　　</span><span style='background: #eeeeee;'>　　　</span><span style='background: #ffffff;'>　　　</span></a>
+https://coolors.co/dc4a5e-14213d-707070-eeeeee-ffffff
+
 
 ## 各種リンク
 - クライアントリポジトリ : https://github.com/camphor-/here-songs-client
