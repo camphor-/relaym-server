@@ -23,16 +23,22 @@ func NewUserUseCase(userCli spotify.User, userRepo repository.User) *UserUseCase
 }
 
 // GetMe はログインしているユーザを取得します。
-func (u *UserUseCase) GetMe(ctx context.Context) (*entity.User, error) {
+func (u *UserUseCase) GetMe(ctx context.Context) (*entity.User, *entity.SpotifyUser, error) {
 	id, ok := service.GetUserIDFromContext(ctx)
 	if !ok {
-		return nil, errors.New("get user id from context")
+		return nil, nil, errors.New("get user id from context")
 	}
 	user, err := u.userRepo.FindByID(id)
 	if err != nil {
-		return nil, fmt.Errorf("find user from repo id=%s: %w", id, err)
+		return nil, nil, fmt.Errorf("find user from repo id=%s: %w", id, err)
 	}
-	return user, nil
+
+	su, err := u.userCli.GetMe(ctx)
+	if err != nil {
+		return nil, nil, fmt.Errorf("get me through spotify client id=%s : %w", id, err)
+	}
+
+	return user, su, nil
 }
 
 // GetActiveDevices はログインしているユーザがSpotifyを起動している端末を取得します。
