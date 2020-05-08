@@ -47,10 +47,9 @@ func (m *SyncCheckTimerManager) CreateTimer(sessionID string, d time.Duration) *
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if existing, ok := m.GetTimer(sessionID); ok {
+	if existing, ok := m.timers[sessionID]; ok {
 		return existing
 	}
-
 	timer := newSyncCheckTimer(d)
 	m.timers[sessionID] = timer
 	return timer
