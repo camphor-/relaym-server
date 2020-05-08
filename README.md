@@ -13,7 +13,8 @@ API仕様は[こちら](docs/api.md)
 
 ### STEP1 サービス内容を理解する
 
-詳しくはこちらのリンクを参照してください。(TODO : サービスの説明リンクを貼る)
+詳しくはこちらのリンクを参照してください。
+[Relaym PRD (プロダクト要求仕様書)](docs/prd.md)
 
 単語の定義も[docs/definition.md](docs/definition.md)からご覧ください。
 
