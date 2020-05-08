@@ -77,3 +77,31 @@ $ sudo vim /etc/hosts
 ```bash
 $ make serve
 ```
+
+## モックの生成
+
+repositoryやspotifyインタフェースのモックを生成して、テスタビリティの向上を図ります。
+
+1. [mockgen](https://github.com/golang/mock) をインストール
+
+```bash
+$ GO111MODULE=on go get github.com/golang/mock/mockgen
+```
+
+2. インターフェースに `go generate` の記述をする。
+
+```go
+//go:generate mockgen -source=$GOFILE -destination=../mock_$GOPACKAGE/$GOFILE
+package repository
+// ...
+```
+
+3. go generateする 
+
+```bash
+$ make generate
+```
+
+### 使い方
+
+[/web/handler/user_test.go](../web/handler/user_test.go)を参照。

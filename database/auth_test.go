@@ -1,6 +1,7 @@
 package database
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -90,7 +91,7 @@ func TestAuthRepository_StoreORUpdateToken(t *testing.T) {
 	}
 }
 
-func TestAuthRepository_GetTokenBySpotifyUserID(t *testing.T) {
+func TestAuthRepository_GetTokenByUserID(t *testing.T) {
 	// Prepare
 	dbMap, err := NewDB()
 	if err != nil {
@@ -115,7 +116,7 @@ func TestAuthRepository_GetTokenBySpotifyUserID(t *testing.T) {
 		name          string
 		spotifyUserID string
 		want          *oauth2.Token
-		wantErr       bool
+		wantErr       error
 	}{
 		{
 			name:          "保存してあるトークンを取得できる",
@@ -126,13 +127,13 @@ func TestAuthRepository_GetTokenBySpotifyUserID(t *testing.T) {
 				TokenType:    "Bearer",
 				Expiry:       time.Date(2020, 1, 2, 0, 0, 0, 0, time.UTC),
 			},
-			wantErr: false,
+			wantErr: nil,
 		},
 		{
 			name:          "存在しないユーザのトークンを取得しようとするとエラーになる",
 			spotifyUserID: "not_found_user",
 			want:          nil,
-			wantErr:       true,
+			wantErr:       entity.ErrTokenNotFound,
 		},
 	}
 
@@ -140,7 +141,7 @@ func TestAuthRepository_GetTokenBySpotifyUserID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := AuthRepository{dbMap: dbMap}
 			got, err := r.GetTokenByUserID(tt.spotifyUserID)
-			if (err != nil) != tt.wantErr {
+			if !errors.Is(err, tt.wantErr) {
 				t.Errorf("GetTokenByUserID() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
@@ -281,8 +282,8 @@ func TestAuthRepository_Delete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := r.Delete(tt.state); (err != nil) != tt.wantErr {
-				t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
+			if err := r.DeleteState(tt.state); (err != nil) != tt.wantErr {
+				t.Errorf("DeleteState() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

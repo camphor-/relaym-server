@@ -59,7 +59,7 @@ func (h *AuthHandler) Callback(c echo.Context) error {
 	redirectURL, sessionID, err := h.authUC.Authorization(state, code)
 	if err != nil {
 		c.Logger().Errorf("spotify auth failed: %v", err)
-		return c.Redirect(http.StatusFound, h.frontendURL+"?err=%spotify auth failed")
+		return c.Redirect(http.StatusFound, h.frontendURL+"?err=spotifyAuthFailed")
 	}
 
 	c.SetCookie(&http.Cookie{

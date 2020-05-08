@@ -13,3 +13,5 @@
 # vendor/
 
 env.secret
+
+.tags

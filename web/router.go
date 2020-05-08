@@ -1,16 +1,24 @@
 package web
 
 import (
+	"github.com/camphor-/relaym-server/config"
 	"github.com/camphor-/relaym-server/usecase"
 	"github.com/camphor-/relaym-server/web/handler"
+	"github.com/camphor-/relaym-server/web/ws"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/gommon/log"
 )
 
 // NewServer はミドルウェアやハンドラーが登録されたechoの構造体を返します。
-func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase) *echo.Echo {
+func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, trackUC *usecase.TrackUseCase, hub *ws.Hub) *echo.Echo {
 	e := echo.New()
+	e.Logger.SetLevel(log.INFO)
+	if config.IsLocal() {
+		e.Logger.SetLevel(log.DEBUG)
+	}
+
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CSRF())
@@ -20,15 +28,25 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase) *echo.E
 	}))
 
 	userHandler := handler.NewUserHandler(userUC)
+	trackHandler := handler.NewTrackHandler(trackUC)
 
 	// TODO フロントエンドのURLを環境変数で指定する
 	authHandler := handler.NewAuthHandler(authUC, "http://relaym.local:3000")
+
+	wsHandler := handler.NewWebSocketHandler(hub)
 
 	v3 := e.Group("/api/v3")
 	v3.GET("/login", authHandler.Login)
 	v3.GET("/callback", authHandler.Callback)
 
-	user := v3.Group("/users", NewAuthMiddleware(authUC).Authenticate)
+	// TODO 本来は認証が必要だがテストのために認証を外しておく
+	v3.GET("/ws/:id", wsHandler.WebSocket)
+
+	authed := v3.Group("", NewAuthMiddleware(authUC).Authenticate)
+	authed.GET("/search", trackHandler.SearchTracks)
+
+	user := authed.Group("/users")
 	user.GET("/me", userHandler.GetMe)
+	user.GET("/me/devices", userHandler.GetActiveDevices)
 	return e
 }

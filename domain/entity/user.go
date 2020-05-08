@@ -31,3 +31,8 @@ func NewUser(spotifyUserID, displayName string) *User {
 func (u *User) SpotifyURI() string {
 	return "spotify:user:" + u.SpotifyUserID
 }
+
+// Premium はプレイリスト会員かどうか判定します。
+func (su *SpotifyUser) Premium() bool {
+	return su.Product == "premium"
+}

@@ -9,14 +9,14 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// Client はSpotifyのWeb APIをコールするクライアントです、
+// Client はSpotifyのWeb APIをコールするクライアントです。
 type Client struct {
 	auth spotify.Authenticator
 }
 
 // NewClient はClientのポインタを生成する関数です。
 func NewClient(cfg *config.Spotify) *Client {
-	auth := spotify.NewAuthenticator(cfg.RedirectURL(), spotify.ScopeUserReadPrivate)
+	auth := spotify.NewAuthenticator(cfg.RedirectURL(), spotify.ScopeUserReadPrivate, spotify.ScopeUserReadPlaybackState)
 	auth.SetAuthInfo(cfg.ClientID(), cfg.ClientSecret())
 	return &Client{auth: auth}
 }
@@ -34,4 +34,14 @@ func (c *Client) Exchange(code string) (*oauth2.Token, error) {
 		return nil, fmt.Errorf("excahnge code: %w", err)
 	}
 	return token, nil
+}
+
+// Refresh はリフレッシュトークンを使用して新しいアクセストークンを取得します。
+func (c *Client) Refresh(token *oauth2.Token) (*oauth2.Token, error) {
+	cli := c.auth.NewClient(token)
+	newToken, err := cli.Token()
+	if err != nil {
+		return nil, fmt.Errorf("token refresh: %w", err)
+	}
+	return newToken, nil
 }

@@ -354,15 +354,15 @@ Spotifyで曲の検索を行います。
   "tracks": [
     { 
       "uri": "spotify:track:7zHq5ayXLxpJ89392EYm1L",
-      // 以下省略 /session/:idのtracksを参考
+      // 以下省略 /sessions/:idのtracksを参考
     },
     { 
       "uri": "spotify:track:7zHq5ayXLxpJ89392EYm1L",
-      // 以下省略 /session/:idのtracksを参考
+      // 以下省略 /sessions/:idのtracksを参考
     },
     {
       "uri": "spotify:track:7zHq5ayXLxpJ89392EYm1L",
-      // 以下省略 /session/:idのtracksを参考
+      // 以下省略 /sessions/:idのtracksを参考
     },
   ]
 

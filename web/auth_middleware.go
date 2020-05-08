@@ -1,8 +1,10 @@
 package web
 
 import (
+	"errors"
 	"net/http"
 
+	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/service"
 	"github.com/camphor-/relaym-server/usecase"
 
@@ -21,25 +23,35 @@ func NewAuthMiddleware(uc *usecase.AuthUseCase) *AuthMiddleware {
 }
 
 // Authenticate は認証が必要なAPIで認証情報があるかチェックします。
-// TODO テストを書く
 func (m *AuthMiddleware) Authenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		sessCookie, err := c.Cookie("session")
 		if err != nil {
-			c.Logger().Warn("session cookie not found err=%v", err)
-			return echo.NewHTTPError(http.StatusUnauthorized, "Unauthorized")
+			c.Logger().Warnf("session cookie not found err=%v", err)
+			return echo.NewHTTPError(http.StatusUnauthorized)
 		}
 		userID, err := m.uc.GetUserIDFromSession(sessCookie.Value)
 		if err != nil {
 			c.Logger().Warnf("failed to get session  sessionID=%s err=%v", sessCookie.Value, err)
-			return echo.NewHTTPError(http.StatusUnauthorized, "Unauthorized")
+			return echo.NewHTTPError(http.StatusUnauthorized)
 		}
 
 		token, err := m.uc.GetTokenByUserID(userID)
 		if err != nil {
+			if errors.Is(err, entity.ErrTokenNotFound) {
+				return echo.NewHTTPError(http.StatusUnauthorized)
+			}
 			c.Logger().Errorf("failed to get token userID=%s err=%v", userID, err)
-			return echo.NewHTTPError(http.StatusUnauthorized, "Unauthorized")
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
+
+		newToken, err := m.uc.RefreshAccessToken(userID, token)
+		if err != nil {
+			c.Logger().Errorf("failed to refresh access token: %v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+		token = newToken
+
 		c = setToContext(c, userID, token)
 		return next(c)
 	}

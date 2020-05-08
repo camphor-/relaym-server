@@ -71,7 +71,7 @@ func (u *AuthUseCase) Authorization(state, code string) (string, string, error) 
 	}
 
 	// Stateを削除するのが失敗してもログインは成功しているので、エラーを返さない
-	if err := u.repo.Delete(state); err != nil {
+	if err := u.repo.DeleteState(state); err != nil {
 		log.Printf("Failed to delete state state=%s: %v\n", state, err)
 		return storedState.RedirectURL, sessionID, nil
 	}
@@ -120,4 +120,20 @@ func (u *AuthUseCase) GetUserIDFromSession(sessionID string) (string, error) {
 		return "", fmt.Errorf("get user from session sessionID=%s: %w", sessionID, err)
 	}
 	return userID, nil
+}
+
+// RefreshAccessToken はリフレッシュトークンを使用してアクセストークンを更新し保存します。
+func (u *AuthUseCase) RefreshAccessToken(userID string, token *oauth2.Token) (*oauth2.Token, error) {
+	if token.Valid() {
+		return token, nil
+	}
+	newToken, err := u.authCli.Refresh(token)
+	if err != nil {
+		return nil, fmt.Errorf("refresh access token through spotify client: %w", err)
+	}
+
+	if err := u.repo.StoreORUpdateToken(userID, newToken); err != nil {
+		return nil, fmt.Errorf("update new token: %w", err)
+	}
+	return newToken, nil
 }
