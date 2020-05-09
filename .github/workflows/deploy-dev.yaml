@@ -1,0 +1,21 @@
+name: Deploy dev environment
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Publish Docker
+        uses: elgohr/Publish-Docker-Github-Action@2.12
+        with:
+          name: relaym-server
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: registry.camph.net
+      - name: Notify to Rundeck
+        uses: wei/curl@v1.1.1
+        with:
+          args: https://${{ secrets.RUNDECK_DOMAIN }}/api/1/job/${{ secrets.RUNDECK_JOB_ID }}/run?authtoken=${{ secrets.RUNDECK_TOKEN }} -X POST
