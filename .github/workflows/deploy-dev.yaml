@@ -2,6 +2,8 @@ name: Deploy dev environment
 
 on:
   push:
+    branches:
+      - master
 
 jobs:
   build:
