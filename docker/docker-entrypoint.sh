@@ -11,6 +11,7 @@ chmod +x "${TMPDIR}/skeema"
 mv "${TMPDIR}/skeema" /usr/local/bin/skeema
 
 cd /mysql
+sed -i "s/schema=relaym/schema=relaym_${ENV}/" ./schemas/relaym/.skeema
 skeema push -p"${DB_PASSWORD}" "${ENV}"
 
 exec "$@"
