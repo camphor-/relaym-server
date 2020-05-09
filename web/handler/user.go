@@ -23,7 +23,7 @@ func NewUserHandler(userUC *usecase.UserUseCase) *UserHandler {
 func (h *UserHandler) GetMe(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	user, err := h.userUC.GetMe(ctx)
+	user, su, err := h.userUC.GetMe(ctx)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -32,7 +32,7 @@ func (h *UserHandler) GetMe(c echo.Context) error {
 		ID:          user.ID,
 		URI:         user.SpotifyURI(),
 		DisplayName: user.DisplayName,
-		IsPremium:   false, // TODO : 正しくPremium情報を取得する
+		IsPremium:   su.Premium(),
 	})
 }
 

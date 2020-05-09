@@ -22,7 +22,8 @@ func TestUserHandler_GetMe(t *testing.T) {
 	tests := []struct {
 		name                string
 		userID              string
-		prepareMockUserRepo func(mock *mock_repository.MockUser)
+		prepareMockUserRepo func(repo *mock_repository.MockUser)
+		prepareMockUserCli  func(cli *mock_spotify.MockUser)
 		want                *userRes
 		wantErr             bool
 		wantCode            int
@@ -30,27 +31,52 @@ func TestUserHandler_GetMe(t *testing.T) {
 		{
 			name:   "正しくユーザが取得できる",
 			userID: "userID",
-			prepareMockUserRepo: func(mock *mock_repository.MockUser) {
-				mock.EXPECT().FindByID("userID").Return(&entity.User{
+			prepareMockUserRepo: func(repo *mock_repository.MockUser) {
+				repo.EXPECT().FindByID("userID").Return(&entity.User{
 					ID:            "userID",
 					SpotifyUserID: "spotify_user_id",
 					DisplayName:   "display_name",
+				}, nil)
+			},
+			prepareMockUserCli: func(cli *mock_spotify.MockUser) {
+				cli.EXPECT().GetMe(gomock.Any()).Return(&entity.SpotifyUser{
+					SpotifyUserID: "spotify_user_id",
+					DisplayName:   "spotify_display_name",
+					Product:       "premium",
 				}, nil)
 			},
 			want: &userRes{
 				ID:          "userID",
 				URI:         "spotify:user:spotify_user_id",
 				DisplayName: "display_name",
-				IsPremium:   false, // TODO : Spotifyの情報も正しく取ってこれるようにする
+				IsPremium:   true,
 			},
 			wantErr:  false,
 			wantCode: http.StatusOK,
 		},
 		{
-			name:   "ユーザの取得に失敗したときはInternalServerError",
+			name:   "DBからユーザの取得に失敗したときはInternalServerError",
 			userID: "userID",
-			prepareMockUserRepo: func(mock *mock_repository.MockUser) {
-				mock.EXPECT().FindByID("userID").Return(nil, errors.New("unknown error"))
+			prepareMockUserRepo: func(repo *mock_repository.MockUser) {
+				repo.EXPECT().FindByID("userID").Return(nil, errors.New("unknown error"))
+			},
+			prepareMockUserCli: func(cli *mock_spotify.MockUser) {},
+			want:               nil,
+			wantErr:            true,
+			wantCode:           http.StatusInternalServerError,
+		},
+		{
+			name:   "SpotifyAPIからユーザの取得に失敗したときはInternalServerError",
+			userID: "userID",
+			prepareMockUserRepo: func(repo *mock_repository.MockUser) {
+				repo.EXPECT().FindByID("userID").Return(&entity.User{
+					ID:            "userID",
+					SpotifyUserID: "spotify_user_id",
+					DisplayName:   "display_name",
+				}, nil)
+			},
+			prepareMockUserCli: func(cli *mock_spotify.MockUser) {
+				cli.EXPECT().GetMe(gomock.Any()).Return(nil, errors.New("unknown error"))
 			},
 			want:     nil,
 			wantErr:  true,
@@ -69,9 +95,11 @@ func TestUserHandler_GetMe(t *testing.T) {
 			// モックの準備
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
-			mock := mock_repository.NewMockUser(ctrl)
-			tt.prepareMockUserRepo(mock)
-			uc := usecase.NewUserUseCase(nil, mock)
+			repo := mock_repository.NewMockUser(ctrl)
+			tt.prepareMockUserRepo(repo)
+			cli := mock_spotify.NewMockUser(ctrl)
+			tt.prepareMockUserCli(cli)
+			uc := usecase.NewUserUseCase(cli, repo)
 			h := &UserHandler{userUC: uc}
 
 			err := h.GetMe(c)
