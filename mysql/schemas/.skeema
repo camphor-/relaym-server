@@ -8,4 +8,4 @@ user=root
 flavor=mysql:5.7
 host=mysql
 port=3306
-user=relaym-dev
+user=relaym_dev
