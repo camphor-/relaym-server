@@ -15,6 +15,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
           registry: registry.camph.net
+          dockerfile: docker/Dockerfile
       - name: Notify to Rundeck
         uses: wei/curl@v1.1.1
         with:
