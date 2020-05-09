@@ -8,6 +8,11 @@ var (
 	// ErrUserAlreadyExisted はユーザが既に存在しているエラーを表します。
 	ErrUserAlreadyExisted = errors.New("user has already existed")
 
+	// ErrSessionNotFound はセッションが存在しないエラーを表します。
+	ErrSessionNotFound = errors.New("session not found")
+	// ErrSessionAlreadyExisted はセッションが既に存在しているときのエラーを表します。
+	ErrSessionAlreadyExisted = errors.New("session has already existed")
+
 	// ErrTokenNotFound はSpotifyのアクセストークンが存在しないエラーを表します。
 	ErrTokenNotFound = errors.New("token not found")
 
