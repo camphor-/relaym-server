@@ -5,7 +5,7 @@ port=3306
 user=root
 
 [dev]
-flavor=mysql:5.7
+flavor=mysql:8.0
 host=relaym-mysql-dev
 port=3306
 user=relaym_dev
