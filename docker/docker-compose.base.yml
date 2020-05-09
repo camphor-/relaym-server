@@ -4,3 +4,8 @@ services:
     env_file:
       - ../${ENV_FILE}
     restart: always
+    networks:
+      - relaym-network
+networks:
+  relaym-network:
+    driver: bridge
