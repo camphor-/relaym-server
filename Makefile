@@ -28,6 +28,5 @@ generate:
 
 .PHONY: deploy-dev
 deploy-dev:
-	ENV=dev
-	$(ENV_DEV) ENV_FILE=$(ENV_DEV_FILE) docker-compose -f docker/docker-compose.base.yml -f docker/docker-compose.$(ENV).yml -p $(ENV) stop
-	$(ENV_DEV) ENV_FILE=$(ENV_DEV_FILE) docker-compose -f docker/docker-compose.base.yml -f docker/docker-compose.$(ENV).yml -p $(ENV) up -d
+	$(ENV_DEV) ENV_FILE=$(ENV_DEV_FILE) docker-compose -f docker/docker-compose.base.yml -f docker/docker-compose.dev.yml -p dev stop
+	$(ENV_DEV) ENV_FILE=$(ENV_DEV_FILE) docker-compose -f docker/docker-compose.base.yml -f docker/docker-compose.dev.yml -p dev up -d
