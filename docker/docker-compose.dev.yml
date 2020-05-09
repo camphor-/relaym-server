@@ -1,0 +1,15 @@
+version: "3.7"
+services:
+  relaym-server:
+    image: registry.camph.net/relaym-server:latest
+    container_name: relaym-server-dev
+    networks:
+      - database
+      - microservices
+    ports:
+      - 127.0.0.1:8091:${PORT}
+networks:
+  database:
+    external: true
+  microservices:
+    external: true
