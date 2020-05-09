@@ -45,7 +45,7 @@ func main() {
 
 	// シグナルを受け取れるようにgoroutine内でサーバを起動する
 	go func() {
-		if err := s.Start(":8080"); err != nil { // TODO : ポート番号を環境変数から読み込む
+		if err := s.Start(":" + config.Port()); err != nil {
 			s.Logger.Infof("shutting down the server with error: %v", err)
 		}
 	}()
