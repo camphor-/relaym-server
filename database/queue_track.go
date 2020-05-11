@@ -1,8 +1,6 @@
 package database
 
 import (
-	"database/sql"
-	"errors"
 	"fmt"
 
 	"github.com/camphor-/relaym-server/domain/entity"
@@ -29,7 +27,7 @@ func (r *QueueTrackRepository) Store(queueTrack *entity.QueueTrack) error {
 	dto := &queueTrackDTO{
 		index:      queueTrack.Index,
 		uri:        queueTrack.URI,
-		session_id: queueTrack.sessionID,
+		session_id: queueTrack.SessionID,
 	}
 
 	if err := r.dbMap.Insert(dto); err != nil {
