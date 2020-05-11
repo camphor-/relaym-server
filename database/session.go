@@ -64,7 +64,8 @@ func (r *SessionRepository) StoreSessions(session *entity.Session) error {
 
 func (r *SessionRepository) StoreQueueTracks(queueTrack *entity.QueueTrack) error {
 
-	if tx, err := r.dbMap.Begin(); err != nil {
+	tx, err := r.dbMap.Begin()
+	if err != nil {
 		return fmt.Errorf("gorp.DbMap.Begin() error: %w", err)
 	}
 	defer func() {
@@ -73,21 +74,22 @@ func (r *SessionRepository) StoreQueueTracks(queueTrack *entity.QueueTrack) erro
 		}
 	}()
 
-	if max_idx, err := tx.SelectInt("SELECT MAX(index) AS index FROM queue_tracks"); err != nil {
+	max_idx, err := tx.SelectInt("SELECT MAX(index) AS index FROM queue_tracks")
+	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			tx.Rollback()
 			return fmt.Errorf("select queue_tracks: %w", err)
 		}
-		max_idx := -1
+		max_idx = -1
 	}
 
 	dto := &queueTrackDTO{
-		index:      max_idx + 1,
+		index:      int(max_idx) + 1,
 		uri:        queueTrack.URI,
 		session_id: queueTrack.SessionID,
 	}
 
-	if err := tx.dbMap.Insert(dto); err != nil {
+	if err := tx.Insert(dto); err != nil {
 		tx.Rollback()
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok && mysqlErr.Number == 1062 {
 			return fmt.Errorf("insert queue_tracks: %w", entity.ErrQueueAlreadyExisted)
@@ -95,7 +97,7 @@ func (r *SessionRepository) StoreQueueTracks(queueTrack *entity.QueueTrack) erro
 		return fmt.Errorf("insert queue_tracks: %w", err)
 	}
 
-	return tx.Commit().Error
+	return tx.Commit()
 }
 
 type sessionDTO struct {
