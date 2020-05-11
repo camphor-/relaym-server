@@ -6,4 +6,5 @@ import "github.com/camphor-/relaym-server/domain/entity"
 
 // QueueTrack はsessionのqueueを操作するためのリポジトリです。
 type QueueTrack interface {
+	Store(*entity.QueueTrack) error
 }
