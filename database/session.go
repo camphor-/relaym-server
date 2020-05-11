@@ -74,11 +74,11 @@ func (r *SessionRepository) StoreQueueTracks(queueTrack *entity.QueueTrack) erro
 	}()
 
 	if max_idx, err := tx.SelectInt("SELECT MAX(index) AS index FROM queue_tracks"); err != nil {
-		tx.Rollback()
-		if errors.Is(err, sql.ErrNoRows) {
-			return fmt.Errorf("select queue_tracks: %w", entity.ErrSessionNotFound)
+		if !errors.Is(err, sql.ErrNoRows) {
+			tx.Rollback()
+			return fmt.Errorf("select queue_tracks: %w", err)
 		}
-		return fmt.Errorf("select queue_tracks: %w", err)
+		max_idx := -1
 	}
 
 	dto := &queueTrackDTO{
