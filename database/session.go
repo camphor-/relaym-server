@@ -22,6 +22,7 @@ type SessionRepository struct {
 // NewSessionRepository はSessionRepositoryのポインタを生成する関数です
 func NewSessionRepository(dbMap *gorp.DbMap) *SessionRepository {
 	dbMap.AddTableWithName(sessionDTO{}, "sessions")
+	dbMap.AddTableWithName(queueTrackDTO{}, "queue_tracks")
 	return &SessionRepository{dbMap: dbMap}
 }
 
@@ -43,7 +44,7 @@ func (r *SessionRepository) FindByID(id string) (*entity.Session, error) {
 	}, nil
 }
 
-func (r *SessionRepository) Store(session *entity.Session) error {
+func (r *SessionRepository) StoreSessions(session *entity.Session) error {
 	dto := &sessionDTO{
 		ID:         session.ID,
 		name:       session.Name,
@@ -61,10 +62,52 @@ func (r *SessionRepository) Store(session *entity.Session) error {
 	return nil
 }
 
+func (r *SessionRepository) StoreQueueTracks(queueTrack *entity.QueueTrack) error {
+
+	if tx, err := r.dbMap.Begin(); err != nil {
+		return fmt.Errorf("gorp.DbMap.Begin() error: %w", err)
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if max_idx, err := tx.SelectInt("SELECT MAX(index) AS index FROM queue_tracks"); err != nil {
+		tx.Rollback()
+		if errors.Is(err, sql.ErrNoRows) {
+			return fmt.Errorf("select session: %w", entity.ErrSessionNotFound)
+		}
+		return fmt.Errorf("select session: %w", err)
+	}
+
+	dto := &queueTrackDTO{
+		index:      max_idx + 1,
+		uri:        queueTrack.URI,
+		session_id: queueTrack.SessionID,
+	}
+
+	if err := tx.dbMap.Insert(dto); err != nil {
+		tx.Rollback()
+		if mysqlErr, ok := err.(*mysql.MySQLError); ok && mysqlErr.Number == 1062 {
+			return fmt.Errorf("insert queue: %w", entity.ErrQueueAlreadyExisted)
+		}
+		return fmt.Errorf("insert queue: %w", err)
+	}
+
+	return tx.Commit().Error
+}
+
 type sessionDTO struct {
 	ID         string `db:"id"`
 	name       string `db:"name"`
 	creator_id string `db:"creator_id"`
 	queue_head int    `db:"queue_head"`
 	state_type string `db:"state_type"`
+}
+
+type queueTrackDTO struct {
+	index      int    `db:"index"`
+	uri        string `db:"uri"`
+	session_id string `db:"session_id"`
 }
