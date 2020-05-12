@@ -1,101 +1,196 @@
 package database
 
 import (
-	"reflect"
+	"errors"
 	"testing"
 
 	"github.com/camphor-/relaym-server/domain/entity"
-	"github.com/go-gorp/gorp/v3"
+	"github.com/google/go-cmp/cmp"
 )
 
-func TestNewSessionRepository(t *testing.T) {
+func TestSessionRepository_FindByID(t *testing.T) {
+	dbMap, err := NewDB()
+	if err != nil {
+		t.Fatal(err)
+	}
+	dbMap.AddTableWithName(sessionDTO{}, "sessions")
+	dbMap.AddTableWithName(userDTO{}, "users")
+	truncateTable(t, dbMap)
+	user := &userDTO{
+		ID:            "existing_user",
+		SpotifyUserID: "existing_user_spotify",
+		DisplayName:   "existing_user_display_name",
+	}
+	session := &sessionDTO{
+		ID:        "existing_session_id",
+		Name:      "existing_session_name",
+		CreatorID: "existing_user",
+		QueueHead: 0,
+		StateType: "PLAY",
+	}
+	if err := dbMap.Insert(user, session); err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name    string
+		id      string
+		want    *entity.Session
+		wantErr error
+	}{
+		{
+			name: "存在するsessionを正しく取得できる",
+			id:   "existing_session_id",
+			want: &entity.Session{
+				ID:        "existing_session_id",
+				Name:      "existing_session_name",
+				CreatorID: "existing_user",
+				QueueHead: 0,
+				StateType: "PLAY",
+			},
+			wantErr: nil,
+		},
+		{
+			name:    "存在しないidの場合はErrSessionNotFound",
+			id:      "not_exist_session_id",
+			want:    nil,
+			wantErr: entity.ErrSessionNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &SessionRepository{dbMap: dbMap}
+			got, err := r.FindByID(tt.id)
+			if !errors.Is(err, tt.wantErr) {
+				t.Errorf("SessionRepository.FindByID() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !cmp.Equal(got, tt.want) {
+				t.Errorf("SessionRepository.FindByID() diff=%v", cmp.Diff(tt.want, got))
+				return
+			}
+		})
+	}
+}
+
+func TestSessionRepository_StoreSession(t *testing.T) {
 	// Prepare
 	dbMap, err := NewDB()
 	if err != nil {
 		t.Fatal(err)
 	}
 	dbMap.AddTableWithName(sessionDTO{}, "sessions")
+	dbMap.AddTableWithName(userDTO{}, "users")
 	truncateTable(t, dbMap)
-	if err := dbMap.Insert(&sessionDTO{
-		ID:         "existing_session_id",
-		name:       "existing_session_name",
-		creator_id: "existing_creator_id",
-		queue_head: 0,
-		state_type: "",
-	}); err != nil {
+	user := &userDTO{
+		ID:            "existing_user",
+		SpotifyUserID: "existing_user_spotify",
+		DisplayName:   "existing_user_display_name",
+	}
+	session := &sessionDTO{
+		ID:        "existing_session_id",
+		Name:      "existing_session_name",
+		CreatorID: "existing_user",
+		QueueHead: 0,
+		StateType: "PLAY",
+	}
+	if err := dbMap.Insert(user, session); err != nil {
 		t.Fatal(err)
 	}
-	tests := []struct {
-		name string
-		args args
-		want *SessionRepository
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := NewSessionRepository(tt.args.dbMap); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewSessionRepository() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
 
-func TestSessionRepository_FindByID(t *testing.T) {
-	type fields struct {
-		dbMap *gorp.DbMap
-	}
-	type args struct {
-		id string
-	}
 	tests := []struct {
 		name    string
-		fields  fields
-		args    args
-		want    *entity.Session
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			r := &SessionRepository{
-				dbMap: tt.fields.dbMap,
-			}
-			got, err := r.FindByID(tt.args.id)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("SessionRepository.FindByID() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("SessionRepository.FindByID() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestSessionRepository_Store(t *testing.T) {
-	type fields struct {
-		dbMap *gorp.DbMap
-	}
-	type args struct {
 		session *entity.Session
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
+		wantErr error
 	}{
-		// TODO: Add test cases.
+		{
+			name: "新規sessionを正しく保存できる",
+			session: &entity.Session{
+				ID:        "new_session_id",
+				Name:      "new_session_name",
+				CreatorID: "existing_user",
+				QueueHead: 0,
+				StateType: "PLAY",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "登録済みのsessionの場合ErrSessionAlreadyExistedを返す",
+			session: &entity.Session{
+				ID:        "existing_session_id",
+				Name:      "existing_session_name",
+				CreatorID: "existing_user",
+				QueueHead: 0,
+				StateType: "PLAY",
+			},
+			wantErr: entity.ErrSessionAlreadyExisted,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &SessionRepository{
-				dbMap: tt.fields.dbMap,
+				dbMap: dbMap,
 			}
-			if err := r.Store(tt.args.session); (err != nil) != tt.wantErr {
-				t.Errorf("SessionRepository.Store() error = %v, wantErr %v", err, tt.wantErr)
+			if err := r.StoreSession(tt.session); !errors.Is(err, tt.wantErr) {
+				t.Errorf("SessionRepository.StoreSessions() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestSessionRepository_StoreQueueTrack(t *testing.T) {
+	// Prepare
+	dbMap, err := NewDB()
+	if err != nil {
+		t.Fatal(err)
+	}
+	dbMap.AddTableWithName(userDTO{}, "users")
+	dbMap.AddTableWithName(sessionDTO{}, "sessions")
+	dbMap.AddTableWithName(queueTrackDTO{}, "queue_tracks")
+	truncateTable(t, dbMap)
+	user := &userDTO{
+		ID:            "existing_user",
+		SpotifyUserID: "existing_user_spotify",
+		DisplayName:   "existing_user_display_name",
+	}
+	session := &sessionDTO{
+		ID:        "existing_session_id",
+		Name:      "existing_session_name",
+		CreatorID: "existing_user",
+		QueueHead: 0,
+		StateType: "PLAY",
+	}
+	queue_tracks := &queueTrackDTO{
+		Index:     0,
+		URI:       "existing_uri",
+		SessionID: "existing_session_id",
+	}
+	if err := dbMap.Insert(user, session, queue_tracks); err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name        string
+		queue_track *entity.QueueTrackToStore
+		wantErr     error
+	}{
+		{
+			name: "新規queue_tracksを正しく保存できる",
+			queue_track: &entity.QueueTrackToStore{
+				URI:       "new_uri",
+				SessionID: "existing_session_id",
+			},
+			wantErr: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &SessionRepository{
+				dbMap: dbMap,
+			}
+			if err := r.StoreQueueTrack(tt.queue_track); !errors.Is(err, tt.wantErr) {
+				t.Errorf("SessionRepository.StoreQueueTracks() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
