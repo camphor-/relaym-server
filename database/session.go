@@ -65,10 +65,7 @@ func (r *SessionRepository) StoreSession(session *entity.Session) error {
 }
 
 func (r *SessionRepository) StoreQueueTrack(queueTrack *entity.QueueTrackToStore) error {
-	if _, err := r.dbMap.Exec("INSERT INTO queue_tracks(`index`, uri, session_id) SELECT MAX(qt.index)+1, ?, ? from queue_tracks as qt;", queueTrack.URI, queueTrack.SessionID); err != nil {
-		if mysqlErr, ok := err.(*mysql.MySQLError); ok && mysqlErr.Number == errorNumDuplicateEntry {
-			return fmt.Errorf("insert queue_tracks: %w", entity.ErrQueueTrackAlreadyExisted)
-		}
+	if _, err := r.dbMap.Exec("INSERT INTO queue_tracks(`index`, uri, session_id) SELECT COALESCE(MAX('index'),-1)+1, ?, ? from queue_tracks as qt WHERE session_id = ?;", queueTrack.URI, queueTrack.SessionID, queueTrack.SessionID); err != nil {
 		return fmt.Errorf("insert queue_tracks: %w", err)
 	}
 	return nil
