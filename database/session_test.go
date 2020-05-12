@@ -154,49 +154,49 @@ func TestSessionRepository_StoreQueueTrack(t *testing.T) {
 		SpotifyUserID: "existing_user_spotify",
 		DisplayName:   "existing_user_display_name",
 	}
-	session_a := &sessionDTO{
-		ID:        "existing_session_id_a",
-		Name:      "existing_session_name_a",
+	sessionHasQueueTrack := &sessionDTO{
+		ID:        "session_with_queue_track_id",
+		Name:      "session_with_queue_track_name",
 		CreatorID: "existing_user",
 		QueueHead: 0,
 		StateType: "PLAY",
 	}
-	session_b := &sessionDTO{
-		ID:        "existing_session_id_b",
-		Name:      "existing_session_name_b",
+	sessionHasNoQueueTrack := &sessionDTO{
+		ID:        "session_with_no_queue_track_id",
+		Name:      "session_with_no_queue_track_name",
 		CreatorID: "existing_user",
 		QueueHead: 0,
 		StateType: "PLAY",
 	}
-	queue_tracks := &queueTrackDTO{
+	queueTracks := &queueTrackDTO{
 		Index:     0,
-		URI:       "existing_uri",
-		SessionID: "existing_session_id_a",
+		URI:       "uri",
+		SessionID: "session_with_queue_track_id",
 	}
-	if err := dbMap.Insert(user, session_a, session_b, queue_tracks); err != nil {
+	if err := dbMap.Insert(user, sessionHasQueueTrack, sessionHasNoQueueTrack, queueTracks); err != nil {
 		t.Fatal(err)
 	}
 
 	tests := []struct {
-		name        string
-		queue_track *entity.QueueTrackToStore
-		wantIndex   int
-		wantErr     error
+		name       string
+		queueTrack *entity.QueueTrackToStore
+		wantIndex  int
+		wantErr    error
 	}{
 		{
 			name: "すでにひも付いているqueue_tracksが1つ以上存在するsessionsに新規queue_tracksを正しく紐づけて保存できる",
-			queue_track: &entity.QueueTrackToStore{
+			queueTrack: &entity.QueueTrackToStore{
 				URI:       "new_uri",
-				SessionID: "existing_session_id_a",
+				SessionID: "session_with_queue_track_id",
 			},
 			wantIndex: 1,
 			wantErr:   nil,
 		},
 		{
 			name: "ひも付いているqueue_tracksが1つも存在しないsessionsに新規queue_tracksを正しく紐づけて保存できる",
-			queue_track: &entity.QueueTrackToStore{
+			queueTrack: &entity.QueueTrackToStore{
 				URI:       "new_uri",
-				SessionID: "existing_session_id_b",
+				SessionID: "session_with_no_queue_track_id",
 			},
 			wantIndex: 0,
 			wantErr:   nil,
@@ -207,17 +207,17 @@ func TestSessionRepository_StoreQueueTrack(t *testing.T) {
 			r := &SessionRepository{
 				dbMap: dbMap,
 			}
-			if err := r.StoreQueueTrack(tt.queue_track); !errors.Is(err, tt.wantErr) {
+			if err := r.StoreQueueTrack(tt.queueTrack); !errors.Is(err, tt.wantErr) {
 				t.Errorf("SessionRepository.StoreQueueTracks() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
 			if tt.wantErr == nil {
-				queue_tracks, _ := r.GetQueueTracksBySessionID(tt.queue_track.SessionID)
-				queue_track, notFound := findQueueTrackByIndexAndSessionID(queue_tracks, tt.wantIndex, tt.queue_track.SessionID)
+				queueTracks, _ := r.GetQueueTracksBySessionID(tt.queueTrack.SessionID)
+				queueTrack, notFound := findQueueTrackByIndexAndSessionID(queueTracks, tt.wantIndex, tt.queueTrack.SessionID)
 
-				if (notFound != nil) || (queue_track.URI != tt.queue_track.URI) {
-					t.Errorf("SessionRepository.StoreQueueTrack() queue_track not found. wantIndex %v, wantSessionID %v", tt.wantIndex, tt.queue_track.SessionID)
+				if (notFound != nil) || (queueTrack.URI != tt.queueTrack.URI) {
+					t.Errorf("SessionRepository.StoreQueueTrack() queue_track not found. wantIndex %v, wantSessionID %v", tt.wantIndex, tt.queueTrack.SessionID)
 				}
 			}
 		})
@@ -246,12 +246,12 @@ func TestSessionRepository_GetQueueTrackBySessionID(t *testing.T) {
 		QueueHead: 0,
 		StateType: "PLAY",
 	}
-	queue_tracks := &queueTrackDTO{
+	queueTracks := &queueTrackDTO{
 		Index:     0,
 		URI:       "existing_uri",
 		SessionID: "existing_session_id",
 	}
-	if err := dbMap.Insert(user, session, queue_tracks); err != nil {
+	if err := dbMap.Insert(user, session, queueTracks); err != nil {
 		t.Fatal(err)
 	}
 
@@ -285,14 +285,14 @@ func TestSessionRepository_GetQueueTrackBySessionID(t *testing.T) {
 			r := &SessionRepository{
 				dbMap: dbMap,
 			}
-			queue_tracks, err := r.GetQueueTracksBySessionID(tt.id)
+			queueTracks, err := r.GetQueueTracksBySessionID(tt.id)
 
 			if !errors.Is(err, tt.wantErr) {
 				t.Errorf("SessionRepository.GetQueueTrackBySessionID() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !cmp.Equal(queue_tracks, tt.want) {
-				t.Errorf("SessionRepository.GetQueueTracksBySessionID() diff = %v", cmp.Diff(queue_tracks, tt.want))
+			if !cmp.Equal(queueTracks, tt.want) {
+				t.Errorf("SessionRepository.GetQueueTracksBySessionID() diff = %v", cmp.Diff(queueTracks, tt.want))
 			}
 		})
 	}
