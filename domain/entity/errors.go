@@ -13,7 +13,7 @@ var (
 	// ErrSessionAlreadyExisted はセッションが既に存在しているときのエラーを表します。
 	ErrSessionAlreadyExisted = errors.New("session has already existed")
 
-	// ErrQueueTracksNotFound はセッションに紐付くQueueTrackが存在しないエラーを表します。
+	// ErrQueueTrackNotFound はセッションに紐付くQueueTrackが存在しないエラーを表します。
 	ErrQueueTrackNotFound = errors.New("queue_tracks not found")
 
 	// ErrTokenNotFound はSpotifyのアクセストークンが存在しないエラーを表します。
