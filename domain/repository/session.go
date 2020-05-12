@@ -7,6 +7,6 @@ import "github.com/camphor-/relaym-server/domain/entity"
 // Session はsessionを管理するためのリポジトリです。
 type Session interface {
 	FindByID(id string) (*entity.Session, error)
-	StoreSessions(*entity.Session) error
-	StoreQueueTracks(*entity.QueueTrackToStore) error
+	StoreSession(*entity.Session) error
+	StoreQueueTrack(*entity.QueueTrackToStore) error
 }

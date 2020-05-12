@@ -37,20 +37,20 @@ func (r *SessionRepository) FindByID(id string) (*entity.Session, error) {
 	}
 	return &entity.Session{
 		ID:        dto.ID,
-		Name:      dto.name,
-		CreatorID: dto.creator_id,
-		QueueHead: dto.queue_head,
-		StateType: dto.state_type,
+		Name:      dto.Name,
+		CreatorID: dto.CreatorID,
+		QueueHead: dto.QueueHead,
+		StateType: dto.StateType,
 	}, nil
 }
 
-func (r *SessionRepository) StoreSessions(session *entity.Session) error {
+func (r *SessionRepository) StoreSession(session *entity.Session) error {
 	dto := &sessionDTO{
-		ID:         session.ID,
-		name:       session.Name,
-		creator_id: session.CreatorID,
-		queue_head: session.QueueHead,
-		state_type: session.StateType,
+		ID:        session.ID,
+		Name:      session.Name,
+		CreatorID: session.CreatorID,
+		QueueHead: session.QueueHead,
+		StateType: session.StateType,
 	}
 
 	if err := r.dbMap.Insert(dto); err != nil {
@@ -62,54 +62,26 @@ func (r *SessionRepository) StoreSessions(session *entity.Session) error {
 	return nil
 }
 
-func (r *SessionRepository) StoreQueueTracks(queueTrack *entity.QueueTrackToStore) error {
-
-	tx, err := r.dbMap.Begin()
-	if err != nil {
-		return fmt.Errorf("gorp.DbMap.Begin() error: %w", err)
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
-	max_idx, err := tx.SelectInt("SELECT MAX(index) AS index FROM queue_tracks")
-	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
-			tx.Rollback()
-			return fmt.Errorf("select queue_tracks: %w", err)
-		}
-		max_idx = -1
-	}
-
-	dto := &queueTrackDTO{
-		index:      int(max_idx) + 1,
-		uri:        queueTrack.URI,
-		session_id: queueTrack.SessionID,
-	}
-
-	if err := tx.Insert(dto); err != nil {
-		tx.Rollback()
+func (r *SessionRepository) StoreQueueTrack(queueTrack *entity.QueueTrackToStore) error {
+	if _, err := r.dbMap.Exec("INSERT INTO queue_tracks SELECT MAX(qt.index)+1, ?, ? from queue_tracks as qt;", queueTrack.URI, queueTrack.SessionID); err != nil {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok && mysqlErr.Number == 1062 {
-			return fmt.Errorf("insert queue_tracks: %w", entity.ErrQueueAlreadyExisted)
+			return fmt.Errorf("insert session: %w", entity.ErrSessionAlreadyExisted)
 		}
-		return fmt.Errorf("insert queue_tracks: %w", err)
+		return fmt.Errorf("insert session: %w", err)
 	}
-
-	return tx.Commit()
+	return nil
 }
 
 type sessionDTO struct {
-	ID         string `db:"id"`
-	name       string `db:"name"`
-	creator_id string `db:"creator_id"`
-	queue_head int    `db:"queue_head"`
-	state_type string `db:"state_type"`
+	ID        string `db:"id"`
+	Name      string `db:"name"`
+	CreatorID string `db:"creator_id"`
+	QueueHead int    `db:"queue_head"`
+	StateType string `db:"state_type"`
 }
 
 type queueTrackDTO struct {
-	index      int    `db:"index"`
-	uri        string `db:"uri"`
-	session_id string `db:"session_id"`
+	Index     int    `db:"index"`
+	URI       string `db:"uri"`
+	SessionID string `db:"session_id"`
 }
