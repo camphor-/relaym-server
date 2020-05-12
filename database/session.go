@@ -14,6 +14,8 @@ import (
 
 var _ repository.Session = &SessionRepository{}
 
+var errorNumDuplicateEntry uint16 = 1062
+
 // SessionRepository は repository.SessionRepository を満たす構造体です
 type SessionRepository struct {
 	dbMap *gorp.DbMap
@@ -54,7 +56,7 @@ func (r *SessionRepository) StoreSession(session *entity.Session) error {
 	}
 
 	if err := r.dbMap.Insert(dto); err != nil {
-		if mysqlErr, ok := err.(*mysql.MySQLError); ok && mysqlErr.Number == 1062 {
+		if mysqlErr, ok := err.(*mysql.MySQLError); ok && mysqlErr.Number == errorNumDuplicateEntry {
 			return fmt.Errorf("insert session: %w", entity.ErrSessionAlreadyExisted)
 		}
 		return fmt.Errorf("insert session: %w", err)
@@ -64,7 +66,7 @@ func (r *SessionRepository) StoreSession(session *entity.Session) error {
 
 func (r *SessionRepository) StoreQueueTrack(queueTrack *entity.QueueTrackToStore) error {
 	if _, err := r.dbMap.Exec("INSERT INTO queue_tracks SELECT MAX(qt.index)+1, ?, ? from queue_tracks as qt;", queueTrack.URI, queueTrack.SessionID); err != nil {
-		if mysqlErr, ok := err.(*mysql.MySQLError); ok && mysqlErr.Number == 1062 {
+		if mysqlErr, ok := err.(*mysql.MySQLError); ok && mysqlErr.Number == errorNumDuplicateEntry {
 			return fmt.Errorf("insert session: %w", entity.ErrSessionAlreadyExisted)
 		}
 		return fmt.Errorf("insert session: %w", err)
