@@ -65,13 +65,38 @@ func (r *SessionRepository) StoreSession(session *entity.Session) error {
 }
 
 func (r *SessionRepository) StoreQueueTrack(queueTrack *entity.QueueTrackToStore) error {
-	if _, err := r.dbMap.Exec("INSERT INTO queue_tracks SELECT MAX(qt.index)+1, ?, ? from queue_tracks as qt;", queueTrack.URI, queueTrack.SessionID); err != nil {
+	if _, err := r.dbMap.Exec("INSERT INTO queue_tracks(`index`, uri, session_id) SELECT MAX(qt.index)+1, ?, ? from queue_tracks as qt;", queueTrack.URI, queueTrack.SessionID); err != nil {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok && mysqlErr.Number == errorNumDuplicateEntry {
 			return fmt.Errorf("insert queue_tracks: %w", entity.ErrQueueTrackAlreadyExisted)
 		}
 		return fmt.Errorf("insert queue_tracks: %w", err)
 	}
 	return nil
+}
+
+func (r *SessionRepository) GetQueueTracksBySessionID(id string) ([]*entity.QueueTrack, error) {
+	var dto []queueTrackDTO
+	if _, err := r.dbMap.Select(&dto, "SELECT * FROM queue_tracks WHERE session_id = ?", id); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return []*entity.QueueTrack{}, nil
+		}
+		return nil, fmt.Errorf("select queue_tracks: %w", err)
+	}
+	return r.toQueueTracks(dto), nil
+}
+
+func (r *SessionRepository) toQueueTracks(resultQueueTracks []queueTrackDTO) []*entity.QueueTrack {
+	queueTracks := make([]*entity.QueueTrack, len(resultQueueTracks))
+
+	for i, rs := range resultQueueTracks {
+		queueTracks[i] = &entity.QueueTrack{
+			Index:     rs.Index,
+			URI:       rs.URI,
+			SessionID: rs.SessionID,
+		}
+	}
+
+	return queueTracks
 }
 
 type sessionDTO struct {
