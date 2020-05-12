@@ -62,7 +62,7 @@ func (r *SessionRepository) StoreSessions(session *entity.Session) error {
 	return nil
 }
 
-func (r *SessionRepository) StoreQueueTracks(queueTrack *entity.QueueTrack) error {
+func (r *SessionRepository) StoreQueueTracks(queueTrack *entity.QueueTrackToStore) error {
 
 	tx, err := r.dbMap.Begin()
 	if err != nil {
