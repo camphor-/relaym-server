@@ -55,12 +55,6 @@ $ cp env.secret.example env.secret
 $ ${EDITOR} env.secret
 ```
 
-## テストの実行
-
-```bash
-$ make test
-```
-
 ## `/etc/hosts` を修正する
 
 `localhost` ではクッキーを使えないので、別名を割り当てる必要があります。
@@ -105,3 +99,19 @@ $ make generate
 ### 使い方
 
 [/web/handler/user_test.go](../web/handler/user_test.go)を参照。
+
+## テストの実行
+
+### ユニットテスト
+
+```bash
+$ make test
+```
+
+### インテグレーションテスト
+SpotifyのAPIを実体に叩くことが出来ます。CIで実行することは想定しておらず、ローカルでデバッグするための機能として存在しています。
+
+1. `env.secret` の `SPOTIFY_REFRESH_TOKEN_FOR_TEST` にリフレッシュトークンをセットする。(/loginを叩いてDBから取得するのが簡単です。)
+2. `make integration-test`
+
+Spotifyのクライアントを起動しているかどうかや再生しているかどうかで、テストが通るかどうかは変わるので、テストが落ちるのは仕様です。
