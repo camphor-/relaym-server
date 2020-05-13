@@ -71,7 +71,7 @@ func (r *SessionRepository) StoreQueueTrack(queueTrack *entity.QueueTrackToStore
 	return nil
 }
 
-func (r *SessionRepository) GetQueueTracksBySessionID(id string) ([]*entity.QueueTrack, error) {
+func (r *SessionRepository) getQueueTracksBySessionID(id string) ([]*entity.QueueTrack, error) {
 	var dto []queueTrackDTO
 	if _, err := r.dbMap.Select(&dto, "SELECT * FROM queue_tracks WHERE session_id = ?", id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

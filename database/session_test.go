@@ -213,7 +213,7 @@ func TestSessionRepository_StoreQueueTrack(t *testing.T) {
 			}
 
 			if tt.wantErr == nil {
-				queueTracks, _ := r.GetQueueTracksBySessionID(tt.queueTrack.SessionID)
+				queueTracks, _ := r.getQueueTracksBySessionID(tt.queueTrack.SessionID)
 				queueTrack, notFound := findQueueTrackByIndexAndSessionID(queueTracks, tt.wantIndex, tt.queueTrack.SessionID)
 
 				if (notFound != nil) || (queueTrack.URI != tt.queueTrack.URI) {
@@ -224,7 +224,7 @@ func TestSessionRepository_StoreQueueTrack(t *testing.T) {
 	}
 }
 
-func TestSessionRepository_GetQueueTrackBySessionID(t *testing.T) {
+func TestSessionRepository_getQueueTrackBySessionID(t *testing.T) {
 	// Prepare
 	dbMap, err := NewDB()
 	if err != nil {
@@ -285,14 +285,14 @@ func TestSessionRepository_GetQueueTrackBySessionID(t *testing.T) {
 			r := &SessionRepository{
 				dbMap: dbMap,
 			}
-			queueTracks, err := r.GetQueueTracksBySessionID(tt.id)
+			queueTracks, err := r.getQueueTracksBySessionID(tt.id)
 
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("SessionRepository.GetQueueTrackBySessionID() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("SessionRepository.getQueueTrackBySessionID() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !cmp.Equal(queueTracks, tt.want) {
-				t.Errorf("SessionRepository.GetQueueTracksBySessionID() diff = %v", cmp.Diff(queueTracks, tt.want))
+				t.Errorf("SessionRepository.getQueueTracksBySessionID() diff = %v", cmp.Diff(queueTracks, tt.want))
 			}
 		})
 	}
