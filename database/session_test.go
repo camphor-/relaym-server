@@ -15,6 +15,7 @@ func TestSessionRepository_FindByID(t *testing.T) {
 	}
 	dbMap.AddTableWithName(sessionDTO{}, "sessions")
 	dbMap.AddTableWithName(userDTO{}, "users")
+	dbMap.AddTableWithName(queueTrackDTO{}, "queue_tracks")
 	truncateTable(t, dbMap)
 	user := &userDTO{
 		ID:            "existing_user",
@@ -28,7 +29,12 @@ func TestSessionRepository_FindByID(t *testing.T) {
 		QueueHead: 0,
 		StateType: "PLAY",
 	}
-	if err := dbMap.Insert(user, session); err != nil {
+	queueTrack := &queueTrackDTO{
+		Index:     0,
+		URI:       "existing_uri",
+		SessionID: "existing_session_id",
+	}
+	if err := dbMap.Insert(user, session, queueTrack); err != nil {
 		t.Fatal(err)
 	}
 
@@ -47,6 +53,13 @@ func TestSessionRepository_FindByID(t *testing.T) {
 				CreatorID: "existing_user",
 				QueueHead: 0,
 				StateType: "PLAY",
+				QueueTracks: []*entity.QueueTrack{
+					{
+						Index:     0,
+						URI:       "existing_uri",
+						SessionID: "existing_session_id",
+					},
+				},
 			},
 			wantErr: nil,
 		},

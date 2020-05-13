@@ -37,12 +37,19 @@ func (r *SessionRepository) FindByID(id string) (*entity.Session, error) {
 		}
 		return nil, fmt.Errorf("select session: %w", err)
 	}
+
+	queueTracks, errOnGetQueue := r.getQueueTracksBySessionID(id)
+	if errOnGetQueue != nil {
+		return nil, errOnGetQueue
+	}
+
 	return &entity.Session{
-		ID:        dto.ID,
-		Name:      dto.Name,
-		CreatorID: dto.CreatorID,
-		QueueHead: dto.QueueHead,
-		StateType: dto.StateType,
+		ID:          dto.ID,
+		Name:        dto.Name,
+		CreatorID:   dto.CreatorID,
+		QueueHead:   dto.QueueHead,
+		StateType:   dto.StateType,
+		QueueTracks: queueTracks,
 	}, nil
 }
 
@@ -74,9 +81,6 @@ func (r *SessionRepository) StoreQueueTrack(queueTrack *entity.QueueTrackToStore
 func (r *SessionRepository) getQueueTracksBySessionID(id string) ([]*entity.QueueTrack, error) {
 	var dto []queueTrackDTO
 	if _, err := r.dbMap.Select(&dto, "SELECT * FROM queue_tracks WHERE session_id = ?", id); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return []*entity.QueueTrack{}, nil
-		}
 		return nil, fmt.Errorf("select queue_tracks: %w", err)
 	}
 	return r.toQueueTracks(dto), nil
