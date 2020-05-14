@@ -42,3 +42,12 @@ $ skeema push local -p
 ```bash
 $ skeema pull local -p
 ```
+
+### 一般ユーザを使うとき
+
+rootではなく一般ユーザを使う場合は適切に権限を設定する必要があります。
+
+```mysql
+GRANT SESSION_VARIABLES_ADMIN ON *.* TO `ユーザ名`@`%` ;
+GRANT ALL PRIVILEGES ON `ユーザ名`.* TO `テーブル名`@`%`;
+```
