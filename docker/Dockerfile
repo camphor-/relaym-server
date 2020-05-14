@@ -13,7 +13,7 @@ RUN go mod download
 COPY . .
 RUN go build .
 
-FROM alpine:latest
+FROM alpine:3.11.6
 
 RUN apk add --no-cache bash ca-certificates curl
 
