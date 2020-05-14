@@ -80,7 +80,7 @@ func (s *SessionUseCase) startSyncCheck(sessionID string) {
 			fmt.Printf("timer stopped sessionID=%s\n", sessionID)
 			return
 		case <-triggerAfterTrackEnd.ExpireCh():
-			// TODO DBに保存されているセッション情報を種痘
+			// TODO DBに保存されているセッション情報を取得
 			// TODO : Spotify APIで現在の再生状況を取得
 			// 問題なければ新しいtimerをセット
 			{
