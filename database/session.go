@@ -80,7 +80,7 @@ func (r *SessionRepository) StoreQueueTrack(queueTrack *entity.QueueTrackToStore
 
 func (r *SessionRepository) getQueueTracksBySessionID(id string) ([]*entity.QueueTrack, error) {
 	var dto []queueTrackDTO
-	if _, err := r.dbMap.Select(&dto, "SELECT * FROM queue_tracks WHERE session_id = ?", id); err != nil {
+	if _, err := r.dbMap.Select(&dto, "SELECT * FROM queue_tracks WHERE session_id = ? ORDER BY `index` ASC", id); err != nil {
 		return nil, fmt.Errorf("select queue_tracks: %w", err)
 	}
 	return r.toQueueTracks(dto), nil
