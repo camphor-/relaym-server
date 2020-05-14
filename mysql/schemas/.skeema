@@ -3,3 +3,9 @@ flavor=mysql:8.0
 host=127.0.0.1
 port=3306
 user=root
+
+[dev]
+flavor=mysql:8.0
+host=relaym-mysql-dev
+port=3306
+user=relaym_dev

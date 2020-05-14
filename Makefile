@@ -1,5 +1,7 @@
 ENV_LOCAL_FILE := env.local
 ENV_LOCAL = $(shell cat $(ENV_LOCAL_FILE))
+ENV_DEV_FILE := env.dev
+ENV_DEV = $(shell cat $(ENV_DEV_FILE))
 ENV_TEST_FILE := env.test
 ENV_TEST = $(shell cat $(ENV_TEST_FILE))
 
@@ -27,3 +29,9 @@ run-db-local:
 .PHONY:generate
 generate:
 	go generate ./...
+
+.PHONY: deploy-dev
+deploy-dev:
+	$(ENV_DEV) docker-compose -f docker/docker-compose.deps.base.yml -f docker/docker-compose.deps.dev.yml -p dev up -d
+	$(ENV_DEV) ENV_FILE=$(ENV_DEV_FILE) docker-compose -f docker/docker-compose.base.yml -f docker/docker-compose.dev.yml -p dev stop
+	$(ENV_DEV) ENV_FILE=$(ENV_DEV_FILE) docker-compose -f docker/docker-compose.base.yml -f docker/docker-compose.dev.yml -p dev up -d
