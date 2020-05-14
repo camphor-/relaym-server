@@ -252,6 +252,7 @@ func TestSessionRepository_getQueueTrackBySessionID(t *testing.T) {
 		SpotifyUserID: "existing_user_spotify",
 		DisplayName:   "existing_user_display_name",
 	}
+
 	session := &sessionDTO{
 		ID:        "existing_session_id",
 		Name:      "existing_session_name",
@@ -259,12 +260,35 @@ func TestSessionRepository_getQueueTrackBySessionID(t *testing.T) {
 		QueueHead: 0,
 		StateType: "PLAY",
 	}
-	queueTracks := &queueTrackDTO{
+	sessionHasManyQueueTracks := &sessionDTO{
+		ID:        "session_has_many_queue_tracks_id",
+		Name:      "session_has_many_queue_tracks_name",
+		CreatorID: "existing_user",
+		QueueHead: 0,
+		StateType: "PLAY",
+	}
+
+	queueTrack1 := &queueTrackDTO{
 		Index:     0,
-		URI:       "existing_uri",
+		URI:       "existing_uri1",
 		SessionID: "existing_session_id",
 	}
-	if err := dbMap.Insert(user, session, queueTracks); err != nil {
+	queueTrack2 := &queueTrackDTO{
+		Index:     0,
+		URI:       "existing_uri2",
+		SessionID: "session_has_many_queue_tracks_id",
+	}
+	queueTrack3 := &queueTrackDTO{
+		Index:     1,
+		URI:       "existing_uri3",
+		SessionID: "session_has_many_queue_tracks_id",
+	}
+	queueTrack4 := &queueTrackDTO{
+		Index:     2,
+		URI:       "existing_uri4",
+		SessionID: "session_has_many_queue_tracks_id",
+	}
+	if err := dbMap.Insert(user, session, sessionHasManyQueueTracks, queueTrack1, queueTrack2, queueTrack3, queueTrack4); err != nil {
 		t.Fatal(err)
 	}
 
@@ -280,8 +304,30 @@ func TestSessionRepository_getQueueTrackBySessionID(t *testing.T) {
 			want: []*entity.QueueTrack{
 				{
 					Index:     0,
-					URI:       "existing_uri",
+					URI:       "existing_uri1",
 					SessionID: "existing_session_id",
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "セッションIDから正しく複数のqueue_tracksを正しい順序で取り出せる",
+			id:   "session_has_many_queue_tracks_id",
+			want: []*entity.QueueTrack{
+				{
+					Index:     0,
+					URI:       "existing_uri2",
+					SessionID: "session_has_many_queue_tracks_id",
+				},
+				{
+					Index:     1,
+					URI:       "existing_uri3",
+					SessionID: "session_has_many_queue_tracks_id",
+				},
+				{
+					Index:     2,
+					URI:       "existing_uri4",
+					SessionID: "session_has_many_queue_tracks_id",
 				},
 			},
 			wantErr: nil,
