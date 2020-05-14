@@ -210,13 +210,13 @@
 
 ### 概要
 
-参加しているセッションの再生状態を操作します。
+与えられたセッションの再生状態を操作します。
 
 ### リクエスト
 
 ```json5
 {
-  "state": "PLAY" // 再生の状態: PLAY または PAUSE または STOP
+  "state": "PLAY" // 再生の状態: PLAY または PAUSE
 }
 ```
 
@@ -234,7 +234,8 @@
 
 | code | message | 補足 |
 | ---- | -------- | -------- |
-| 400 | invalid device id | 指定されたデバイスIDはオフライン or 不正 |
+| 400 | invalid state     | 不正なstate |
+| 403 | invalid device id | 指定されたデバイスIDはオフライン or 不正 |
 | 404 | session not found | 指定されたidのセッションが存在しない |
 
 
