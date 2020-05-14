@@ -35,7 +35,7 @@ func TestSyncCheckTimer_ExpireCh(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := SyncCheckTimer{
+			s := &SyncCheckTimer{
 				timer:  tt.fields.timer,
 				stopCh: tt.fields.stopCh,
 			}

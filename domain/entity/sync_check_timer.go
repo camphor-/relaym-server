@@ -13,7 +13,7 @@ type SyncCheckTimer struct {
 }
 
 // ExpireCh は指定設定された秒数経過したことを送るチャネルを返します。
-func (s SyncCheckTimer) ExpireCh() <-chan time.Time {
+func (s *SyncCheckTimer) ExpireCh() <-chan time.Time {
 	return s.timer.C
 }
 
