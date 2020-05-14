@@ -6,6 +6,7 @@ package mock_spotify
 
 import (
 	context "context"
+	entity "github.com/camphor-/relaym-server/domain/entity"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 )
@@ -34,10 +35,10 @@ func (m *MockPlayer) EXPECT() *MockPlayerMockRecorder {
 }
 
 // CurrentlyPlaying mocks base method
-func (m *MockPlayer) CurrentlyPlaying(ctx context.Context) (bool, error) {
+func (m *MockPlayer) CurrentlyPlaying(ctx context.Context) (*entity.CurrentPlayingInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CurrentlyPlaying", ctx)
-	ret0, _ := ret[0].(bool)
+	ret0, _ := ret[0].(*entity.CurrentPlayingInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -49,17 +50,17 @@ func (mr *MockPlayerMockRecorder) CurrentlyPlaying(ctx interface{}) *gomock.Call
 }
 
 // Play mocks base method
-func (m *MockPlayer) Play(ctx context.Context) error {
+func (m *MockPlayer) Play(ctx context.Context, deviceID string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Play", ctx)
+	ret := m.ctrl.Call(m, "Play", ctx, deviceID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Play indicates an expected call of Play
-func (mr *MockPlayerMockRecorder) Play(ctx interface{}) *gomock.Call {
+func (mr *MockPlayerMockRecorder) Play(ctx, deviceID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Play", reflect.TypeOf((*MockPlayer)(nil).Play), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Play", reflect.TypeOf((*MockPlayer)(nil).Play), ctx, deviceID)
 }
 
 // Pause mocks base method

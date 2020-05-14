@@ -2,12 +2,16 @@
 
 package spotify
 
-import "context"
+import (
+	"context"
+
+	"github.com/camphor-/relaym-server/domain/entity"
+)
 
 // Player はSpotifyの曲の操作に関連するAPIを呼び出すためのインターフェースです。
 type Player interface {
-	CurrentlyPlayiwng(ctx context.Context) (bool, error)
-	Play(ctx context.Context) error
+	CurrentlyPlaying(ctx context.Context) (*entity.CurrentPlayingInfo, error)
+	Play(ctx context.Context, deviceID string) error
 	Pause(ctx context.Context) error
 	AddToQueue(ctx context.Context, trackID string) error
 	SetRepeatMode(ctx context.Context, on bool) error

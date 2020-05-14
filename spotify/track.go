@@ -29,21 +29,25 @@ func (c *Client) toTracks(resultTracks []spotify.FullTrack) []*entity.Track {
 	tracks := make([]*entity.Track, len(resultTracks))
 
 	for i, rt := range resultTracks {
-		tracks[i] = &entity.Track{
-			URI:      string(rt.URI),
-			ID:       rt.ID.String(),
-			Name:     rt.Name,
-			Duration: time.Duration(rt.Duration) * time.Millisecond,
-			Artists:  c.toArtists(rt.Artists),
-			URL:      rt.ExternalURLs["spotify"],
-			Album: &entity.Album{
-				Name:   rt.Album.Name,
-				Images: c.toImages(rt.Album.Images),
-			},
-		}
+		tracks[i] = c.toTrack(&rt)
 	}
 
 	return tracks
+}
+
+func (c *Client) toTrack(fullTrack *spotify.FullTrack) *entity.Track {
+	return &entity.Track{
+		URI:      string(fullTrack.URI),
+		ID:       fullTrack.ID.String(),
+		Name:     fullTrack.Name,
+		Duration: time.Duration(fullTrack.Duration) * time.Millisecond,
+		Artists:  c.toArtists(fullTrack.Artists),
+		URL:      fullTrack.ExternalURLs["spotify"],
+		Album: &entity.Album{
+			Name:   fullTrack.Album.Name,
+			Images: c.toImages(fullTrack.Album.Images),
+		},
+	}
 }
 
 func (c *Client) toArtists(resultArtists []spotify.SimpleArtist) []*entity.Artist {

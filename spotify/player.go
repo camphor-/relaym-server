@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/service"
@@ -15,32 +16,40 @@ import (
 
 // CurrentlyPlaying は現在の再生状況を取得するAPIです。
 // TODO : 現状はなんの情報が必要か分かってないので現在再生中かどうかのみ返します。
-func (c *Client) CurrentlyPlaying(ctx context.Context) (bool, error) {
+func (c *Client) CurrentlyPlaying(ctx context.Context) (*entity.CurrentPlayingInfo, error) {
 	token, ok := service.GetTokenFromContext(ctx)
 	if !ok {
-		return false, errors.New("token not found")
+		return nil, errors.New("token not found")
 	}
 	cli := c.auth.NewClient(token)
 	cp, err := cli.PlayerCurrentlyPlaying()
 	if convErr := c.convertPlayerError(err); convErr != nil {
-		return false, fmt.Errorf("spotify api: currently playing: %w", convErr)
+		return nil, fmt.Errorf("spotify api: currently playing: %w", convErr)
 	}
-	return cp.Playing, nil
+	return &entity.CurrentPlayingInfo{
+		Playing:  cp.Playing,
+		Progress: time.Duration(cp.Progress) * time.Millisecond,
+		Track:    c.toTrack(cp.Item),
+	}, nil
 }
 
-// Play は曲を再生し始めるか現在再生途中の曲の再生を再開するAPIです。
+// Play は曲を再生し始めるか現在再生途中の曲の再生を再開するAPIです。deviceIDが空の場合はデフォルトのデバイスで再生されます。
 // APIが非同期で処理がされるため、リクエストが返ってきても再生が開始しているとは限りません。
 // 設定が反映されたか確認するには CurrentlyPlaying() を叩く必要があります。
 // プレミアム会員必須
-func (c *Client) Play(ctx context.Context) error {
+func (c *Client) Play(ctx context.Context, deviceID string) error {
 	token, ok := service.GetTokenFromContext(ctx)
 	if !ok {
 		return errors.New("token not found")
 	}
 	cli := c.auth.NewClient(token)
 
-	// TODO : デバイスIDを指定する必要がある場合はいじる
 	opt := &spotify.PlayOptions{DeviceID: nil}
+	if deviceID != "" {
+		spotifyID := spotify.ID(deviceID)
+		opt = &spotify.PlayOptions{DeviceID: &spotifyID}
+	}
+
 	err := cli.PlayOpt(opt)
 	if convErr := c.convertPlayerError(err); convErr != nil {
 		return fmt.Errorf("spotify api: play or resume: %w", convErr)
