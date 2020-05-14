@@ -40,7 +40,7 @@ func (r *SessionRepository) FindByID(id string) (*entity.Session, error) {
 
 	queueTracks, errOnGetQueue := r.getQueueTracksBySessionID(id)
 	if errOnGetQueue != nil {
-		return nil, errOnGetQueue
+		return nil, fmt.Errorf("get queue tracks: %w", errOnGetQueue)
 	}
 
 	return &entity.Session{
