@@ -185,6 +185,7 @@ func TestSyncCheckTimerManager_StopTimer(t *testing.T) {
 				t.Errorf("StopTimer() diff=%v", cmp.Diff(tt.want, m.timers, opts...))
 			}
 
+			// 既に閉じられているchannelに対してcloseするとpanicが起こることを利用して正しくcloseされているかチェックする
 			close(tt.timer.stopCh)
 		})
 	}
