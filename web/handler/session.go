@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/camphor-/relaym-server/domain/entity"
@@ -26,23 +27,25 @@ func (h *SessionHandler) Playback(c echo.Context) error {
 	}
 	req := new(reqJSON)
 	if err := c.Bind(req); err != nil {
-		c.Logger().Errorf("bind: %v", err)
-
+		c.Logger().Debugf("bind: %v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid state")
 	}
 
 	st, err := entity.NewStateType(req.State)
 	if err != nil {
-		c.Logger().Errorf("NewStateType: %v", err)
-
+		c.Logger().Debugf("NewStateType: %v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid state")
 	}
 
 	ctx := c.Request().Context()
 	sessionID := c.Param("id")
 	if err := h.uc.ChangePlaybackState(ctx, sessionID, st); err != nil {
+		switch {
+		case errors.Is(err, entity.ErrActiveDeviceNotFound):
+			return echo.NewHTTPError(http.StatusForbidden, entity.ErrActiveDeviceNotFound.Error())
+		}
 		c.Logger().Errorf("change playback: %v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
-	return nil
+	return c.NoContent(http.StatusAccepted)
 }

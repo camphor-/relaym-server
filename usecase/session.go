@@ -98,7 +98,7 @@ func (s *SessionUseCase) CanConnectToPusher(sessionID string) (bool, error) {
 
 // TODO 関数名を変える。synccheckだけじゃなくて曲が終わった後のビジネスロジックを賄っているので
 // startSyncCheck はSpotifyとの同期が取れているかチェックを行います。goroutineで実行されることを想定しています。
-func (s *SessionUseCase) startSyncCheck(sessionID string) {
+func (s *SessionUseCase) startSyncCheck(ctx context.Context, sessionID string) {
 	// TODO : Spotify APIで現在の再生状況を取得
 	remainDuration := 3 * time.Minute
 

@@ -131,7 +131,7 @@ func (c *Client) convertPlayerError(err error) error {
 			return nil
 		case e.Status == http.StatusForbidden:
 			return fmt.Errorf("%s: %w", e.Message, entity.ErrNonPremium)
-		case e.Status == http.StatusNotFound:
+		case e.Status == http.StatusNotFound || (e.Status == http.StatusInternalServerError && strings.Contains(e.Message, "Server error")):
 			return fmt.Errorf("%s: %w", e.Message, entity.ErrActiveDeviceNotFound)
 		}
 	}
