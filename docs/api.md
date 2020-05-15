@@ -244,13 +244,13 @@ X-CSRF-Token: relaym
 | code | message | 補足 |
 | ---- | -------- | -------- |
 | 400 | invalid state     | 不正なstate |
-| 403 | invalid device id | 指定されたデバイスIDはオフライン or 不正 |
+| 403 | active device not found | アクティブなデバイスが存在しないので操作ができない |
 | 404 | session not found | 指定されたidのセッションが存在しない |
 
 
 **注意(解決方法を調査中)**
 
-404で `"invalid device id"` が返ってきた時は、聞いていた端末でアプリを開き、再生ボタンを押して一時停止ボタンを押すという操作をしないと、一生再生できない。
+[Spotify APIの不思議な挙動](sotify_api_problem.md)
 
 ## POST /sessions/:id/queue
 
