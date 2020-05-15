@@ -15,4 +15,7 @@ var (
 	ErrActiveDeviceNotFound = errors.New("active device not found")
 	// ErrNonPremium はユーザがプレミアム会員ではないエラーを表します。
 	ErrNonPremium = errors.New("non-premium user")
+
+	// ErrInvalidStateType は不正なstate typeであるというエラーを表します。
+	ErrInvalidStateType = errors.New("invalid state type")
 )
