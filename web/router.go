@@ -24,7 +24,7 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, session
 	e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
 		Skipper: func(c echo.Context) bool {
 			token := c.Request().Header.Get("X-CSRF-Token")
-			return token != ""
+			return token != "relaym"
 		},
 	}))
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
