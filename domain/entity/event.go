@@ -11,7 +11,7 @@ var (
 		Type: "PLAY",
 	}
 
-	// EventNextTrack はセッションの曲の再生が (正常に) 次の曲に移った際に発されるイベント。
+	// EventNextTrack はセッションの曲の再生が (正常に) 次の曲に移った際に発されるイベントです。
 	// キューの現在再生している曲の位置が含まれます。
 	EventNextTrack = &Event{
 		Type: "NEXTTRACK",

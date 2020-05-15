@@ -66,23 +66,23 @@ https://github.com/spotify/web-api/issues/1325
 13. `GET /users/me/devices` を叩く
 14. 先程まで再生していたデバイスが消える
 15. Spotify アプリをフォアグラウンドにする
-16. ここで自動で再生が開始される (APIの処理が行われる)
+16. ここで自動で再生が開始される (11のAPIの処理が行われる)
 
 #### 動作パターン2
 
 10までは一緒
 
-- 11'. Spotify アプリをフォアグラウンドにする
-- 16'. 再度、再生API `PUT /sessions/:id/playback` を叩く
-- 17'. `active device not found` になる
-- 18'. なにかしら曲を再生する
-- 19'. 曲を止める
-- 20'. 再生API `PUT /sessions/:id/playback` を叩く
-- 21'. 正しく再生される
+11'. Spotify アプリをフォアグラウンドにする  
+12'. 再度、再生API `PUT /sessions/:id/playback` を叩く  
+13'. `active device not found` になる  
+14'. なにかしら曲を再生する  
+15'. 曲を止める  
+16'. 再生API `PUT /sessions/:id/playback` を叩く  
+17'. 正しく再生される  
 
 #### 要因
 
-アプリを一定時間バックグラウンドにするとデバイスがinactiveになるのだが、デバイス取得APIはキャッシュされていてそのままactiveの状態を返してしまっているっぽい。
+アプリを一定時間バックグラウンドにするとデバイスがinactiveになるが、デバイス取得APIはキャッシュされていてそのままactiveの状態を返してしまっているっぽい。
 
 #### 厄介なところ
 
