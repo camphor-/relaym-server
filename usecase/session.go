@@ -98,13 +98,11 @@ func (s *SessionUseCase) CanConnectToPusher(sessionID string) (bool, error) {
 
 // TODO 関数名を変える。synccheckだけじゃなくて曲が終わった後のビジネスロジックを賄っているので
 // startSyncCheck はSpotifyとの同期が取れているかチェックを行います。goroutineで実行されることを想定しています。
-func (s *SessionUseCase) startSyncCheck(ctx context.Context, sessionID string) {
-	currentPlayingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
-	if err != nil {
-		fmt.Printf("startSyncCheck : call currently playing api: %v \n", err)
-		return
-	}
-	triggerAfterTrackEnd := s.tm.CreateTimer(sessionID, currentPlayingInfo.Remain()+syncCheckOffset)
+func (s *SessionUseCase) startSyncCheck(sessionID string) {
+	// TODO : Spotify APIで現在の再生状況を取得
+	remainDuration := 3 * time.Minute
+
+	triggerAfterTrackEnd := s.tm.CreateTimer(sessionID, remainDuration+syncCheckOffset)
 
 	for {
 		select {
@@ -112,41 +110,32 @@ func (s *SessionUseCase) startSyncCheck(ctx context.Context, sessionID string) {
 			fmt.Printf("timer stopped sessionID=%s\n", sessionID)
 			return
 		case <-triggerAfterTrackEnd.ExpireCh():
-			triggerAfterTrackEnd, err = s.syncCheck(ctx, sessionID)
-			if err != nil {
-				fmt.Printf("synccheck: %v\n", err)
+			// TODO DBに保存されているセッション情報を取得
+			// TODO : Spotify APIで現在の再生状況を取得
+			// 問題なければ新しいtimerをセット
+			{
+				newD := 4 * time.Minute
+				triggerAfterTrackEnd = s.tm.CreateTimer(sessionID, newD+syncCheckOffset)
+				s.pusher.Push(&event.PushMessage{
+					SessionID: sessionID,
+					Msg: &entity.Event{
+						Type: "NEXTTRACK",
+					},
+				})
+			}
+
+			// TODO 同期に失敗したらエラーを通知して終了
+			{
+				s.pusher.Push(&event.PushMessage{
+					SessionID: sessionID,
+					Msg: &entity.Event{
+						Type: "INTERRUPT",
+					},
+				})
+				s.tm.StopTimer(sessionID)
 				return
 			}
+
 		}
 	}
-}
-
-func (s *SessionUseCase) syncCheck(ctx context.Context, sessionID string) (*entity.SyncCheckTimer, error) {
-	// TODO DBに保存されているセッション情報を取得してキューが全て消化されたらDBのstate_typeをSTOPに変更して戻る
-	// sess ,err := repo.GetByID(sessionID)
-
-	// TODO APIトークンの更新
-	currentPlayingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("call currently playing api: %w", err)
-	}
-
-	// TODO ずれているかチェック
-
-	triggerAfterTrackEnd := s.tm.CreateTimer(sessionID, currentPlayingInfo.Remain()+syncCheckOffset)
-	s.pusher.Push(&event.PushMessage{
-		SessionID: sessionID,
-		Msg:       entity.EventNextTrack,
-	})
-	// TODO headを前にすすめる
-
-	{
-		s.pusher.Push(&event.PushMessage{
-			SessionID: sessionID,
-			Msg:       entity.EventInterrupt,
-		})
-		s.tm.StopTimer(sessionID)
-		// TODO : DBのstate_typeを更新
-	}
-	return triggerAfterTrackEnd, nil
 }
