@@ -41,6 +41,8 @@ func (h *SessionHandler) Playback(c echo.Context) error {
 	sessionID := c.Param("id")
 	if err := h.uc.ChangePlaybackState(ctx, sessionID, st); err != nil {
 		switch {
+		case errors.Is(err, entity.ErrSessionNotFound):
+			return echo.NewHTTPError(http.StatusNotFound, entity.ErrSessionNotFound.Error())
 		case errors.Is(err, entity.ErrActiveDeviceNotFound):
 			return echo.NewHTTPError(http.StatusForbidden, entity.ErrActiveDeviceNotFound.Error())
 		}

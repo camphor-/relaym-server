@@ -9,6 +9,7 @@ import (
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/event"
 	"github.com/camphor-/relaym-server/domain/mock_event"
+	"github.com/camphor-/relaym-server/domain/mock_repository"
 	"github.com/camphor-/relaym-server/domain/mock_spotify"
 	"github.com/camphor-/relaym-server/usecase"
 
@@ -23,6 +24,7 @@ func TestSessionHandler_Playback(t *testing.T) {
 		body                string
 		prepareMockPlayerFn func(m *mock_spotify.MockPlayer)
 		prepareMockPusherFn func(m *mock_event.MockPusher)
+		prepareMockRepoFn   func(m *mock_repository.MockSession)
 		wantErr             bool
 		wantCode            int
 	}{
@@ -32,19 +34,22 @@ func TestSessionHandler_Playback(t *testing.T) {
 			body:                `{"state": "INVALID"}`,
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {},
 			prepareMockPusherFn: func(m *mock_event.MockPusher) {},
+			prepareMockRepoFn:   func(m *mock_repository.MockSession) {},
 			wantErr:             true,
 			wantCode:            http.StatusBadRequest,
 		},
-		// TODO レポジトリが実装されたら有効にする
-		// {
-		// 	name:                "PLAYで指定されたidのセッションが存在しないとき404",
-		// 	sessionID:           "notFoundSessionID",
-		// 	body:                `{"state": "PLAY"}`,
-		// 	prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {},
-		// 	prepareMockPusherFn: func(m *mock_event.MockPusher) {},
-		// 	wantErr:             true,
-		// 	wantCode:            http.StatusNotFound,
-		// },
+		{
+			name:                "PLAYで指定されたidのセッションが存在しないとき404",
+			sessionID:           "notFoundSessionID",
+			body:                `{"state": "PLAY"}`,
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {},
+			prepareMockPusherFn: func(m *mock_event.MockPusher) {},
+			prepareMockRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("notFoundSessionID").Return(nil, entity.ErrSessionNotFound)
+			},
+			wantErr:  true,
+			wantCode: http.StatusNotFound,
+		},
 		{
 			name:      "PLAYで再生するデバイスがオフラインのとき403",
 			sessionID: "sessionID",
@@ -53,8 +58,18 @@ func TestSessionHandler_Playback(t *testing.T) {
 				m.EXPECT().Play(gomock.Any(), "").Return(entity.ErrActiveDeviceNotFound)
 			},
 			prepareMockPusherFn: func(m *mock_event.MockPusher) {},
-			wantErr:             true,
-			wantCode:            http.StatusForbidden,
+			prepareMockRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+					ID:          "sessionID",
+					Name:        "session_name",
+					CreatorID:   "creator_id",
+					QueueHead:   0,
+					StateType:   "PLAY",
+					QueueTracks: nil,
+				}, nil)
+			},
+			wantErr:  true,
+			wantCode: http.StatusForbidden,
 		},
 		{
 			name:      "PLAYで正しく再生リクエストが処理されたとき202",
@@ -68,6 +83,24 @@ func TestSessionHandler_Playback(t *testing.T) {
 					SessionID: "sessionID",
 					Msg:       entity.EventPlay,
 				})
+			},
+			prepareMockRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+					ID:          "sessionID",
+					Name:        "session_name",
+					CreatorID:   "creator_id",
+					QueueHead:   0,
+					StateType:   "STOP",
+					QueueTracks: nil,
+				}, nil)
+				m.EXPECT().Update(&entity.Session{
+					ID:          "sessionID",
+					Name:        "session_name",
+					CreatorID:   "creator_id",
+					QueueHead:   0,
+					StateType:   "PLAY",
+					QueueTracks: nil,
+				}).Return(nil)
 			},
 			wantErr:  false,
 			wantCode: http.StatusAccepted,
@@ -92,7 +125,9 @@ func TestSessionHandler_Playback(t *testing.T) {
 			tt.prepareMockPlayerFn(mockPlayer)
 			mockPusher := mock_event.NewMockPusher(ctrl)
 			tt.prepareMockPusherFn(mockPusher)
-			uc := usecase.NewSessionUseCase(mockPlayer, mockPusher)
+			mockRepo := mock_repository.NewMockSession(ctrl)
+			tt.prepareMockRepoFn(mockRepo)
+			uc := usecase.NewSessionUseCase(mockRepo, mockPlayer, mockPusher)
 			h := &SessionHandler{
 				uc: uc,
 			}

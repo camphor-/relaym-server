@@ -7,6 +7,7 @@ import (
 
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/event"
+	"github.com/camphor-/relaym-server/domain/repository"
 	"github.com/camphor-/relaym-server/domain/spotify"
 )
 
@@ -15,16 +16,18 @@ var syncCheckOffset = 5 * time.Second
 // SessionUseCase はセッションに関するユースケースです。
 type SessionUseCase struct {
 	tm        *entity.SyncCheckTimerManager
-	pusher    event.Pusher
+	repo      repository.Session
 	playerCli spotify.Player
+	pusher    event.Pusher
 }
 
 // NewSessionUseCase はSessionUseCaseのポインタを生成します。
-func NewSessionUseCase(playerCli spotify.Player, pusher event.Pusher) *SessionUseCase {
+func NewSessionUseCase(repo repository.Session, playerCli spotify.Player, pusher event.Pusher) *SessionUseCase {
 	return &SessionUseCase{
 		tm:        entity.NewSyncCheckTimerManager(),
-		pusher:    pusher,
+		repo:      repo,
 		playerCli: playerCli,
+		pusher:    pusher,
 	}
 }
 
@@ -45,17 +48,23 @@ func (s *SessionUseCase) ChangePlaybackState(ctx context.Context, sessionID stri
 
 // Play はセッションのstateを STOP → PLAY に変更して曲の再生を始めます。
 func (s *SessionUseCase) play(ctx context.Context, sessionID string) error {
-	// TODO : セッションを取得
-	// sess ,err := repo.GetByID(sessionID)
+	sess, err := s.repo.FindByID(sessionID)
+	if err != nil {
+		return fmt.Errorf("find session id=%s: %w", sessionID, err)
+	}
 
 	// TODO : デバイスIDをどっかから読み込む
 	if err := s.playerCli.Play(ctx, ""); err != nil {
 		return fmt.Errorf("call play api: %w", err)
 	}
 
-	// TODO : セッションのステートを書き換え
-	// err := sess.MoveToPlay()
-	// err := repo.Store(sess)
+	if err := sess.MoveToPlay(); err != nil {
+		return fmt.Errorf("move to play id=%s: %w", sessionID, err)
+	}
+
+	if err := s.repo.Update(sess); err != nil {
+		return fmt.Errorf("update session id=%s: %w", sessionID, err)
+	}
 
 	go s.startSyncCheck(ctx, sessionID)
 
