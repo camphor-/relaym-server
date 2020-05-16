@@ -2,7 +2,6 @@ package database
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/camphor-/relaym-server/domain/entity"
@@ -218,7 +217,6 @@ func TestSessionRepository_Update(t *testing.T) {
 
 			if !tt.wantErr {
 				got, err := r.FindByID(tt.session.ID)
-				fmt.Println(err)
 				if err != nil {
 					t.Fatal(err)
 				}
