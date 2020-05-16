@@ -1,0 +1,11 @@
+version: "3.7"
+services:
+  relaym-server:
+    env_file:
+      - ../${ENV_FILE}
+    restart: always
+    networks:
+      - relaym-network
+networks:
+  relaym-network:
+    driver: bridge
