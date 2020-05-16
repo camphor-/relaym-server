@@ -56,19 +56,22 @@ func (c *Client) Play(ctx context.Context, deviceID string) error {
 	return nil
 }
 
-// Pause は再生を一時停止します。
+// Pause は再生を一時停止します。deviceIDが空の場合はデフォルトのデバイスで再生されます。
 // APIが非同期で処理がされるため、リクエストが返ってきても再生が一時停止されているとは限りません。
 // 設定が反映されたか確認するには CurrentlyPlaying() を叩く必要があります。
 // プレミアム会員必須
-func (c *Client) Pause(ctx context.Context) error {
+func (c *Client) Pause(ctx context.Context, deviceID string) error {
 	token, ok := service.GetTokenFromContext(ctx)
 	if !ok {
 		return errors.New("token not found")
 	}
 	cli := c.auth.NewClient(token)
 
-	// TODO : デバイスIDを指定する必要がある場合はいじる
 	opt := &spotify.PlayOptions{DeviceID: nil}
+	if deviceID != "" {
+		spotifyID := spotify.ID(deviceID)
+		opt = &spotify.PlayOptions{DeviceID: &spotifyID}
+	}
 	err := cli.PauseOpt(opt)
 	if convErr := c.convertPlayerError(err); convErr != nil {
 		return fmt.Errorf("spotify api: pause: %w", convErr)
@@ -76,19 +79,22 @@ func (c *Client) Pause(ctx context.Context) error {
 	return nil
 }
 
-// AddToQueue は曲を「次に再生される曲」に追加するAPIです。
+// AddToQueue は曲を「次に再生される曲」に追加するAPIです。deviceIDが空の場合はデフォルトのデバイスで再生されます。
 // APIが非同期で処理がされるため、リクエストが返ってきても曲の追加が完了しているとは限りません。
 // 設定が反映されたか確認するには CurrentlyPlaying() を叩く必要があります。
 // プレミアム会員必須
-func (c *Client) AddToQueue(ctx context.Context, trackID string) error {
+func (c *Client) AddToQueue(ctx context.Context, trackID string, deviceID string) error {
 	token, ok := service.GetTokenFromContext(ctx)
 	if !ok {
 		return errors.New("token not found")
 	}
 	cli := c.auth.NewClient(token)
 
-	// TODO : デバイスIDを指定する必要がある場合はいじる
 	opt := &spotify.PlayOptions{DeviceID: nil}
+	if deviceID != "" {
+		spotifyID := spotify.ID(deviceID)
+		opt = &spotify.PlayOptions{DeviceID: &spotifyID}
+	}
 	err := cli.QueueSongOpt(spotify.ID(trackID), opt)
 	if convErr := c.convertPlayerError(err); convErr != nil {
 		return fmt.Errorf("spotify api: add queue: %w", convErr)
