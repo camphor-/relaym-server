@@ -43,12 +43,17 @@ func (r *SessionRepository) FindByID(id string) (*entity.Session, error) {
 		return nil, fmt.Errorf("get queue tracks: %w", errOnGetQueue)
 	}
 
+	stateType, err := entity.NewStateType(dto.StateType)
+	if err != nil {
+		return nil, fmt.Errorf("find session: %w", entity.ErrInvalidStateType)
+	}
+
 	return &entity.Session{
 		ID:          dto.ID,
 		Name:        dto.Name,
 		CreatorID:   dto.CreatorID,
 		QueueHead:   dto.QueueHead,
-		StateType:   dto.StateType,
+		StateType:   stateType,
 		QueueTracks: queueTracks,
 	}, nil
 }
@@ -59,7 +64,7 @@ func (r *SessionRepository) StoreSession(session *entity.Session) error {
 		Name:      session.Name,
 		CreatorID: session.CreatorID,
 		QueueHead: session.QueueHead,
-		StateType: session.StateType,
+		StateType: session.StateType.String(),
 	}
 
 	if err := r.dbMap.Insert(dto); err != nil {
@@ -78,7 +83,7 @@ func (r *SessionRepository) Update(session *entity.Session) error {
 		Name:      session.Name,
 		CreatorID: session.CreatorID,
 		QueueHead: session.QueueHead,
-		StateType: session.StateType,
+		StateType: session.StateType.String(),
 	}
 
 	updateNum, err := r.dbMap.Update(dto)
