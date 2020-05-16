@@ -12,7 +12,7 @@ type Session struct {
 	QueueTracks []*QueueTrack
 }
 
-// MoveToPlay はセッションのStateTypeをPlayに状態遷移します。ｓ
+// MoveToPlay はセッションのStateTypeをPlayに状態遷移します。
 func (s *Session) MoveToPlay() error {
 	if s.StateType == Pause || s.StateType == Stop {
 		s.StateType = Play
