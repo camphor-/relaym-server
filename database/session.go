@@ -23,7 +23,7 @@ type SessionRepository struct {
 
 // NewSessionRepository はSessionRepositoryのポインタを生成する関数です
 func NewSessionRepository(dbMap *gorp.DbMap) *SessionRepository {
-	dbMap.AddTableWithName(sessionDTO{}, "sessions")
+	dbMap.AddTableWithName(sessionDTO{}, "sessions").SetKeys(false, "ID")
 	dbMap.AddTableWithName(queueTrackDTO{}, "queue_tracks")
 	return &SessionRepository{dbMap: dbMap}
 }
@@ -71,7 +71,23 @@ func (r *SessionRepository) StoreSession(session *entity.Session) error {
 	return nil
 }
 
-func (r *SessionRepository) Update(*entity.Session) error {
+// Update はセッションの情報を更新します。
+func (r *SessionRepository) Update(session *entity.Session) error {
+	dto := &sessionDTO{
+		ID:        session.ID,
+		Name:      session.Name,
+		CreatorID: session.CreatorID,
+		QueueHead: session.QueueHead,
+		StateType: session.StateType,
+	}
+
+	updateNum, err := r.dbMap.Update(dto)
+	if err != nil {
+		return fmt.Errorf("update session: %w", err)
+	}
+	if updateNum == 0 {
+		return fmt.Errorf("update session: %w", entity.ErrSessionNotFound)
+	}
 	return nil
 }
 
