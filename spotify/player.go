@@ -15,7 +15,6 @@ import (
 )
 
 // CurrentlyPlaying は現在の再生状況を取得するAPIです。
-// TODO : 現状はなんの情報が必要か分かってないので現在再生中かどうかのみ返します。
 func (c *Client) CurrentlyPlaying(ctx context.Context) (*entity.CurrentPlayingInfo, error) {
 	token, ok := service.GetTokenFromContext(ctx)
 	if !ok {
