@@ -34,6 +34,15 @@
 
 事前に`GET /login`で認証を済ませ、Cookieをつけた状態でリクエストを送る必要があります。
 
+## CSRF対策
+
+CSRF対策としてプリフライトリクエストを発生させるために、カスタムヘッダが必要です。
+
+```
+X-CSRF-Token: relaym
+```
+
+をHTTPヘッダに付与してAPIリクエストを行ってください。
 
 ## POST /sessions
 
@@ -210,13 +219,13 @@
 
 ### 概要
 
-参加しているセッションの再生状態を操作します。
+与えられたセッションの再生状態を操作します。
 
 ### リクエスト
 
 ```json5
 {
-  "state": "PLAY" // 再生の状態: PLAY または PAUSE または STOP
+  "state": "PLAY" // 再生の状態: PLAY または PAUSE
 }
 ```
 
@@ -234,13 +243,14 @@
 
 | code | message | 補足 |
 | ---- | -------- | -------- |
-| 400 | invalid device id | 指定されたデバイスIDはオフライン or 不正 |
+| 400 | invalid state     | 不正なstate |
+| 403 | active device not found | アクティブなデバイスが存在しないので操作ができない |
 | 404 | session not found | 指定されたidのセッションが存在しない |
 
 
 **注意(解決方法を調査中)**
 
-404で `"invalid device id"` が返ってきた時は、聞いていた端末でアプリを開き、再生ボタンを押して一時停止ボタンを押すという操作をしないと、一生再生できない。
+[Spotify APIの不思議な挙動](sotify_api_problem.md)
 
 ## POST /sessions/:id/queue
 

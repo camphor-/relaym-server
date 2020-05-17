@@ -27,3 +27,15 @@ type AlbumImage struct {
 type Artist struct {
 	Name string
 }
+
+// CurrentPlayingInfo は現在再生している情報を表します
+type CurrentPlayingInfo struct {
+	Playing  bool
+	Progress time.Duration
+	Track    *Track
+}
+
+// Remain は残りの再生時間を計算します。
+func (cpi *CurrentPlayingInfo) Remain() time.Duration {
+	return cpi.Track.Duration - cpi.Progress
+}

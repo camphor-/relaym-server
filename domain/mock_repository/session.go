@@ -62,6 +62,20 @@ func (mr *MockSessionMockRecorder) StoreSession(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreSession", reflect.TypeOf((*MockSession)(nil).StoreSession), arg0)
 }
 
+// Update mocks base method
+func (m *MockSession) Update(arg0 *entity.Session) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Update", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Update indicates an expected call of Update
+func (mr *MockSessionMockRecorder) Update(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockSession)(nil).Update), arg0)
+}
+
 // StoreQueueTrack mocks base method
 func (m *MockSession) StoreQueueTrack(arg0 *entity.QueueTrackToStore) error {
 	m.ctrl.T.Helper()

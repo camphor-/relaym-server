@@ -23,4 +23,10 @@ var (
 	ErrActiveDeviceNotFound = errors.New("active device not found")
 	// ErrNonPremium はユーザがプレミアム会員ではないエラーを表します。
 	ErrNonPremium = errors.New("non-premium user")
+
+	// ErrInvalidStateType は不正なstate typeであるというエラーを表します。
+	ErrInvalidStateType = errors.New("invalid state type")
+
+	// ErrChangeSessionStateNotPermit はセッションのステートの状態遷移が許可されていない場合のエラーを表します。
+	ErrChangeSessionStateNotPermit = errors.New("change session state is not permits")
 )

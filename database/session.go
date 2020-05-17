@@ -23,7 +23,7 @@ type SessionRepository struct {
 
 // NewSessionRepository はSessionRepositoryのポインタを生成する関数です
 func NewSessionRepository(dbMap *gorp.DbMap) *SessionRepository {
-	dbMap.AddTableWithName(sessionDTO{}, "sessions")
+	dbMap.AddTableWithName(sessionDTO{}, "sessions").SetKeys(false, "ID")
 	dbMap.AddTableWithName(queueTrackDTO{}, "queue_tracks")
 	return &SessionRepository{dbMap: dbMap}
 }
@@ -43,12 +43,17 @@ func (r *SessionRepository) FindByID(id string) (*entity.Session, error) {
 		return nil, fmt.Errorf("get queue tracks: %w", errOnGetQueue)
 	}
 
+	stateType, err := entity.NewStateType(dto.StateType)
+	if err != nil {
+		return nil, fmt.Errorf("find session: %w", entity.ErrInvalidStateType)
+	}
+
 	return &entity.Session{
 		ID:          dto.ID,
 		Name:        dto.Name,
 		CreatorID:   dto.CreatorID,
 		QueueHead:   dto.QueueHead,
-		StateType:   dto.StateType,
+		StateType:   stateType,
 		QueueTracks: queueTracks,
 	}, nil
 }
@@ -59,7 +64,7 @@ func (r *SessionRepository) StoreSession(session *entity.Session) error {
 		Name:      session.Name,
 		CreatorID: session.CreatorID,
 		QueueHead: session.QueueHead,
-		StateType: session.StateType,
+		StateType: session.StateType.String(),
 	}
 
 	if err := r.dbMap.Insert(dto); err != nil {
@@ -67,6 +72,26 @@ func (r *SessionRepository) StoreSession(session *entity.Session) error {
 			return fmt.Errorf("insert session: %w", entity.ErrSessionAlreadyExisted)
 		}
 		return fmt.Errorf("insert session: %w", err)
+	}
+	return nil
+}
+
+// Update はセッションの情報を更新します。
+func (r *SessionRepository) Update(session *entity.Session) error {
+	dto := &sessionDTO{
+		ID:        session.ID,
+		Name:      session.Name,
+		CreatorID: session.CreatorID,
+		QueueHead: session.QueueHead,
+		StateType: session.StateType.String(),
+	}
+
+	updateNum, err := r.dbMap.Update(dto)
+	if err != nil {
+		return fmt.Errorf("update session: %w", err)
+	}
+	if updateNum == 0 {
+		return fmt.Errorf("update session: %w", entity.ErrSessionNotFound)
 	}
 	return nil
 }

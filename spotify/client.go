@@ -16,7 +16,7 @@ type Client struct {
 
 // NewClient はClientのポインタを生成する関数です。
 func NewClient(cfg *config.Spotify) *Client {
-	auth := spotify.NewAuthenticator(cfg.RedirectURL(), spotify.ScopeUserReadPrivate, spotify.ScopeUserReadPlaybackState)
+	auth := spotify.NewAuthenticator(cfg.RedirectURL(), spotify.ScopeUserReadPrivate, spotify.ScopeUserReadPlaybackState, spotify.ScopeUserModifyPlaybackState)
 	auth.SetAuthInfo(cfg.ClientID(), cfg.ClientSecret())
 	return &Client{auth: auth}
 }

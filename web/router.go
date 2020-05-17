@@ -12,7 +12,7 @@ import (
 )
 
 // NewServer はミドルウェアやハンドラーが登録されたechoの構造体を返します。
-func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, trackUC *usecase.TrackUseCase, hub *ws.Hub) *echo.Echo {
+func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, sessionUC *usecase.SessionUseCase, trackUC *usecase.TrackUseCase, hub *ws.Hub) *echo.Echo {
 	e := echo.New()
 	e.Logger.SetLevel(log.INFO)
 	if config.IsLocal() {
@@ -21,7 +21,12 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, trackUC
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	e.Use(middleware.CSRF())
+	e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
+		Skipper: func(c echo.Context) bool {
+			token := c.Request().Header.Get("X-CSRF-Token")
+			return token != "relaym"
+		},
+	}))
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"relaym.local:3000"}, // TODO : 環境変数から読み込むようにする
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
@@ -29,6 +34,7 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, trackUC
 
 	userHandler := handler.NewUserHandler(userUC)
 	trackHandler := handler.NewTrackHandler(trackUC)
+	sessionHandler := handler.NewSessionHandler(sessionUC)
 
 	// TODO フロントエンドのURLを環境変数で指定する
 	authHandler := handler.NewAuthHandler(authUC, "http://relaym.local:3000")
@@ -48,5 +54,8 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, trackUC
 	user := authed.Group("/users")
 	user.GET("/me", userHandler.GetMe)
 	user.GET("/me/devices", userHandler.GetActiveDevices)
+
+	session := authed.Group("/sessions")
+	session.PUT("/:id/playback", sessionHandler.Playback)
 	return e
 }

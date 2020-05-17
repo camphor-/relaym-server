@@ -47,7 +47,7 @@ func TestClient_CurrentlyPlaying(t *testing.T) {
 				t.Errorf("CurrentlyPlaying() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got != tt.want {
+			if got.Playing != tt.want {
 				t.Errorf("CurrentlyPlaying() got = %v, want %v", got, tt.want)
 			}
 		})
@@ -80,7 +80,7 @@ func TestClient_Play(t *testing.T) {
 			ctx := context.Background()
 			ctx = service.SetTokenToContext(ctx, token)
 
-			if err := c.Play(ctx); (err != nil) != tt.wantErr {
+			if err := c.Play(ctx, ""); (err != nil) != tt.wantErr {
 				t.Errorf("Play() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -112,7 +112,7 @@ func TestClient_Pause(t *testing.T) {
 			}
 			ctx := context.Background()
 			ctx = service.SetTokenToContext(ctx, token)
-			if err := c.Pause(ctx); (err != nil) != tt.wantErr {
+			if err := c.Pause(ctx, ""); (err != nil) != tt.wantErr {
 				t.Errorf("Pause() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -148,7 +148,7 @@ func TestClient_AddToQueue(t *testing.T) {
 			ctx := context.Background()
 			ctx = service.SetTokenToContext(ctx, token)
 
-			if err := c.AddToQueue(ctx, tt.trackID); (err != nil) != tt.wantErr {
+			if err := c.AddToQueue(ctx, tt.trackID, ""); (err != nil) != tt.wantErr {
 				t.Errorf("AddToQueue() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})

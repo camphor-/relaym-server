@@ -152,6 +152,84 @@ func TestSessionRepository_StoreSession(t *testing.T) {
 	}
 }
 
+func TestSessionRepository_Update(t *testing.T) {
+	// Prepare
+	dbMap, err := NewDB()
+	if err != nil {
+		t.Fatal(err)
+	}
+	dbMap.AddTableWithName(sessionDTO{}, "sessions")
+	dbMap.AddTableWithName(userDTO{}, "users")
+	dbMap.AddTableWithName(queueTrackDTO{}, "queue_tracks")
+	truncateTable(t, dbMap)
+	user := &userDTO{
+		ID:            "existing_user",
+		SpotifyUserID: "existing_user_spotify",
+		DisplayName:   "existing_user_display_name",
+	}
+	session := &sessionDTO{
+		ID:        "existing_session_id",
+		Name:      "existing_session_name",
+		CreatorID: "existing_user",
+		QueueHead: 0,
+		StateType: "PAUSE",
+	}
+	if err := dbMap.Insert(user, session); err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name    string
+		session *entity.Session
+		wantErr bool
+	}{
+		{
+			name: "既に存在するセッションの情報を更新できる",
+			session: &entity.Session{
+				ID:          "existing_session_id",
+				Name:        "existing_session_name",
+				CreatorID:   "existing_user",
+				QueueHead:   1,
+				StateType:   entity.Play,
+				QueueTracks: []*entity.QueueTrack{},
+			},
+			wantErr: false,
+		},
+		{
+			name: "存在しないセッションはエラーになる",
+			session: &entity.Session{
+				ID:          "not_found_id",
+				Name:        "not_found_id_names",
+				CreatorID:   "existing_user",
+				QueueHead:   1,
+				StateType:   entity.Play,
+				QueueTracks: []*entity.QueueTrack{},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := NewSessionRepository(dbMap)
+			if err := r.Update(tt.session); (err != nil) != tt.wantErr {
+				t.Errorf("Update() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			if !tt.wantErr {
+				got, err := r.FindByID(tt.session.ID)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				if !cmp.Equal(tt.session, got) {
+					t.Errorf("Update() diff = %v", cmp.Diff(got, tt.session))
+
+				}
+			}
+		})
+	}
+}
+
 func TestSessionRepository_StoreQueueTrack(t *testing.T) {
 	// Prepare
 	dbMap, err := NewDB()

@@ -8,5 +8,6 @@ import "github.com/camphor-/relaym-server/domain/entity"
 type Session interface {
 	FindByID(id string) (*entity.Session, error)
 	StoreSession(*entity.Session) error
+	Update(*entity.Session) error
 	StoreQueueTrack(*entity.QueueTrackToStore) error
 }
