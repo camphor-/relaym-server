@@ -2,12 +2,14 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/event"
 	"github.com/camphor-/relaym-server/domain/repository"
+	"github.com/camphor-/relaym-server/domain/service"
 	"github.com/camphor-/relaym-server/domain/spotify"
 )
 
@@ -17,15 +19,17 @@ var syncCheckOffset = 5 * time.Second
 type SessionUseCase struct {
 	tm        *entity.SyncCheckTimerManager
 	repo      repository.Session
+	userRepo  repository.User
 	playerCli spotify.Player
 	pusher    event.Pusher
 }
 
 // NewSessionUseCase はSessionUseCaseのポインタを生成します。
-func NewSessionUseCase(repo repository.Session, playerCli spotify.Player, pusher event.Pusher) *SessionUseCase {
+func NewSessionUseCase(repo repository.Session, userRepo repository.User, playerCli spotify.Player, pusher event.Pusher) *SessionUseCase {
 	return &SessionUseCase{
 		tm:        entity.NewSyncCheckTimerManager(),
 		repo:      repo,
+		userRepo:  userRepo,
 		playerCli: playerCli,
 		pusher:    pusher,
 	}
@@ -147,4 +151,33 @@ func (s *SessionUseCase) startSyncCheck(ctx context.Context, sessionID string) {
 
 		}
 	}
+}
+
+// SetDevice は指定されたidのセッションの作成者と再生する端末を紐付けて再生するデバイスを指定します。
+func (s *SessionUseCase) SetDevice(ctx context.Context, sessionID string, deviceID string) error {
+	userID, ok := service.GetUserIDFromContext(ctx)
+	if !ok {
+		return errors.New("get user id from context")
+	}
+
+	sess, err := s.repo.FindByID(sessionID)
+	if err != nil {
+		return fmt.Errorf("find session id=%s: %w", sessionID, err)
+	}
+
+	if !sess.IsCreator(userID) {
+		return fmt.Errorf("userID=%s creatorID=%s: %w", userID, sess.CreatorID, entity.ErrUserIsNotSessionCreator)
+	}
+
+	creator, err := s.userRepo.FindByID(sess.CreatorID)
+	if err != nil {
+		return fmt.Errorf("find creator id=%s: %w", sess.CreatorID, err)
+	}
+
+	creator.DeviceID = deviceID
+	if err := s.userRepo.Update(creator); err != nil {
+		return fmt.Errorf("update creator id=%s: %w", sess.CreatorID, err)
+	}
+
+	return nil
 }

@@ -21,6 +21,11 @@ func (s *Session) MoveToPlay() error {
 	return fmt.Errorf("state type from %s to Play: %w", s.StateType, ErrChangeSessionStateNotPermit)
 }
 
+// IsCreator は指定されたユーザがセッションの作成者かどうか返します。
+func (s *Session) IsCreator(userID string) bool {
+	return s.CreatorID == userID
+}
+
 type StateType string
 
 const (

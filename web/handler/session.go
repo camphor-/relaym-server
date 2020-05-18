@@ -51,3 +51,36 @@ func (h *SessionHandler) Playback(c echo.Context) error {
 	}
 	return c.NoContent(http.StatusAccepted)
 }
+
+// SetDevice PUT /sessions/:id/devicesに対応するハンドラーです。
+func (h *SessionHandler) SetDevice(c echo.Context) error {
+	type reqJSON struct {
+		DeviceID string `json:"device_id"`
+	}
+	req := new(reqJSON)
+	if err := c.Bind(req); err != nil {
+		c.Logger().Debugf("bind: %v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, "empty device id")
+	}
+
+	if req.DeviceID == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "empty device id")
+	}
+
+	ctx := c.Request().Context()
+	sessionID := c.Param("id")
+
+	if err := h.uc.SetDevice(ctx, sessionID, req.DeviceID); err != nil {
+		switch {
+		case errors.Is(err, entity.ErrSessionNotFound):
+			return echo.NewHTTPError(http.StatusNotFound, entity.ErrSessionNotFound.Error())
+		case errors.Is(err, entity.ErrUserIsNotSessionCreator):
+			return echo.NewHTTPError(http.StatusForbidden, entity.ErrUserIsNotSessionCreator.Error())
+
+		}
+		c.Logger().Errorf("set device id=%s: %v", req.DeviceID, err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
