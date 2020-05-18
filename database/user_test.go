@@ -16,7 +16,12 @@ func TestUserRepository_FindByID(t *testing.T) {
 	}
 	dbMap.AddTableWithName(userDTO{}, "users")
 	truncateTable(t, dbMap)
-	if err := dbMap.Insert(&userDTO{ID: "existing_user", SpotifyUserID: "existing_user_spotify", DisplayName: "display_name"}); err != nil {
+	if err := dbMap.Insert(&userDTO{
+		ID:            "existing_user",
+		SpotifyUserID: "existing_user_spotify",
+		DisplayName:   "display_name",
+		DeviceID:      "device_id",
+	}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -33,6 +38,7 @@ func TestUserRepository_FindByID(t *testing.T) {
 				ID:            "existing_user",
 				SpotifyUserID: "existing_user_spotify",
 				DisplayName:   "display_name",
+				DeviceID:      "device_id",
 			},
 			wantErr: nil,
 		},
@@ -67,7 +73,12 @@ func TestUserRepository_FindBySpotifyUserID(t *testing.T) {
 	}
 	dbMap.AddTableWithName(userDTO{}, "users")
 	truncateTable(t, dbMap)
-	if err := dbMap.Insert(&userDTO{ID: "existing_user", SpotifyUserID: "existing_user_spotify", DisplayName: "display_name"}); err != nil {
+	if err := dbMap.Insert(&userDTO{
+		ID:            "existing_user",
+		SpotifyUserID: "existing_user_spotify",
+		DisplayName:   "display_name",
+		DeviceID:      "device_id",
+	}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -84,6 +95,7 @@ func TestUserRepository_FindBySpotifyUserID(t *testing.T) {
 				ID:            "existing_user",
 				SpotifyUserID: "existing_user_spotify",
 				DisplayName:   "display_name",
+				DeviceID:      "device_id",
 			},
 			wantErr: nil,
 		},
@@ -117,7 +129,12 @@ func TestUserRepository_Store(t *testing.T) {
 	}
 	dbMap.AddTableWithName(userDTO{}, "users")
 	truncateTable(t, dbMap)
-	if err := dbMap.Insert(&userDTO{ID: "existing_user", SpotifyUserID: "existing_user_spotify"}); err != nil {
+	if err := dbMap.Insert(&userDTO{
+		ID:            "existing_user",
+		SpotifyUserID: "existing_user_spotify",
+		DisplayName:   "display_name",
+		DeviceID:      "device_id",
+	}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -132,6 +149,7 @@ func TestUserRepository_Store(t *testing.T) {
 				ID:            "new_user",
 				SpotifyUserID: "new_spotify_user",
 				DisplayName:   "displayName",
+				DeviceID:      "device_id",
 			},
 			wantErr: nil,
 		},
@@ -141,6 +159,7 @@ func TestUserRepository_Store(t *testing.T) {
 				ID:            "new_user",
 				SpotifyUserID: "new_spotify_user",
 				DisplayName:   "displayName",
+				DeviceID:      "device_id",
 			},
 			wantErr: entity.ErrUserAlreadyExisted,
 		},

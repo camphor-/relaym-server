@@ -8,6 +8,7 @@ type (
 		ID            string // IDは外部のパッケージで書き換えられると困るのでprivateにする
 		SpotifyUserID string
 		DisplayName   string
+		DeviceID      string
 	}
 
 	// SpotifyUser はSpotify APIのユーザ情報を表します。
@@ -24,6 +25,7 @@ func NewUser(spotifyUserID, displayName string) *User {
 		ID:            uuid.New().String(),
 		SpotifyUserID: spotifyUserID,
 		DisplayName:   displayName,
+		DeviceID:      "",
 	}
 }
 
