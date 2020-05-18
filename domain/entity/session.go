@@ -14,11 +14,9 @@ type Session struct {
 
 // MoveToPlay はセッションのStateTypeをPlayに状態遷移します。
 func (s *Session) MoveToPlay() error {
-	if s.StateType == Pause || s.StateType == Stop {
-		s.StateType = Play
-		return nil
-	}
-	return fmt.Errorf("state type from %s to Play: %w", s.StateType, ErrChangeSessionStateNotPermit)
+	s.StateType = Play
+	return nil
+
 }
 
 // MoveToPause はセッションのStateTypeをPauseに状態遷移します。
