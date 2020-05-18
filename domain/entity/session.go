@@ -21,6 +21,15 @@ func (s *Session) MoveToPlay() error {
 	return fmt.Errorf("state type from %s to Play: %w", s.StateType, ErrChangeSessionStateNotPermit)
 }
 
+// MoveToPause はセッションのStateTypeをPauseに状態遷移します。
+func (s *Session) MoveToPause() error {
+	if s.StateType == Play || s.StateType == Pause {
+		s.StateType = Pause
+		return nil
+	}
+	return fmt.Errorf("state type from %s to Play: %w", s.StateType, ErrChangeSessionStateNotPermit)
+}
+
 type StateType string
 
 const (

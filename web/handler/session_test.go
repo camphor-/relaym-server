@@ -105,6 +105,77 @@ func TestSessionHandler_Playback(t *testing.T) {
 			wantErr:  false,
 			wantCode: http.StatusAccepted,
 		},
+		{
+			name:                "PAUSEで指定されたidのセッションが存在しないとき404",
+			sessionID:           "notFoundSessionID",
+			body:                `{"state": "PAUSE"}`,
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {},
+			prepareMockPusherFn: func(m *mock_event.MockPusher) {},
+			prepareMockRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("notFoundSessionID").Return(nil, entity.ErrSessionNotFound)
+			},
+			wantErr:  true,
+			wantCode: http.StatusNotFound,
+		},
+		{
+			name:      "PAUSEで再生するデバイスがオフラインのときは、既に再生が止まっているはずなので202を返す",
+			sessionID: "sessionID",
+			body:      `{"state": "PAUSE"}`,
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().Pause(gomock.Any(), "").Return(entity.ErrActiveDeviceNotFound)
+			},
+			prepareMockPusherFn: func(m *mock_event.MockPusher) {},
+			prepareMockRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+					ID:          "sessionID",
+					Name:        "session_name",
+					CreatorID:   "creator_id",
+					QueueHead:   0,
+					StateType:   "PAUSE",
+					QueueTracks: nil,
+				}, nil)
+				m.EXPECT().Update(&entity.Session{
+					ID:          "sessionID",
+					Name:        "session_name",
+					CreatorID:   "creator_id",
+					QueueHead:   0,
+					StateType:   "PAUSE",
+					QueueTracks: nil,
+				}).Return(nil)
+			},
+			wantErr:  false,
+			wantCode: http.StatusAccepted,
+		},
+		{
+			name:      "PAUSEで正しく再生リクエストが処理されたとき202",
+			sessionID: "sessionID",
+			body:      `{"state": "PAUSE"}`,
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().Pause(gomock.Any(), "").Return(nil)
+			},
+			prepareMockPusherFn: func(m *mock_event.MockPusher) {
+			},
+			prepareMockRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+					ID:          "sessionID",
+					Name:        "session_name",
+					CreatorID:   "creator_id",
+					QueueHead:   0,
+					StateType:   "PLAY",
+					QueueTracks: nil,
+				}, nil)
+				m.EXPECT().Update(&entity.Session{
+					ID:          "sessionID",
+					Name:        "session_name",
+					CreatorID:   "creator_id",
+					QueueHead:   0,
+					StateType:   "PAUSE",
+					QueueTracks: nil,
+				}).Return(nil)
+			},
+			wantErr:  false,
+			wantCode: http.StatusAccepted,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -137,7 +208,7 @@ func TestSessionHandler_Playback(t *testing.T) {
 			}
 
 			// ステータスコードのチェック
-			if er, ok := err.(*echo.HTTPError); (ok && er.Code != tt.wantCode) || (!ok && rec.Code != tt.wantCode) {
+			if er, ok := err.(*echo.HTTPError); ok && er.Code != tt.wantCode {
 				t.Errorf("Playback() code = %d, want = %d", rec.Code, tt.wantCode)
 			}
 		})
