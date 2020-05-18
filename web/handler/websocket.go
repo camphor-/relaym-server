@@ -29,7 +29,7 @@ func NewWebSocketHandler(hub *ws.Hub) *WebSocketHandler {
 		}}
 }
 
-// GetMe は GET /ws/:id に対応するハンドラーです。
+// WebSocket は GET /ws/:id に対応するハンドラーです。
 func (h *WebSocketHandler) WebSocket(c echo.Context) error {
 	sessionID := c.Param("id")
 
