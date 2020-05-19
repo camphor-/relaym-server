@@ -31,6 +31,20 @@ func NewSessionUseCase(repo repository.Session, playerCli spotify.Player, pusher
 	}
 }
 
+// CreateSession は与えられたセッション名のセッションを作成します。
+func (s *SessionUseCase) CreateSession(sessionName string, creatorID string) (*entity.Session, error) {
+	newSession, errNewSession := entity.NewSession(sessionName, creatorID)
+	if errNewSession != nil {
+		return nil, fmt.Errorf("CreateSession: %w", errNewSession)
+	}
+
+	err := s.repo.StoreSession(newSession)
+	if err != nil {
+		return nil, fmt.Errorf("createSession sessionName=%s: %w", sessionName, err)
+	}
+	return newSession, nil
+}
+
 // ChangePlaybackState は与えられたセッションの再生状態を操作します。
 func (s *SessionUseCase) ChangePlaybackState(ctx context.Context, sessionID string, st entity.StateType) error {
 	switch st {
