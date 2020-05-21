@@ -17,20 +17,13 @@ type Session struct {
 }
 
 type SessionWithUser struct {
-	ID          string
-	Name        string
-	Creator     *User
-	StateType   StateType
-	QueueHead   int
-	QueueTracks []*QueueTrack
+	*Session
+	Creator *User
 }
 
 // NewSession はSessionのポインタを生成する関数です。
 func NewSession(name string, creatorID string) (*Session, error) {
-	stateType, err := NewStateType("STOP")
-	if err != nil {
-		return nil, fmt.Errorf("NewSession: %w", err)
-	}
+	stateType, _ := NewStateType("STOP")
 	return &Session{
 		ID:          uuid.New().String(),
 		Name:        name,
@@ -44,12 +37,15 @@ func NewSession(name string, creatorID string) (*Session, error) {
 // SessionToSessionWithUser はSession(ポインタ)からSessionWithUser(ポインタ)を生成します
 func SessionToSessionWithUser(session *Session, creator *User) *SessionWithUser {
 	return &SessionWithUser{
-		ID:          session.ID,
-		Name:        session.Name,
-		Creator:     creator,
-		StateType:   session.StateType,
-		QueueHead:   session.QueueHead,
-		QueueTracks: session.QueueTracks,
+		Session: &Session{
+			ID:          session.ID,
+			Name:        session.Name,
+			CreatorID:   creator.ID,
+			StateType:   session.StateType,
+			QueueHead:   session.QueueHead,
+			QueueTracks: session.QueueTracks,
+		},
+		Creator: creator,
 	}
 }
 
