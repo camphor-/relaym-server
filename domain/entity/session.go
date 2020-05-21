@@ -16,11 +16,20 @@ type Session struct {
 	QueueTracks []*QueueTrack
 }
 
+type SessionWithUser struct {
+	ID          string
+	Name        string
+	Creator     *User
+	StateType   StateType
+	QueueHead   int
+	QueueTracks []*QueueTrack
+}
+
 // NewSession はSessionのポインタを生成する関数です。
 func NewSession(name string, creatorID string) (*Session, error) {
 	stateType, err := NewStateType("STOP")
 	if err != nil {
-		return nil, fmt.Errorf("NewStateType: %w", err)
+		return nil, fmt.Errorf("NewSession: %w", err)
 	}
 	return &Session{
 		ID:          uuid.New().String(),
@@ -30,6 +39,18 @@ func NewSession(name string, creatorID string) (*Session, error) {
 		StateType:   stateType,
 		QueueTracks: nil,
 	}, nil
+}
+
+// SessionToSessionWithUser はSession構造体(ポインタ)からSessionWithUser(ポインタ)を生成します
+func SessionToSessionWithUser(session *Session, creator *User) *SessionWithUser {
+	return &SessionWithUser{
+		ID:          session.ID,
+		Name:        session.Name,
+		Creator:     creator,
+		StateType:   session.StateType,
+		QueueHead:   session.QueueHead,
+		QueueTracks: session.QueueTracks,
+	}
 }
 
 // MoveToPlay はセッションのStateTypeをPlayに状態遷移します。
