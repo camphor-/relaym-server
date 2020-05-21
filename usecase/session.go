@@ -49,7 +49,7 @@ func (s *SessionUseCase) CreateSession(sessionName string, creatorID string) (*e
 	if errWithStore != nil {
 		return nil, fmt.Errorf("CreateSession sessionName=%s: %w", sessionName, errWithStore)
 	}
-	return entity.SessionToSessionWithUser(newSession, creator), nil
+	return entity.NewSessionWithUser(newSession, creator), nil
 }
 
 // ChangePlaybackState は与えられたセッションの再生状態を操作します。

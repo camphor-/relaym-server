@@ -34,8 +34,8 @@ func NewSession(name string, creatorID string) (*Session, error) {
 	}, nil
 }
 
-// SessionToSessionWithUser はSession(ポインタ)からSessionWithUser(ポインタ)を生成します
-func SessionToSessionWithUser(session *Session, creator *User) *SessionWithUser {
+// NewSessionWithUser はSession(ポインタ)からSessionWithUser(ポインタ)を生成します
+func NewSessionWithUser(session *Session, creator *User) *SessionWithUser {
 	return &SessionWithUser{
 		Session: &Session{
 			ID:          session.ID,
