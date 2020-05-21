@@ -45,7 +45,7 @@ func (s *SessionUseCase) CreateSession(sessionName string, creatorID string) (*e
 		return nil, fmt.Errorf("NewSession sessionName=%s: %w", sessionName, err)
 	}
 
-	err := s.sessionRepo.StoreSession(newSession)
+	err = s.sessionRepo.StoreSession(newSession)
 	if err != nil {
 		return nil, fmt.Errorf("StoreSession sessionName=%s: %w", sessionName, err)
 	}
