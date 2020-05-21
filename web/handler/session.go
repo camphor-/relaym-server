@@ -44,19 +44,28 @@ func (h *SessionHandler) PostSession(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	return c.JSON(http.StatusOK, &sessionJSON{
+	return c.JSON(http.StatusCreated, toSessionRes(session))
+}
+
+func toSessionRes(session *entity.SessionWithUser) *sessionRes {
+	return &sessionRes{
 		ID:   session.ID,
 		Name: session.Name,
 		Creator: creatorJSON{
-			ID:          "",
-			DisplayName: "",
+			ID:          session.Creator.ID,
+			DisplayName: session.Creator.DisplayName,
 		},
 		Playback: playbackJSON{
-			State:  stateJSON{},
-			Device: deviceJSON{},
+			State: stateJSON{
+				Type: "STOP",
+			},
+			Device: nil, //TODO: deviceを取得し、deviceJSONを作成する
 		},
-		Queue: queueJSON{},
-	})
+		Queue: queueJSON{
+			Head:   session.QueueHead,
+			Tracks: nil, //TODO: queueTrackのsessionIDからsessionを取得し、trackJSONを作成する
+		},
+	}
 }
 
 // Playback は PUT /sessions/:id/playback に対応するハンドラーです。
@@ -91,7 +100,7 @@ func (h *SessionHandler) Playback(c echo.Context) error {
 	return c.NoContent(http.StatusAccepted)
 }
 
-type sessionJSON struct {
+type sessionRes struct {
 	ID       string       `json:"id"`
 	Name     string       `json:"name"`
 	Creator  creatorJSON  `json:"creator"`
@@ -105,8 +114,8 @@ type creatorJSON struct {
 }
 
 type playbackJSON struct {
-	State  stateJSON  `json:"state"`
-	Device deviceJSON `json:"device"`
+	State  stateJSON     `json:"state"`
+	Device []*deviceJSON `json:"device"`
 }
 type stateJSON struct {
 	Type string `json:"type"`
