@@ -37,17 +37,17 @@ func NewSessionUseCase(sessionRepo repository.Session, userRepo repository.User,
 func (s *SessionUseCase) CreateSession(sessionName string, creatorID string) (*entity.SessionWithUser, error) {
 	creator, err := s.userRepo.FindByID(creatorID)
 	if err != nil {
-		return nil, fmt.Errorf("CreateSession: %w", err)
+		return nil, fmt.Errorf("CreateSession sessionName=%s: %w", sessionName, err)
 	}
 
 	newSession, errNewSession := entity.NewSession(sessionName, creatorID)
 	if errNewSession != nil {
-		return nil, fmt.Errorf("CreateSession: %w", errNewSession)
+		return nil, fmt.Errorf("CreateSession sessionName=%s: %w", sessionName, errNewSession)
 	}
 
 	errWithStore := s.sessionRepo.StoreSession(newSession)
 	if errWithStore != nil {
-		return nil, fmt.Errorf("createSession sessionName=%s: %w", sessionName, errWithStore)
+		return nil, fmt.Errorf("CreateSession sessionName=%s: %w", sessionName, errWithStore)
 	}
 	return entity.SessionToSessionWithUser(newSession, creator), nil
 }
