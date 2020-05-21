@@ -23,13 +23,12 @@ type SessionWithUser struct {
 
 // NewSession はSessionのポインタを生成する関数です。
 func NewSession(name string, creatorID string) (*Session, error) {
-	stateType, _ := NewStateType("STOP")
 	return &Session{
 		ID:          uuid.New().String(),
 		Name:        name,
 		CreatorID:   creatorID,
 		QueueHead:   0,
-		StateType:   stateType,
+		StateType:   Stop,
 		QueueTracks: nil,
 	}, nil
 }
