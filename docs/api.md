@@ -91,7 +91,6 @@ X-CSRF-Token: relaym
 | code | message | 補足 |
 | ---- | -------- | -------- |
 | 400 | empty name | セッション名がリクエストに含まれていない | 
-| 403 | already entered other session    | 既に他のセッションに参加している |
 
 
 
