@@ -40,9 +40,9 @@ func (s *SessionUseCase) CreateSession(sessionName string, creatorID string) (*e
 		return nil, fmt.Errorf("CreateSession sessionName=%s: %w", sessionName, err)
 	}
 
-	newSession, errNewSession := entity.NewSession(sessionName, creatorID)
-	if errNewSession != nil {
-		return nil, fmt.Errorf("CreateSession sessionName=%s: %w", sessionName, errNewSession)
+	newSession, err := entity.NewSession(sessionName, creatorID)
+	if err != nil {
+		return nil, fmt.Errorf("NewSession sessionName=%s: %w", sessionName, err)
 	}
 
 	err := s.sessionRepo.StoreSession(newSession)
