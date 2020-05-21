@@ -131,7 +131,7 @@ func TestTrackHandler_SearchTracks(t *testing.T) {
 			// httptestの準備
 			e := echo.New()
 			q := tt.prepareQueryFn()
-			req := httptest.NewRequest(http.MethodPost, "/?"+q.Encode(), nil)
+			req := httptest.NewRequest(http.MethodGet, "/?"+q.Encode(), nil)
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
