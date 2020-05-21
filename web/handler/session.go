@@ -44,10 +44,10 @@ func (h *SessionHandler) PostSession(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	return c.JSON(http.StatusCreated, toSessionRes(session))
+	return c.JSON(http.StatusCreated, h.toSessionRes(session))
 }
 
-func toSessionRes(session *entity.SessionWithUser) *sessionRes {
+func (h *SessionHandler) toSessionRes(session *entity.SessionWithUser) *sessionRes {
 	return &sessionRes{
 		ID:   session.ID,
 		Name: session.Name,
