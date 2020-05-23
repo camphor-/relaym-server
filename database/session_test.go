@@ -182,7 +182,14 @@ func TestSessionRepository_Update(t *testing.T) {
 		StateType: "PAUSE",
 		DeviceID:  "device_id",
 	}
-	if err := dbMap.Insert(user, session); err != nil {
+	sameFieldSession := &sessionDTO{
+		ID:        "same_field_session_id",
+		Name:      "same_field_session_name",
+		CreatorID: "existing_user",
+		QueueHead: 0,
+		StateType: "PAUSE",
+	}
+	if err := dbMap.Insert(user, session, sameFieldSession); err != nil {
 		t.Fatal(err)
 	}
 
@@ -205,16 +212,16 @@ func TestSessionRepository_Update(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "存在しないセッションはエラーになる",
+			name: "フィールドの値が全てDBの値を一致するセッションで更新してもエラーにならない",
 			session: &entity.Session{
-				ID:          "not_found_id",
-				Name:        "not_found_id_names",
+				ID:          "same_field_session_id",
+				Name:        "same_field_session_name",
 				CreatorID:   "existing_user",
-				QueueHead:   1,
-				StateType:   entity.Play,
+				QueueHead:   0,
+				StateType:   entity.Pause,
 				QueueTracks: []*entity.QueueTrack{},
 			},
-			wantErr: true,
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {

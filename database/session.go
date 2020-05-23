@@ -89,12 +89,8 @@ func (r *SessionRepository) Update(session *entity.Session) error {
 		DeviceID:  session.DeviceID,
 	}
 
-	updateNum, err := r.dbMap.Update(dto)
-	if err != nil {
+	if _, err := r.dbMap.Update(dto); err != nil {
 		return fmt.Errorf("update session: %w", err)
-	}
-	if updateNum == 0 {
-		return fmt.Errorf("update session: %w", entity.ErrSessionNotFound)
 	}
 	return nil
 }

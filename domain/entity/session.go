@@ -53,11 +53,18 @@ func NewSessionWithUser(session *Session, creator *User) *SessionWithUser {
 
 // MoveToPlay はセッションのStateTypeをPlayに状態遷移します。
 func (s *Session) MoveToPlay() error {
-	if s.StateType == Pause || s.StateType == Stop {
-		s.StateType = Play
+	s.StateType = Play
+	return nil
+
+}
+
+// MoveToPause はセッションのStateTypeをPauseに状態遷移します。
+func (s *Session) MoveToPause() error {
+	if s.StateType == Play || s.StateType == Pause {
+		s.StateType = Pause
 		return nil
 	}
-	return fmt.Errorf("state type from %s to Play: %w", s.StateType, ErrChangeSessionStateNotPermit)
+	return fmt.Errorf("state type from %s to Pause: %w", s.StateType, ErrChangeSessionStateNotPermit)
 }
 
 // IsCreator は指定されたユーザがセッションの作成者かどうか返します。

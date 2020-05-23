@@ -101,14 +101,26 @@ func (s *SessionUseCase) play(ctx context.Context, sessionID string) error {
 
 // Pause はセッションのstateをPLAY→PAUSEに変更して曲の再生を一時停止します。
 func (s *SessionUseCase) pause(ctx context.Context, sessionID string) error {
-	// TODO : セッションを取得
-	// sess ,err := repo.GetByID(sessionID)
+	sess, err := s.sessionRepo.FindByID(sessionID)
+	if err != nil {
+		return fmt.Errorf("find session id=%s: %w", sessionID, err)
+	}
+
+	// TODO : デバイスIDをどっかから読み込む
+	if err := s.playerCli.Pause(ctx, ""); err != nil && !errors.Is(err, entity.ErrActiveDeviceNotFound) {
+		return fmt.Errorf("call pause api: %w", err)
+	}
 
 	s.tm.StopTimer(sessionID)
 
-	// TODO : セッションのステートを書き換え
-	// err := sess.MoveToPause()
-	// err := repo.Store(sess)
+	if err := sess.MoveToPause(); err != nil {
+		return fmt.Errorf("move to pause id=%s: %w", sessionID, err)
+	}
+
+	if err := s.sessionRepo.Update(sess); err != nil {
+		return fmt.Errorf("update session id=%s: %w", sessionID, err)
+	}
+
 	return nil
 }
 
