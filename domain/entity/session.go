@@ -25,7 +25,7 @@ func (s *Session) MoveToPause() error {
 		s.StateType = Pause
 		return nil
 	}
-	return fmt.Errorf("state type from %s to Play: %w", s.StateType, ErrChangeSessionStateNotPermit)
+	return fmt.Errorf("state type from %s to Pause: %w", s.StateType, ErrChangeSessionStateNotPermit)
 }
 
 type StateType string
