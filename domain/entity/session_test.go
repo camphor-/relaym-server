@@ -1,6 +1,50 @@
 package entity
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+)
+
+func TestNewSession(t *testing.T) {
+	t.Parallel()
+
+	session := &Session{
+		ID:          "ID",
+		Name:        "VeryGoodSession",
+		CreatorID:   "VeryCreativePersonID",
+		StateType:   Stop,
+		QueueHead:   0,
+		QueueTracks: nil,
+	}
+
+	tests := []struct {
+		name        string
+		sessionName string
+		creatorID   string
+		want        *Session
+	}{
+		{
+			name:        "正常系",
+			sessionName: "VeryGoodSession",
+			creatorID:   "VeryCreativePersonID",
+			want:        session,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := NewSession(tt.sessionName, tt.creatorID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			opts := []cmp.Option{cmpopts.IgnoreFields(Session{}, "ID")}
+			if !cmp.Equal(got, tt.want, opts...) {
+				t.Errorf("NewSession() diff = %v", cmp.Diff(got, tt.want, opts...))
+			}
+		})
+	}
+}
 
 func TestNewStateType(t *testing.T) {
 	t.Parallel()
