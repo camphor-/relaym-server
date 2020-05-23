@@ -28,6 +28,7 @@ func TestSessionRepository_FindByID(t *testing.T) {
 		CreatorID: "existing_user",
 		QueueHead: 0,
 		StateType: "PLAY",
+		DeviceID:  "device_id",
 	}
 	queueTrack := &queueTrackDTO{
 		Index:     0,
@@ -51,8 +52,9 @@ func TestSessionRepository_FindByID(t *testing.T) {
 				ID:        "existing_session_id",
 				Name:      "existing_session_name",
 				CreatorID: "existing_user",
-				QueueHead: 0,
+				DeviceID:  "device_id",
 				StateType: "PLAY",
+				QueueHead: 0,
 				QueueTracks: []*entity.QueueTrack{
 					{
 						Index:     0,
@@ -107,6 +109,7 @@ func TestSessionRepository_StoreSession(t *testing.T) {
 		CreatorID: "existing_user",
 		QueueHead: 0,
 		StateType: "PLAY",
+		DeviceID:  "device_id",
 	}
 	if err := dbMap.Insert(user, session); err != nil {
 		t.Fatal(err)
@@ -120,22 +123,26 @@ func TestSessionRepository_StoreSession(t *testing.T) {
 		{
 			name: "新規sessionを正しく保存できる",
 			session: &entity.Session{
-				ID:        "new_session_id",
-				Name:      "new_session_name",
-				CreatorID: "existing_user",
-				QueueHead: 0,
-				StateType: "PLAY",
+				ID:          "new_session_id",
+				Name:        "new_session_name",
+				CreatorID:   "existing_user",
+				DeviceID:    "new_device_id",
+				StateType:   "PLAY",
+				QueueHead:   0,
+				QueueTracks: nil,
 			},
 			wantErr: nil,
 		},
 		{
 			name: "登録済みのsessionの場合ErrSessionAlreadyExistedを返す",
 			session: &entity.Session{
-				ID:        "existing_session_id",
-				Name:      "existing_session_name",
-				CreatorID: "existing_user",
-				QueueHead: 0,
-				StateType: "PLAY",
+				ID:          "existing_session_id",
+				Name:        "existing_session_name",
+				CreatorID:   "existing_user",
+				DeviceID:    "device_id",
+				StateType:   "PLAY",
+				QueueHead:   0,
+				QueueTracks: nil,
 			},
 			wantErr: entity.ErrSessionAlreadyExisted,
 		},
@@ -173,6 +180,7 @@ func TestSessionRepository_Update(t *testing.T) {
 		CreatorID: "existing_user",
 		QueueHead: 0,
 		StateType: "PAUSE",
+		DeviceID:  "device_id",
 	}
 	if err := dbMap.Insert(user, session); err != nil {
 		t.Fatal(err)
@@ -189,8 +197,9 @@ func TestSessionRepository_Update(t *testing.T) {
 				ID:          "existing_session_id",
 				Name:        "existing_session_name",
 				CreatorID:   "existing_user",
-				QueueHead:   1,
+				DeviceID:    "new_device_id",
 				StateType:   entity.Play,
+				QueueHead:   1,
 				QueueTracks: []*entity.QueueTrack{},
 			},
 			wantErr: false,

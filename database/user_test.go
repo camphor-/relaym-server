@@ -20,7 +20,6 @@ func TestUserRepository_FindByID(t *testing.T) {
 		ID:            "existing_user",
 		SpotifyUserID: "existing_user_spotify",
 		DisplayName:   "display_name",
-		DeviceID:      "device_id",
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -38,7 +37,6 @@ func TestUserRepository_FindByID(t *testing.T) {
 				ID:            "existing_user",
 				SpotifyUserID: "existing_user_spotify",
 				DisplayName:   "display_name",
-				DeviceID:      "device_id",
 			},
 			wantErr: nil,
 		},
@@ -77,7 +75,6 @@ func TestUserRepository_FindBySpotifyUserID(t *testing.T) {
 		ID:            "existing_user",
 		SpotifyUserID: "existing_user_spotify",
 		DisplayName:   "display_name",
-		DeviceID:      "device_id",
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -95,7 +92,6 @@ func TestUserRepository_FindBySpotifyUserID(t *testing.T) {
 				ID:            "existing_user",
 				SpotifyUserID: "existing_user_spotify",
 				DisplayName:   "display_name",
-				DeviceID:      "device_id",
 			},
 			wantErr: nil,
 		},
@@ -133,7 +129,6 @@ func TestUserRepository_Store(t *testing.T) {
 		ID:            "existing_user",
 		SpotifyUserID: "existing_user_spotify",
 		DisplayName:   "display_name",
-		DeviceID:      "device_id",
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -149,7 +144,6 @@ func TestUserRepository_Store(t *testing.T) {
 				ID:            "new_user",
 				SpotifyUserID: "new_spotify_user",
 				DisplayName:   "displayName",
-				DeviceID:      "device_id",
 			},
 			wantErr: nil,
 		},
@@ -159,7 +153,6 @@ func TestUserRepository_Store(t *testing.T) {
 				ID:            "new_user",
 				SpotifyUserID: "new_spotify_user",
 				DisplayName:   "displayName",
-				DeviceID:      "device_id",
 			},
 			wantErr: entity.ErrUserAlreadyExisted,
 		},
@@ -189,13 +182,11 @@ func TestUserRepository_Update(t *testing.T) {
 		ID:            "existing_user",
 		SpotifyUserID: "existing_user_spotify",
 		DisplayName:   "existing_user_display_name",
-		DeviceID:      "existing_device_id",
 	}
 	sameFieldUser := &userDTO{
 		ID:            "user_id",
 		SpotifyUserID: "user_spotify_id",
 		DisplayName:   "display_name",
-		DeviceID:      "device_id",
 	}
 	if err := dbMap.Insert(user, sameFieldUser); err != nil {
 		t.Fatal(err)
@@ -212,7 +203,6 @@ func TestUserRepository_Update(t *testing.T) {
 				ID:            "existing_user",
 				SpotifyUserID: "update_existing_user_spotify",
 				DisplayName:   "update_existing_user_display_name",
-				DeviceID:      "update_existing_device_id",
 			},
 			wantErr: false,
 		},
@@ -222,7 +212,6 @@ func TestUserRepository_Update(t *testing.T) {
 				ID:            "user_id",
 				SpotifyUserID: "user_spotify_id",
 				DisplayName:   "display_name",
-				DeviceID:      "device_id",
 			},
 			wantErr: false,
 		},

@@ -219,27 +219,24 @@ func TestSessionHandler_SetDevice(t *testing.T) {
 					ID:          "session_id",
 					Name:        "name",
 					CreatorID:   "creator_id",
-					QueueHead:   0,
+					DeviceID:    "",
 					StateType:   "PAUSE",
+					QueueHead:   0,
 					QueueTracks: nil,
 				}, nil)
+				m.EXPECT().Update(&entity.Session{
+					ID:          "session_id",
+					Name:        "name",
+					CreatorID:   "creator_id",
+					DeviceID:    "device_id",
+					StateType:   "PAUSE",
+					QueueHead:   0,
+					QueueTracks: nil,
+				})
 			},
-			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {
-				m.EXPECT().FindByID("creator_id").Return(&entity.User{
-					ID:            "creator_id",
-					SpotifyUserID: "spotify_user_id",
-					DisplayName:   "display_name",
-					DeviceID:      "old_device_id",
-				}, nil)
-				m.EXPECT().Update(&entity.User{
-					ID:            "creator_id",
-					SpotifyUserID: "spotify_user_id",
-					DisplayName:   "display_name",
-					DeviceID:      "device_id",
-				}).Return(nil)
-			},
-			wantErr:  false,
-			wantCode: http.StatusNoContent,
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			wantErr:               false,
+			wantCode:              http.StatusNoContent,
 		},
 	}
 	for _, tt := range tests {

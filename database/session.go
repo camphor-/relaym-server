@@ -31,7 +31,7 @@ func NewSessionRepository(dbMap *gorp.DbMap) *SessionRepository {
 // FindByID は指定されたIDを持つsessionをDBから取得します
 func (r *SessionRepository) FindByID(id string) (*entity.Session, error) {
 	var dto sessionDTO
-	if err := r.dbMap.SelectOne(&dto, "SELECT id, name, creator_id, queue_head, state_type FROM sessions WHERE id = ?", id); err != nil {
+	if err := r.dbMap.SelectOne(&dto, "SELECT id, name, creator_id, queue_head, state_type, device_id FROM sessions WHERE id = ?", id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("select session: %w", entity.ErrSessionNotFound)
 		}
@@ -52,8 +52,9 @@ func (r *SessionRepository) FindByID(id string) (*entity.Session, error) {
 		ID:          dto.ID,
 		Name:        dto.Name,
 		CreatorID:   dto.CreatorID,
-		QueueHead:   dto.QueueHead,
+		DeviceID:    dto.DeviceID,
 		StateType:   stateType,
+		QueueHead:   dto.QueueHead,
 		QueueTracks: queueTracks,
 	}, nil
 }
@@ -65,6 +66,7 @@ func (r *SessionRepository) StoreSession(session *entity.Session) error {
 		CreatorID: session.CreatorID,
 		QueueHead: session.QueueHead,
 		StateType: session.StateType.String(),
+		DeviceID:  session.DeviceID,
 	}
 
 	if err := r.dbMap.Insert(dto); err != nil {
@@ -84,6 +86,7 @@ func (r *SessionRepository) Update(session *entity.Session) error {
 		CreatorID: session.CreatorID,
 		QueueHead: session.QueueHead,
 		StateType: session.StateType.String(),
+		DeviceID:  session.DeviceID,
 	}
 
 	updateNum, err := r.dbMap.Update(dto)
@@ -131,6 +134,7 @@ type sessionDTO struct {
 	CreatorID string `db:"creator_id"`
 	QueueHead int    `db:"queue_head"`
 	StateType string `db:"state_type"`
+	DeviceID  string `db:"device_id"`
 }
 
 type queueTrackDTO struct {
