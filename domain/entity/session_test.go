@@ -135,7 +135,7 @@ func TestSession_IsCreator(t *testing.T) {
 			want:   true,
 		},
 		{
-			name: "作成者でないときときtrue",
+			name: "作成者でないときtrue",
 			session: &Session{
 				CreatorID: "user_id",
 			},
