@@ -17,22 +17,41 @@ var syncCheckOffset = 5 * time.Second
 
 // SessionUseCase はセッションに関するユースケースです。
 type SessionUseCase struct {
-	tm        *entity.SyncCheckTimerManager
-	repo      repository.Session
-	userRepo  repository.User
-	playerCli spotify.Player
-	pusher    event.Pusher
+	tm          *entity.SyncCheckTimerManager
+	sessionRepo repository.Session
+	userRepo    repository.User
+	playerCli   spotify.Player
+	pusher      event.Pusher
 }
 
 // NewSessionUseCase はSessionUseCaseのポインタを生成します。
-func NewSessionUseCase(repo repository.Session, userRepo repository.User, playerCli spotify.Player, pusher event.Pusher) *SessionUseCase {
+func NewSessionUseCase(sessionRepo repository.Session, userRepo repository.User, playerCli spotify.Player, pusher event.Pusher) *SessionUseCase {
 	return &SessionUseCase{
-		tm:        entity.NewSyncCheckTimerManager(),
-		repo:      repo,
-		userRepo:  userRepo,
-		playerCli: playerCli,
-		pusher:    pusher,
+		tm:          entity.NewSyncCheckTimerManager(),
+		sessionRepo: sessionRepo,
+		userRepo:    userRepo,
+		playerCli:   playerCli,
+		pusher:      pusher,
 	}
+}
+
+// CreateSession は与えられたセッション名のセッションを作成します。
+func (s *SessionUseCase) CreateSession(sessionName string, creatorID string) (*entity.SessionWithUser, error) {
+	creator, err := s.userRepo.FindByID(creatorID)
+	if err != nil {
+		return nil, fmt.Errorf("CreateSession sessionName=%s: %w", sessionName, err)
+	}
+
+	newSession, err := entity.NewSession(sessionName, creatorID)
+	if err != nil {
+		return nil, fmt.Errorf("NewSession sessionName=%s: %w", sessionName, err)
+	}
+
+	err = s.sessionRepo.StoreSession(newSession)
+	if err != nil {
+		return nil, fmt.Errorf("StoreSession sessionName=%s: %w", sessionName, err)
+	}
+	return entity.NewSessionWithUser(newSession, creator), nil
 }
 
 // ChangePlaybackState は与えられたセッションの再生状態を操作します。
@@ -52,7 +71,7 @@ func (s *SessionUseCase) ChangePlaybackState(ctx context.Context, sessionID stri
 
 // Play はセッションのstateを STOP → PLAY に変更して曲の再生を始めます。
 func (s *SessionUseCase) play(ctx context.Context, sessionID string) error {
-	sess, err := s.repo.FindByID(sessionID)
+	sess, err := s.sessionRepo.FindByID(sessionID)
 	if err != nil {
 		return fmt.Errorf("find session id=%s: %w", sessionID, err)
 	}
@@ -66,7 +85,7 @@ func (s *SessionUseCase) play(ctx context.Context, sessionID string) error {
 		return fmt.Errorf("move to play id=%s: %w", sessionID, err)
 	}
 
-	if err := s.repo.Update(sess); err != nil {
+	if err := s.sessionRepo.Update(sess); err != nil {
 		return fmt.Errorf("update session id=%s: %w", sessionID, err)
 	}
 
@@ -160,7 +179,7 @@ func (s *SessionUseCase) SetDevice(ctx context.Context, sessionID string, device
 		return errors.New("get user id from context")
 	}
 
-	sess, err := s.repo.FindByID(sessionID)
+	sess, err := s.sessionRepo.FindByID(sessionID)
 	if err != nil {
 		return fmt.Errorf("find session id=%s: %w", sessionID, err)
 	}

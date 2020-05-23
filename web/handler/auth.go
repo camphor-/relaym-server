@@ -22,7 +22,7 @@ func NewAuthHandler(authUC *usecase.AuthUseCase, frontendURL string) *AuthHandle
 	return &AuthHandler{authUC: authUC, frontendURL: frontendURL}
 }
 
-// Login は POST /login に対応するハンドラーです。
+// Login は GET /login に対応するハンドラーです。
 func (h *AuthHandler) Login(c echo.Context) error {
 	redirectURL := c.QueryParam("redirect_url")
 	if redirectURL == "" {

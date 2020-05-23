@@ -1,15 +1,51 @@
 package entity
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/google/uuid"
+)
 
 // Session はセッションを表します。
 type Session struct {
 	ID          string
 	Name        string
 	CreatorID   string
-	QueueHead   int
 	StateType   StateType
+	QueueHead   int
 	QueueTracks []*QueueTrack
+}
+
+type SessionWithUser struct {
+	*Session
+	Creator *User
+}
+
+// NewSession はSessionのポインタを生成する関数です。
+func NewSession(name string, creatorID string) (*Session, error) {
+	return &Session{
+		ID:          uuid.New().String(),
+		Name:        name,
+		CreatorID:   creatorID,
+		QueueHead:   0,
+		StateType:   Stop,
+		QueueTracks: nil,
+	}, nil
+}
+
+// NewSessionWithUser はSession(ポインタ)からSessionWithUser(ポインタ)を生成します
+func NewSessionWithUser(session *Session, creator *User) *SessionWithUser {
+	return &SessionWithUser{
+		Session: &Session{
+			ID:          session.ID,
+			Name:        session.Name,
+			CreatorID:   creator.ID,
+			StateType:   session.StateType,
+			QueueHead:   session.QueueHead,
+			QueueTracks: session.QueueTracks,
+		},
+		Creator: creator,
+	}
 }
 
 // MoveToPlay はセッションのStateTypeをPlayに状態遷移します。

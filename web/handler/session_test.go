@@ -1,10 +1,14 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/event"
@@ -19,32 +23,35 @@ import (
 
 func TestSessionHandler_Playback(t *testing.T) {
 	tests := []struct {
-		name                string
-		sessionID           string
-		body                string
-		prepareMockPlayerFn func(m *mock_spotify.MockPlayer)
-		prepareMockPusherFn func(m *mock_event.MockPusher)
-		prepareMockRepoFn   func(m *mock_repository.MockSession)
-		wantErr             bool
-		wantCode            int
+		name                     string
+		sessionID                string
+		body                     string
+		prepareMockPlayerFn      func(m *mock_spotify.MockPlayer)
+		prepareMockPusherFn      func(m *mock_event.MockPusher)
+		prepareMockUserRepoFn    func(m *mock_repository.MockUser)
+		prepareMockSessionRepoFn func(m *mock_repository.MockSession)
+		wantErr                  bool
+		wantCode                 int
 	}{
 		{
-			name:                "存在しないstateのとき400",
-			sessionID:           "sessionID",
-			body:                `{"state": "INVALID"}`,
-			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {},
-			prepareMockPusherFn: func(m *mock_event.MockPusher) {},
-			prepareMockRepoFn:   func(m *mock_repository.MockSession) {},
-			wantErr:             true,
-			wantCode:            http.StatusBadRequest,
+			name:                     "存在しないstateのとき400",
+			sessionID:                "sessionID",
+			body:                     `{"state": "INVALID"}`,
+			prepareMockPlayerFn:      func(m *mock_spotify.MockPlayer) {},
+			prepareMockPusherFn:      func(m *mock_event.MockPusher) {},
+			prepareMockUserRepoFn:    func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {},
+			wantErr:                  true,
+			wantCode:                 http.StatusBadRequest,
 		},
 		{
-			name:                "PLAYで指定されたidのセッションが存在しないとき404",
-			sessionID:           "notFoundSessionID",
-			body:                `{"state": "PLAY"}`,
-			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {},
-			prepareMockPusherFn: func(m *mock_event.MockPusher) {},
-			prepareMockRepoFn: func(m *mock_repository.MockSession) {
+			name:                  "PLAYで指定されたidのセッションが存在しないとき404",
+			sessionID:             "notFoundSessionID",
+			body:                  `{"state": "PLAY"}`,
+			prepareMockPlayerFn:   func(m *mock_spotify.MockPlayer) {},
+			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
 				m.EXPECT().FindByID("notFoundSessionID").Return(nil, entity.ErrSessionNotFound)
 			},
 			wantErr:  true,
@@ -57,8 +64,9 @@ func TestSessionHandler_Playback(t *testing.T) {
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
 				m.EXPECT().Play(gomock.Any(), "").Return(entity.ErrActiveDeviceNotFound)
 			},
-			prepareMockPusherFn: func(m *mock_event.MockPusher) {},
-			prepareMockRepoFn: func(m *mock_repository.MockSession) {
+			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
 				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
 					ID:          "sessionID",
 					Name:        "session_name",
@@ -78,13 +86,14 @@ func TestSessionHandler_Playback(t *testing.T) {
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
 				m.EXPECT().Play(gomock.Any(), "").Return(nil)
 			},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockPusherFn: func(m *mock_event.MockPusher) {
 				m.EXPECT().Push(&event.PushMessage{
 					SessionID: "sessionID",
 					Msg:       entity.EventPlay,
 				})
 			},
-			prepareMockRepoFn: func(m *mock_repository.MockSession) {
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
 				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
 					ID:          "sessionID",
 					Name:        "session_name",
@@ -125,10 +134,14 @@ func TestSessionHandler_Playback(t *testing.T) {
 			tt.prepareMockPlayerFn(mockPlayer)
 			mockPusher := mock_event.NewMockPusher(ctrl)
 			tt.prepareMockPusherFn(mockPusher)
-			mockRepo := mock_repository.NewMockSession(ctrl)
-			tt.prepareMockRepoFn(mockRepo)
-			uc := usecase.NewSessionUseCase(mockRepo, nil, mockPlayer, mockPusher)
-			h := &SessionHandler{uc: uc}
+			mockUserRepo := mock_repository.NewMockUser(ctrl)
+			tt.prepareMockUserRepoFn(mockUserRepo)
+			mockSessionRepo := mock_repository.NewMockSession(ctrl)
+			tt.prepareMockSessionRepoFn(mockSessionRepo)
+			uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, mockPusher)
+			h := &SessionHandler{
+				uc: uc,
+			}
 			err := h.Playback(c)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Playback() error = %v, wantErr %v", err, tt.wantErr)
@@ -261,6 +274,123 @@ func TestSessionHandler_SetDevice(t *testing.T) {
 			// ステータスコードのチェック
 			if er, ok := err.(*echo.HTTPError); (ok && er.Code != tt.wantCode) || (!ok && rec.Code != tt.wantCode) {
 				t.Errorf("SetDevice() code = %d, want = %d", rec.Code, tt.wantCode)
+			}
+		})
+	}
+}
+
+func TestSessionHandler_PostSession(t *testing.T) {
+	sessionResponse := &sessionRes{
+		ID:   "ID",
+		Name: "go! go! session!",
+		Creator: creatorJSON{
+			ID:          "creatorID",
+			DisplayName: "creatorDisplayName",
+		},
+		Playback: playbackJSON{
+			State: stateJSON{
+				Type: "STOP",
+			},
+			Device: nil,
+		},
+		Queue: queueJSON{
+			Head:   0,
+			Tracks: nil,
+		},
+	}
+	user := &entity.User{
+		ID:            "creatorID",
+		SpotifyUserID: "creatorSpotifyUserID",
+		DisplayName:   "creatorDisplayName",
+	}
+	tests := []struct {
+		name                     string
+		body                     string
+		userID                   string
+		prepareMockPlayerFn      func(m *mock_spotify.MockPlayer)
+		prepareMockPusherFn      func(m *mock_event.MockPusher)
+		prepareMockSessionRepoFn func(m *mock_repository.MockSession)
+		prepareMockUserRepoFn    func(m *mock_repository.MockUser)
+		want                     *sessionRes
+		wantErr                  bool
+		wantCode                 int
+	}{
+		{
+			name:                "nameを渡すと正常に動作する",
+			body:                `{"name": "go! go! session!"}`,
+			userID:              "creatorID",
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {},
+			prepareMockPusherFn: func(m *mock_event.MockPusher) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().StoreSession(gomock.Any()).Return(nil)
+			},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {
+				m.EXPECT().FindByID("creatorID").Return(user, nil)
+			},
+			want:     sessionResponse,
+			wantErr:  false,
+			wantCode: http.StatusCreated,
+		},
+		{
+			name:                     "nameが空だとempty nameが返る",
+			body:                     `{"name": ""}`,
+			userID:                   "creatorID",
+			prepareMockPlayerFn:      func(m *mock_spotify.MockPlayer) {},
+			prepareMockPusherFn:      func(m *mock_event.MockPusher) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {},
+			prepareMockUserRepoFn:    func(m *mock_repository.MockUser) {},
+			want:                     sessionResponse,
+			wantErr:                  true,
+			wantCode:                 http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// httptestの準備
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(tt.body))
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			c = setToContext(c, tt.userID, nil)
+			c.SetPath("/sessions")
+
+			// モックの準備
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			mockPlayer := mock_spotify.NewMockPlayer(ctrl)
+			tt.prepareMockPlayerFn(mockPlayer)
+			mockPusher := mock_event.NewMockPusher(ctrl)
+			tt.prepareMockPusherFn(mockPusher)
+			mockSessionRepo := mock_repository.NewMockSession(ctrl)
+			tt.prepareMockSessionRepoFn(mockSessionRepo)
+			mockUserRepo := mock_repository.NewMockUser(ctrl)
+			tt.prepareMockUserRepoFn(mockUserRepo)
+			uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, mockPusher)
+			h := &SessionHandler{
+				uc: uc,
+			}
+			postErr := h.PostSession(c)
+			if (postErr != nil) != tt.wantErr {
+				t.Errorf("PostSession() error = %v, wantErr %v", postErr, tt.wantErr)
+			}
+
+			// ステータスコードのチェック
+			if er, ok := postErr.(*echo.HTTPError); (ok && er.Code != tt.wantCode) || (!ok && rec.Code != tt.wantCode) {
+				t.Errorf("PostSession() code = %d, want = %d", rec.Code, tt.wantCode)
+			}
+
+			if !tt.wantErr {
+				got := &sessionRes{}
+				err := json.Unmarshal(rec.Body.Bytes(), got)
+				if err != nil {
+					t.Fatal(err)
+				}
+				opts := []cmp.Option{cmpopts.IgnoreFields(sessionRes{}, "ID")}
+				if !cmp.Equal(got, tt.want, opts...) {
+					t.Errorf("PostSession() diff = %v", cmp.Diff(got, tt.want, opts...))
+				}
 			}
 		})
 	}
