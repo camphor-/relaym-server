@@ -115,12 +115,13 @@ func TestSessionHandler_Playback(t *testing.T) {
 			wantCode: http.StatusAccepted,
 		},
 		{
-			name:                "PAUSEで指定されたidのセッションが存在しないとき404",
-			sessionID:           "notFoundSessionID",
-			body:                `{"state": "PAUSE"}`,
-			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {},
-			prepareMockPusherFn: func(m *mock_event.MockPusher) {},
-			prepareMockRepoFn: func(m *mock_repository.MockSession) {
+			name:                  "PAUSEで指定されたidのセッションが存在しないとき404",
+			sessionID:             "notFoundSessionID",
+			body:                  `{"state": "PAUSE"}`,
+			prepareMockPlayerFn:   func(m *mock_spotify.MockPlayer) {},
+			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
 				m.EXPECT().FindByID("notFoundSessionID").Return(nil, entity.ErrSessionNotFound)
 			},
 			wantErr:  true,
@@ -133,8 +134,9 @@ func TestSessionHandler_Playback(t *testing.T) {
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
 				m.EXPECT().Pause(gomock.Any(), "").Return(entity.ErrActiveDeviceNotFound)
 			},
-			prepareMockPusherFn: func(m *mock_event.MockPusher) {},
-			prepareMockRepoFn: func(m *mock_repository.MockSession) {
+			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
 				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
 					ID:          "sessionID",
 					Name:        "session_name",
@@ -164,7 +166,8 @@ func TestSessionHandler_Playback(t *testing.T) {
 			},
 			prepareMockPusherFn: func(m *mock_event.MockPusher) {
 			},
-			prepareMockRepoFn: func(m *mock_repository.MockSession) {
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
 				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
 					ID:          "sessionID",
 					Name:        "session_name",

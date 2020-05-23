@@ -100,7 +100,7 @@ func (s *SessionUseCase) play(ctx context.Context, sessionID string) error {
 
 // Pause はセッションのstateをPLAY→PAUSEに変更して曲の再生を一時停止します。
 func (s *SessionUseCase) pause(ctx context.Context, sessionID string) error {
-	sess, err := s.repo.FindByID(sessionID)
+	sess, err := s.sessionRepo.FindByID(sessionID)
 	if err != nil {
 		return fmt.Errorf("find session id=%s: %w", sessionID, err)
 	}
@@ -116,7 +116,7 @@ func (s *SessionUseCase) pause(ctx context.Context, sessionID string) error {
 		return fmt.Errorf("move to pause id=%s: %w", sessionID, err)
 	}
 
-	if err := s.repo.Update(sess); err != nil {
+	if err := s.sessionRepo.Update(sess); err != nil {
 		return fmt.Errorf("update session id=%s: %w", sessionID, err)
 	}
 
