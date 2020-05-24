@@ -9,4 +9,5 @@ type User interface {
 	FindByID(id string) (*entity.User, error)
 	FindBySpotifyUserID(spotifyUserID string) (*entity.User, error)
 	Store(user *entity.User) error
+	Update(user *entity.User) error
 }

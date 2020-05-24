@@ -117,6 +117,41 @@ func TestStateType_String(t *testing.T) {
 	}
 }
 
+func TestSession_IsCreator(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		session *Session
+		userID  string
+		want    bool
+	}{
+		{
+			name: "作成者のときtrue",
+			session: &Session{
+				CreatorID: "user_id",
+			},
+			userID: "user_id",
+			want:   true,
+		},
+		{
+			name: "作成者でないときtrue",
+			session: &Session{
+				CreatorID: "user_id",
+			},
+			userID: "not_creator_user_id",
+			want:   false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.session.IsCreator(tt.userID); got != tt.want {
+				t.Errorf("IsCreator() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestSession_MoveToPause(t *testing.T) {
 	tests := []struct {
 		name    string

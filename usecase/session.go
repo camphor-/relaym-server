@@ -9,6 +9,7 @@ import (
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/event"
 	"github.com/camphor-/relaym-server/domain/repository"
+	"github.com/camphor-/relaym-server/domain/service"
 	"github.com/camphor-/relaym-server/domain/spotify"
 )
 
@@ -181,4 +182,28 @@ func (s *SessionUseCase) startSyncCheck(ctx context.Context, sessionID string) {
 
 		}
 	}
+}
+
+// SetDevice は指定されたidのセッションの作成者と再生する端末を紐付けて再生するデバイスを指定します。
+func (s *SessionUseCase) SetDevice(ctx context.Context, sessionID string, deviceID string) error {
+	userID, ok := service.GetUserIDFromContext(ctx)
+	if !ok {
+		return errors.New("get user id from context")
+	}
+
+	sess, err := s.sessionRepo.FindByID(sessionID)
+	if err != nil {
+		return fmt.Errorf("find session id=%s: %w", sessionID, err)
+	}
+
+	if !sess.IsCreator(userID) {
+		return fmt.Errorf("userID=%s creatorID=%s: %w", userID, sess.CreatorID, entity.ErrUserIsNotSessionCreator)
+	}
+
+	sess.DeviceID = deviceID
+	if err := s.sessionRepo.Update(sess); err != nil {
+		return fmt.Errorf("update device id: device_id=%s session_id=%s: %w", deviceID, sess.ID, err)
+	}
+
+	return nil
 }

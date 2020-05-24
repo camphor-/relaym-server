@@ -13,6 +13,9 @@ var (
 	// ErrSessionAlreadyExisted はセッションが既に存在しているときのエラーを表します。
 	ErrSessionAlreadyExisted = errors.New("session has already existed")
 
+	// ErrUserIsNotSessionCreator はユーザがセッションの作成者でないときのエラーを表します。
+	ErrUserIsNotSessionCreator = errors.New("user is not session's creator")
+
 	// ErrQueueTrackNotFound はセッションに紐付くQueueTrackが存在しないエラーを表します。
 	ErrQueueTrackNotFound = errors.New("queue_tracks not found")
 

@@ -57,5 +57,6 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, session
 
 	session := authed.Group("/sessions")
 	session.PUT("/:id/playback", sessionHandler.Playback)
+	session.PUT("/:id/devices", sessionHandler.SetDevice)
 	return e
 }

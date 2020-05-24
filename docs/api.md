@@ -209,7 +209,7 @@ X-CSRF-Token: relaym
 
 | code | message | 補足 |
 | ---- | -------- | -------- |
-| 400 | invalid device id | 指定されたデバイスIDはオフライン or 不正 |
+| 400 | empty device id | デバイスIDがリクエストに含まれていない |
 | 403 | user is not session's creator | セッションの作成者ではない |
 | 404 | session not found | 指定されたidのセッションが存在しない |
 

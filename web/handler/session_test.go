@@ -229,6 +229,127 @@ func TestSessionHandler_Playback(t *testing.T) {
 	}
 }
 
+func TestSessionHandler_SetDevice(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name                  string
+		userID                string
+		sessionID             string
+		body                  string
+		prepareMockRepoFn     func(m *mock_repository.MockSession)
+		prepareMockUserRepoFn func(m *mock_repository.MockUser)
+		wantErr               bool
+		wantCode              int
+	}{
+		{
+			name:                  "デバイスIDが空だと400",
+			userID:                "user_id",
+			sessionID:             "sessionID",
+			body:                  `{"device_id": ""}`,
+			prepareMockRepoFn:     func(m *mock_repository.MockSession) {},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			wantErr:               true,
+			wantCode:              http.StatusBadRequest,
+		},
+		{
+			name:      "セッションが存在しないと404",
+			userID:    "user_id",
+			sessionID: "session_id",
+			body:      `{"device_id": "device_id"}`,
+			prepareMockRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("session_id").Return(nil, entity.ErrSessionNotFound)
+			},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			wantErr:               true,
+			wantCode:              http.StatusNotFound,
+		},
+		{
+			name:      "リクエストしたユーザがセッションの作成者ではないと403",
+			userID:    "user_id",
+			sessionID: "session_id",
+			body:      `{"device_id": "device_id"}`,
+			prepareMockRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("session_id").Return(&entity.Session{
+					ID:          "session_id",
+					Name:        "name",
+					CreatorID:   "creator_id",
+					QueueHead:   0,
+					StateType:   "PAUSE",
+					QueueTracks: nil,
+				}, nil)
+			},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			wantErr:               true,
+			wantCode:              http.StatusForbidden,
+		},
+		{
+			name:      "正しくデバイスをセットできると204",
+			userID:    "creator_id",
+			sessionID: "session_id",
+			body:      `{"device_id": "device_id"}`,
+			prepareMockRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("session_id").Return(&entity.Session{
+					ID:          "session_id",
+					Name:        "name",
+					CreatorID:   "creator_id",
+					DeviceID:    "",
+					StateType:   "PAUSE",
+					QueueHead:   0,
+					QueueTracks: nil,
+				}, nil)
+				m.EXPECT().Update(&entity.Session{
+					ID:          "session_id",
+					Name:        "name",
+					CreatorID:   "creator_id",
+					DeviceID:    "device_id",
+					StateType:   "PAUSE",
+					QueueHead:   0,
+					QueueTracks: nil,
+				})
+			},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			wantErr:               false,
+			wantCode:              http.StatusNoContent,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// httptestの準備
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPut, "/", strings.NewReader(tt.body))
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			c.SetPath("/sessions/:id/devices")
+			c.SetParamNames("id")
+			c.SetParamValues(tt.sessionID)
+			c = setToContext(c, tt.userID, nil)
+
+			// モックの準備
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			mockRepo := mock_repository.NewMockSession(ctrl)
+			tt.prepareMockRepoFn(mockRepo)
+			mockUserRepo := mock_repository.NewMockUser(ctrl)
+			tt.prepareMockUserRepoFn(mockUserRepo)
+
+			uc := usecase.NewSessionUseCase(mockRepo, mockUserRepo, nil, nil)
+			h := &SessionHandler{uc: uc}
+
+			err := h.SetDevice(c)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("SetDevice() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			// ステータスコードのチェック
+			if er, ok := err.(*echo.HTTPError); (ok && er.Code != tt.wantCode) || (!ok && rec.Code != tt.wantCode) {
+				t.Errorf("SetDevice() code = %d, want = %d", rec.Code, tt.wantCode)
+			}
+		})
+	}
+}
+
 func TestSessionHandler_PostSession(t *testing.T) {
 	sessionResponse := &sessionRes{
 		ID:   "ID",

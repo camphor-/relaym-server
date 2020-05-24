@@ -11,6 +11,7 @@ type Session struct {
 	ID          string
 	Name        string
 	CreatorID   string
+	DeviceID    string
 	StateType   StateType
 	QueueHead   int
 	QueueTracks []*QueueTrack
@@ -27,8 +28,9 @@ func NewSession(name string, creatorID string) (*Session, error) {
 		ID:          uuid.New().String(),
 		Name:        name,
 		CreatorID:   creatorID,
-		QueueHead:   0,
+		DeviceID:    "",
 		StateType:   Stop,
+		QueueHead:   0,
 		QueueTracks: nil,
 	}, nil
 }
@@ -40,6 +42,7 @@ func NewSessionWithUser(session *Session, creator *User) *SessionWithUser {
 			ID:          session.ID,
 			Name:        session.Name,
 			CreatorID:   creator.ID,
+			DeviceID:    "",
 			StateType:   session.StateType,
 			QueueHead:   session.QueueHead,
 			QueueTracks: session.QueueTracks,
@@ -62,6 +65,11 @@ func (s *Session) MoveToPause() error {
 		return nil
 	}
 	return fmt.Errorf("state type from %s to Pause: %w", s.StateType, ErrChangeSessionStateNotPermit)
+}
+
+// IsCreator は指定されたユーザがセッションの作成者かどうか返します。
+func (s *Session) IsCreator(userID string) bool {
+	return s.CreatorID == userID
 }
 
 type StateType string

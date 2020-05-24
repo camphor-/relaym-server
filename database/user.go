@@ -21,7 +21,7 @@ type UserRepository struct {
 
 // NewUserRepository はUserRepositoryのポインタを生成する関数です
 func NewUserRepository(dbMap *gorp.DbMap) *UserRepository {
-	dbMap.AddTableWithName(userDTO{}, "users")
+	dbMap.AddTableWithName(userDTO{}, "users").SetKeys(false, "ID")
 	return &UserRepository{dbMap: dbMap}
 }
 
@@ -70,6 +70,20 @@ func (r *UserRepository) Store(user *entity.User) error {
 			return fmt.Errorf("insert user: %w", entity.ErrUserAlreadyExisted)
 		}
 		return fmt.Errorf("insert user: %w", err)
+	}
+	return nil
+}
+
+// Update はユーザの情報を更新します。
+func (r *UserRepository) Update(user *entity.User) error {
+	dto := &userDTO{
+		ID:            user.ID,
+		SpotifyUserID: user.SpotifyUserID,
+		DisplayName:   user.DisplayName,
+	}
+
+	if _, err := r.dbMap.Update(dto); err != nil {
+		return fmt.Errorf("update user: %w", err)
 	}
 	return nil
 }
