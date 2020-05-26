@@ -50,7 +50,10 @@ func (s *SessionUseCase) AddQueueTrack(ctx context.Context, sessionID string, tr
 		fmt.Errorf("StoreQueueTrack URI=%s, sessionID=%s: %w", trackURI, sessionID, err)
 	}
 
-	err = s.playerCli.AddToQueue(ctx, trackURI, session.)
+	err = s.playerCli.AddToQueue(ctx, trackURI, session.DeviceID)
+	if err != nil {
+		fmt.Errorf("AddToQueue URI=%s, sessionID=%s: %w", trackURI, sessionID, err)
+	}
 }
 
 // CreateSession は与えられたセッション名のセッションを作成します。
