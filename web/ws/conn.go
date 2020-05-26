@@ -36,7 +36,7 @@ func NewClient(sessionID string, ws *websocket.Conn, notifyClosedCh chan<- *Clie
 	}
 }
 
-// PushLoop 一つのWebSocketコネクションに対してメッセージを送信するループです。
+// PushLoop は一つのWebSocketコネクションに対してメッセージを送信するループです。
 // 一つのWebSocketコネクションに対して一つのgoroutineでPushLoop()が実行されます。
 // 接続が切れた場合はnotifyClosedChを通じてHubに登録されているwsConnを削除してメモリリークを防ぎます。
 func (c *Client) PushLoop() {
@@ -50,9 +50,9 @@ func (c *Client) PushLoop() {
 		select {
 		case msg, ok := <-c.pushCh:
 			if !ok {
-				c.ws.SetWriteDeadline(time.Now().Add(writeWait))
+				_ = c.ws.SetWriteDeadline(time.Now().Add(writeWait))
 				if err := c.ws.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
-					fmt.Printf("failed to write close message: %v\n", err)
+					fmt.Printf("failed to write close message: sessionID=%s: %v\n", c.sessionID, err)
 					return
 				}
 			}
@@ -62,9 +62,9 @@ func (c *Client) PushLoop() {
 				return
 			}
 		case <-ticker.C:
-			c.ws.SetWriteDeadline(time.Now().Add(writeWait))
+			_ = c.ws.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.ws.WriteMessage(websocket.PingMessage, nil); err != nil {
-				fmt.Printf("failed to ping: %v\n", err)
+				fmt.Printf("failed to ping: sessionID=%s: %v\n", c.sessionID, err)
 				return
 			}
 		}
