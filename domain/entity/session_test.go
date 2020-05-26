@@ -225,3 +225,54 @@ func TestSession_MoveToPlay(t *testing.T) {
 		})
 	}
 }
+
+func TestSession_GoNextTrack(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		s       *Session
+		wantErr bool
+	}{
+		{
+			name: "一つも曲が追加されてないときはエラー",
+			s: &Session{
+				QueueHead:   0,
+				QueueTracks: nil,
+			},
+			wantErr: true,
+		},
+		{
+			name: "最後の曲を再生していたときはエラー",
+			s: &Session{
+				QueueHead: 2,
+				QueueTracks: []*QueueTrack{
+					{},
+					{},
+					{}, // 再生中
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "次の曲が存在するときはエラーにならない",
+			s: &Session{
+				QueueHead: 2,
+				QueueTracks: []*QueueTrack{
+					{},
+					{},
+					{}, // 再生中
+					{},
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.s.GoNextTrack(); (err != nil) != tt.wantErr {
+				t.Errorf("GoNextTrack() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}

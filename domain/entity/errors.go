@@ -12,6 +12,8 @@ var (
 	ErrSessionNotFound = errors.New("session not found")
 	// ErrSessionAlreadyExisted はセッションが既に存在しているときのエラーを表します。
 	ErrSessionAlreadyExisted = errors.New("session has already existed")
+	// ErrSessionAllTracksFinished はセッションに追加された全てのトラックの再生が全て終了しているエラーを表します。
+	ErrSessionAllTracksFinished = errors.New("all tracks has already finished")
 
 	// ErrUserIsNotSessionCreator はユーザがセッションの作成者でないときのエラーを表します。
 	ErrUserIsNotSessionCreator = errors.New("user is not session's creator")
