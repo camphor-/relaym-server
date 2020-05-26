@@ -39,7 +39,7 @@ func NewSessionUseCase(sessionRepo repository.Session, userRepo repository.User,
 func (s *SessionUseCase) AddQueueTrack(ctx context.Context, sessionID string, trackURI string) error {
 	session, err := s.sessionRepo.FindByID(sessionID)
 	if err != nil {
-		fmt.Errorf("FindByID sessionID=%s: %w", sessionID, err)
+		return fmt.Errorf("FindByID sessionID=%s: %w", sessionID, err)
 	}
 
 	err = s.sessionRepo.StoreQueueTrack(&entity.QueueTrackToStore{
@@ -47,13 +47,15 @@ func (s *SessionUseCase) AddQueueTrack(ctx context.Context, sessionID string, tr
 		SessionID: sessionID,
 	})
 	if err != nil {
-		fmt.Errorf("StoreQueueTrack URI=%s, sessionID=%s: %w", trackURI, sessionID, err)
+		return fmt.Errorf("StoreQueueTrack URI=%s, sessionID=%s: %w", trackURI, sessionID, err)
 	}
 
 	err = s.playerCli.AddToQueue(ctx, trackURI, session.DeviceID)
 	if err != nil {
-		fmt.Errorf("AddToQueue URI=%s, sessionID=%s: %w", trackURI, sessionID, err)
+		return fmt.Errorf("AddToQueue URI=%s, sessionID=%s: %w", trackURI, sessionID, err)
 	}
+
+	return nil
 }
 
 // CreateSession は与えられたセッション名のセッションを作成します。
