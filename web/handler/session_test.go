@@ -477,7 +477,7 @@ func TestSessionHandler_AddQueue(t *testing.T) {
 		QueueHead: 0,
 		QueueTracks: []*entity.QueueTrack{{
 			Index:     0,
-			URI:       "existed_session_uri",
+			URI:       "spotify:track:existed_session_uri",
 			SessionID: "sessionID",
 		},
 		},
@@ -499,14 +499,14 @@ func TestSessionHandler_AddQueue(t *testing.T) {
 			sessionID: "sessionID",
 			body:      `{"uri": "valid_uri"}`,
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
-				m.EXPECT().AddToQueue(gomock.Any(), "valid_uri", "sessionDeviceID").Return(nil)
+				m.EXPECT().AddToQueue(gomock.Any(), "spotify:track:valid_uri", "sessionDeviceID").Return(nil)
 			},
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
 				m.EXPECT().FindByID("sessionID").Return(session, nil)
 				m.EXPECT().StoreQueueTrack(&entity.QueueTrackToStore{
-					URI:       "valid_uri",
+					URI:       "spotify:track:valid_uri",
 					SessionID: "sessionID",
 				}).Return(nil)
 			},
