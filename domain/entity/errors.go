@@ -14,6 +14,8 @@ var (
 	ErrSessionAlreadyExisted = errors.New("session has already existed")
 	// ErrSessionAllTracksFinished はセッションに追加された全てのトラックの再生が全て終了しているエラーを表します。
 	ErrSessionAllTracksFinished = errors.New("all tracks has already finished")
+	// ErrSessionPlayingDifferentTrack はキュー先頭の曲と異なる曲が再生されているエラーを表します。
+	ErrSessionPlayingDifferentTrack = errors.New("session is playing different track from queue")
 
 	// ErrUserIsNotSessionCreator はユーザがセッションの作成者でないときのエラーを表します。
 	ErrUserIsNotSessionCreator = errors.New("user is not session's creator")

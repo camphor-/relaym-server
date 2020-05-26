@@ -83,6 +83,14 @@ func (s *Session) GoNextTrack() error {
 	return nil
 }
 
+// IsPlayingCorrectTrack は現在の再生状況がセッションの状況と一致しているかチェックします。
+func (s *Session) IsPlayingCorrectTrack(playingInfo *CurrentPlayingInfo) error {
+	if playingInfo.Track == nil || s.QueueTracks[s.QueueHead].URI != playingInfo.Track.URI {
+		return ErrSessionPlayingDifferentTrack
+	}
+	return nil
+}
+
 type StateType string
 
 const (
