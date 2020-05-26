@@ -497,7 +497,7 @@ func TestSessionHandler_AddQueue(t *testing.T) {
 		{
 			name:      "正しいuriが渡されると正常に動作する",
 			sessionID: "sessionID",
-			body:      `{"uri": "valid_uri"}`,
+			body:      `{"uri": "spotify:track:valid_uri"}`,
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
 				m.EXPECT().AddToQueue(gomock.Any(), "spotify:track:valid_uri", "sessionDeviceID").Return(nil)
 			},
