@@ -68,6 +68,35 @@ func (h *SessionHandler) toSessionRes(session *entity.SessionWithUser) *sessionR
 	}
 }
 
+// AddQueue は POST /sessions/:id/queue に対応するハンドラーです。
+func (h *SessionHandler) AddQueue(c echo.Context) error {
+	type reqJSON struct {
+		URI string `json:"uri"`
+	}
+	req := new(reqJSON)
+	if err := c.Bind(req); err != nil {
+		c.Logger().Debugf("bind: %v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid track id")
+	}
+
+	if req.URI == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid track id")
+	}
+
+	ctx := c.Request().Context()
+	sessionID := c.Param("id")
+
+	if err := h.uc.AddQueueTrack(ctx, sessionID, req.URI); err != nil {
+		if errors.Is(err, entity.ErrSessionNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, entity.ErrSessionNotFound.Error())
+		}
+		c.Logger().Errorf("add queue track: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
 // Playback は PUT /sessions/:id/playback に対応するハンドラーです。
 func (h *SessionHandler) Playback(c echo.Context) error {
 	type reqJSON struct {

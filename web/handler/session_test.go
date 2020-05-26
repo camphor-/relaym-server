@@ -466,3 +466,114 @@ func TestSessionHandler_PostSession(t *testing.T) {
 		})
 	}
 }
+
+func TestSessionHandler_AddQueue(t *testing.T) {
+	session := &entity.Session{
+		ID:        "sessionID",
+		Name:      "sessionName",
+		CreatorID: "sessionCreator",
+		DeviceID:  "sessionDeviceID",
+		StateType: "PLAY",
+		QueueHead: 0,
+		QueueTracks: []*entity.QueueTrack{{
+			Index:     0,
+			URI:       "spotify:track:existed_session_uri",
+			SessionID: "sessionID",
+		},
+		},
+	}
+
+	tests := []struct {
+		name                     string
+		sessionID                string
+		body                     string
+		prepareMockPlayerFn      func(m *mock_spotify.MockPlayer)
+		prepareMockPusherFn      func(m *mock_event.MockPusher)
+		prepareMockUserRepoFn    func(m *mock_repository.MockUser)
+		prepareMockSessionRepoFn func(m *mock_repository.MockSession)
+		wantErr                  bool
+		wantCode                 int
+	}{
+		{
+			name:      "正しいuriが渡されると正常に動作する",
+			sessionID: "sessionID",
+			body:      `{"uri": "spotify:track:valid_uri"}`,
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().AddToQueue(gomock.Any(), "spotify:track:valid_uri", "sessionDeviceID").Return(nil)
+			},
+			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("sessionID").Return(session, nil)
+				m.EXPECT().StoreQueueTrack(&entity.QueueTrackToStore{
+					URI:       "spotify:track:valid_uri",
+					SessionID: "sessionID",
+				}).Return(nil)
+			},
+			wantErr:  false,
+			wantCode: http.StatusNoContent,
+		},
+		{
+			name:                     "uriが空の時400",
+			sessionID:                "sessionID",
+			body:                     `{"uri": ""}`,
+			prepareMockPlayerFn:      func(m *mock_spotify.MockPlayer) {},
+			prepareMockPusherFn:      func(m *mock_event.MockPusher) {},
+			prepareMockUserRepoFn:    func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {},
+			wantErr:                  true,
+			wantCode:                 http.StatusBadRequest,
+		},
+		{
+			name:                  "存在しないsessionIDの時404",
+			sessionID:             "invalidSessionID",
+			body:                  `{"uri": "valid_uri"}`,
+			prepareMockPlayerFn:   func(m *mock_spotify.MockPlayer) {},
+			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("invalidSessionID").Return(nil, entity.ErrSessionNotFound)
+			},
+			wantErr:  true,
+			wantCode: http.StatusNotFound,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// httptestの準備
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(tt.body))
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			c.SetPath("/sessions/:id/queue")
+			c.SetParamNames("id")
+			c.SetParamValues(tt.sessionID)
+
+			// モックの準備
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			mockPlayer := mock_spotify.NewMockPlayer(ctrl)
+			tt.prepareMockPlayerFn(mockPlayer)
+			mockPusher := mock_event.NewMockPusher(ctrl)
+			tt.prepareMockPusherFn(mockPusher)
+			mockUserRepo := mock_repository.NewMockUser(ctrl)
+			tt.prepareMockUserRepoFn(mockUserRepo)
+			mockSessionRepo := mock_repository.NewMockSession(ctrl)
+			tt.prepareMockSessionRepoFn(mockSessionRepo)
+			uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, mockPusher)
+			h := &SessionHandler{
+				uc: uc,
+			}
+			err := h.AddQueue(c)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Playback() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			// ステータスコードのチェック
+			if er, ok := err.(*echo.HTTPError); ok && er.Code != tt.wantCode {
+				t.Errorf("Playback() code = %d, want = %d", rec.Code, tt.wantCode)
+			}
+		})
+	}
+}

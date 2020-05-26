@@ -128,7 +128,7 @@ func TestClient_AddToQueue(t *testing.T) {
 	}{
 		{
 			name:    "曲をqueueに追加できる",
-			trackID: "49BRCNV7E94s7Q2FUhhT3w", // uriではなくidなので"spotify:track:"はいらない
+			trackID: "spotify:track:49BRCNV7E94s7Q2FUhhT3w",
 			wantErr: false,
 		},
 	}
