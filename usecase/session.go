@@ -146,6 +146,7 @@ func (s *SessionUseCase) CanConnectToPusher(sessionID string) (bool, error) {
 
 // startTrackEndTrigger は曲の終了やストップを検知してそれぞれの処理を実行します。 goroutineで実行されることを想定しています。
 func (s *SessionUseCase) startTrackEndTrigger(ctx context.Context, sessionID string) {
+	time.Sleep(5 * time.Second) // 曲の再生が始まるのを待つ
 	playingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
 	if err != nil {
 		fmt.Printf("startTrackEndTrigger: failed to get currently playing info id=%s: %v", sessionID, err)
