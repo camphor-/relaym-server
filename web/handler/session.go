@@ -82,6 +82,14 @@ func (h *SessionHandler) AddQueue(c echo.Context) error {
 	ctx := c.Request().Context()
 	sessionID := c.Param("id")
 
+	if err := h.uc.AddQueueTrack(ctx, sessionID, req.State); err != nil {
+		if errors.Is(err, entity.ErrSessionNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, entity.ErrSessionNotFound.Error())
+		}
+		c.Logger().Errorf("add queue track: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
 	return c.NoContent(http.StatusAccepted)
 }
 
