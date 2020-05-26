@@ -83,7 +83,9 @@ func (c *Client) Pause(ctx context.Context, deviceID string) error {
 // APIが非同期で処理がされるため、リクエストが返ってきても曲の追加が完了しているとは限りません。
 // 設定が反映されたか確認するには CurrentlyPlaying() を叩く必要があります。
 // プレミアム会員必須
-func (c *Client) AddToQueue(ctx context.Context, trackID string, deviceID string) error {
+func (c *Client) AddToQueue(ctx context.Context, trackURI string, deviceID string) error {
+	trackID := strings.Replace(trackURI, "spotify:track", "", 1)
+
 	token, ok := service.GetTokenFromContext(ctx)
 	if !ok {
 		return errors.New("token not found")
