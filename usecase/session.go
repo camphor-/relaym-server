@@ -219,16 +219,16 @@ func (s *SessionUseCase) handleTrackEnd(ctx context.Context, sessionID string) (
 
 	playingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
 	if err != nil {
+		if errors.Is(err, entity.ErrActiveDeviceNotFound) {
+			s.handleInterrupt(sess)
+			return nil, false, nil
+		}
 		return nil, false, fmt.Errorf("get currently playing info id=%s: %v", sessionID, err)
 	}
 	fmt.Println(sess)
 
 	if err := sess.IsPlayingCorrectTrack(playingInfo); err != nil {
-		s.pusher.Push(&event.PushMessage{
-			SessionID: sessionID,
-			Msg:       entity.EventInterrupt,
-		})
-		s.tm.StopTimer(sessionID)
+		s.handleInterrupt(sess)
 		return nil, false, nil
 
 	}
@@ -248,6 +248,19 @@ func (s *SessionUseCase) handleAllTrackFinish(sess *entity.Session) {
 		SessionID: sess.ID,
 		Msg:       entity.EventStop,
 	})
+}
+
+// handleInterrupt はSpotifyとの同期が取れていないときの処理を行います。
+func (s *SessionUseCase) handleInterrupt(sess *entity.Session) {
+	if err := sess.MoveToPause(); err != nil {
+		// 必ずPlayされているのでこのエラーになることはないはず
+		fmt.Printf("failed to move to pause: id=%s: %v", sess.ID, err)
+	}
+	s.pusher.Push(&event.PushMessage{
+		SessionID: sess.ID,
+		Msg:       entity.EventInterrupt,
+	})
+	s.tm.StopTimer(sess.ID)
 }
 
 // SetDevice は指定されたidのセッションの作成者と再生する端末を紐付けて再生するデバイスを指定します。
