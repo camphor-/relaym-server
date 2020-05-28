@@ -469,7 +469,7 @@ Spotifyの本体アプリ側で操作されて、Relaym側との同期が取れ�
 
 ```json
 {
-"type": "INTERRUPT",
+"type": "INTERRUPT"
 }
 ```
 
