@@ -50,6 +50,7 @@ func main() {
 	go func() {
 		if err := s.Start(":" + config.Port()); err != nil {
 			s.Logger.Infof("shutting down the server with error: %v", err)
+			os.Exit(1)
 		}
 	}()
 
