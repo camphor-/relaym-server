@@ -16,6 +16,11 @@ var (
 		Type: "PLAY",
 	}
 
+	// EventPause はセッションが一時停止された際に発されるイベントです。
+	EventPause = &Event{
+		Type: "PAUSE",
+	}
+
 	// EventNextTrack はセッションの曲の再生が (正常に) 次の曲に移った際に発されるイベントです。
 	// キューの現在再生している曲の位置が含まれます。
 	EventNextTrack = &Event{

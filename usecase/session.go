@@ -149,6 +149,11 @@ func (s *SessionUseCase) pause(ctx context.Context, sessionID string) error {
 		return fmt.Errorf("update session id=%s: %w", sessionID, err)
 	}
 
+	s.pusher.Push(&event.PushMessage{
+		SessionID: sessionID,
+		Msg:       entity.EventPause,
+	})
+
 	return nil
 }
 
