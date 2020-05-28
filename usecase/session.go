@@ -55,6 +55,11 @@ func (s *SessionUseCase) AddQueueTrack(ctx context.Context, sessionID string, tr
 		return fmt.Errorf("AddToQueue URI=%s, sessionID=%s: %w", trackURI, sessionID, err)
 	}
 
+	s.pusher.Push(&event.PushMessage{
+		SessionID: sessionID,
+		Msg:       entity.EventAddTrack,
+	})
+
 	return nil
 }
 

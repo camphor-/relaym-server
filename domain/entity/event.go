@@ -6,6 +6,11 @@ type Event struct {
 }
 
 var (
+	// EventAddTrack はセッションに曲が追加された際に発されるイベントです。
+	EventAddTrack = &Event{
+		Type: "ADDTRACK",
+	}
+
 	// EventPlay はセッションの再生が開始された際に発されるイベントです。
 	EventPlay = &Event{
 		Type: "PLAY",

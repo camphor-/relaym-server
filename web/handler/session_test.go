@@ -501,7 +501,12 @@ func TestSessionHandler_AddQueue(t *testing.T) {
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
 				m.EXPECT().AddToQueue(gomock.Any(), "spotify:track:valid_uri", "sessionDeviceID").Return(nil)
 			},
-			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
+			prepareMockPusherFn: func(m *mock_event.MockPusher) {
+				m.EXPECT().Push(&event.PushMessage{
+					SessionID: "sessionID",
+					Msg:       entity.EventAddTrack,
+				})
+			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
 				m.EXPECT().FindByID("sessionID").Return(session, nil)
