@@ -72,6 +72,26 @@ func (s *Session) IsCreator(userID string) bool {
 	return s.CreatorID == userID
 }
 
+// GoNextTrack 次の曲の状態に進めます。
+func (s *Session) GoNextTrack() error {
+	if len(s.QueueTracks) <= s.QueueHead+1 {
+		s.QueueHead++ // https://github.com/camphor-/relaym-server/blob/master/docs/definition.md#%E7%8F%BE%E5%9C%A8%E5%AF%BE%E8%B1%A1%E3%81%AE%E6%9B%B2%E3%81%AE%E3%82%A4%E3%83%B3%E3%83%87%E3%83%83%E3%82%AF%E3%82%B9-head
+		s.StateType = Stop
+		return ErrSessionAllTracksFinished
+	}
+	s.QueueHead++
+	return nil
+}
+
+// IsPlayingCorrectTrack は現在の再生状況がセッションの状況と一致しているかチェックします。
+func (s *Session) IsPlayingCorrectTrack(playingInfo *CurrentPlayingInfo) error {
+	if playingInfo.Track == nil || s.QueueTracks[s.QueueHead].URI != playingInfo.Track.URI {
+		fmt.Printf("session playing different track: queue track %s, but playing track %v\n", s.QueueTracks[s.QueueHead].URI, playingInfo.Track)
+		return ErrSessionPlayingDifferentTrack
+	}
+	return nil
+}
+
 type StateType string
 
 const (

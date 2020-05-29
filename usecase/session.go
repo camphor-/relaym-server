@@ -55,6 +55,11 @@ func (s *SessionUseCase) AddQueueTrack(ctx context.Context, sessionID string, tr
 		return fmt.Errorf("AddToQueue URI=%s, sessionID=%s: %w", trackURI, sessionID, err)
 	}
 
+	s.pusher.Push(&event.PushMessage{
+		SessionID: sessionID,
+		Msg:       entity.EventAddTrack,
+	})
+
 	return nil
 }
 
@@ -99,6 +104,8 @@ func (s *SessionUseCase) play(ctx context.Context, sessionID string) error {
 		return fmt.Errorf("find session id=%s: %w", sessionID, err)
 	}
 
+	// TODO: キューに曲がなかったら再生できないようにする
+
 	// TODO : デバイスIDをどっかから読み込む
 	if err := s.playerCli.Play(ctx, ""); err != nil {
 		return fmt.Errorf("call play api: %w", err)
@@ -112,7 +119,7 @@ func (s *SessionUseCase) play(ctx context.Context, sessionID string) error {
 		return fmt.Errorf("update session id=%s: %w", sessionID, err)
 	}
 
-	go s.startSyncCheck(ctx, sessionID)
+	go s.startTrackEndTrigger(ctx, sessionID)
 
 	s.pusher.Push(&event.PushMessage{
 		SessionID: sessionID,
@@ -144,6 +151,11 @@ func (s *SessionUseCase) pause(ctx context.Context, sessionID string) error {
 		return fmt.Errorf("update session id=%s: %w", sessionID, err)
 	}
 
+	s.pusher.Push(&event.PushMessage{
+		SessionID: sessionID,
+		Msg:       entity.EventPause,
+	})
+
 	return nil
 }
 
@@ -157,17 +169,22 @@ func (s *SessionUseCase) CanConnectToPusher(sessionID string) (bool, error) {
 	// TODO : セッションが再生中なのに同期チェックがされていなかったら始める
 	// サーバ再起動でタイマーがなくなると、イベントが正しくクライアントに送られなくなるのでこのタイミングで復旧させる。
 	// if _, ok := s.tm.GetTimer(sessionID); !ok && sess.IsPlaying() {
-	// 	go s.startSyncCheck(sessionID)
+	// 	go s.startTrackEndTrigger(sessionID)
 	// }
 
 	return true, nil
 }
 
-// TODO 関数名を変える。synccheckだけじゃなくて曲が終わった後のビジネスロジックを賄っているので
-// startSyncCheck はSpotifyとの同期が取れているかチェックを行います。goroutineで実行されることを想定しています。
-func (s *SessionUseCase) startSyncCheck(ctx context.Context, sessionID string) {
-	// TODO : Spotify APIで現在の再生状況を取得
-	remainDuration := 3 * time.Minute
+// startTrackEndTrigger は曲の終了やストップを検知してそれぞれの処理を実行します。 goroutineで実行されることを想定しています。
+func (s *SessionUseCase) startTrackEndTrigger(ctx context.Context, sessionID string) {
+	time.Sleep(5 * time.Second) // 曲の再生が始まるのを待つ
+	playingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
+	if err != nil {
+		fmt.Printf("startTrackEndTrigger: failed to get currently playing info id=%s: %v", sessionID, err)
+		return
+	}
+	remainDuration := playingInfo.Remain()
+	fmt.Println(remainDuration)
 
 	triggerAfterTrackEnd := s.tm.CreateTimer(sessionID, remainDuration+syncCheckOffset)
 
@@ -177,34 +194,81 @@ func (s *SessionUseCase) startSyncCheck(ctx context.Context, sessionID string) {
 			fmt.Printf("timer stopped sessionID=%s\n", sessionID)
 			return
 		case <-triggerAfterTrackEnd.ExpireCh():
-			// TODO DBに保存されているセッション情報を取得
-			// TODO : Spotify APIで現在の再生状況を取得
-			// 問題なければ新しいtimerをセット
-			{
-				newD := 4 * time.Minute
-				triggerAfterTrackEnd = s.tm.CreateTimer(sessionID, newD+syncCheckOffset)
-				s.pusher.Push(&event.PushMessage{
-					SessionID: sessionID,
-					Msg: &entity.Event{
-						Type: "NEXTTRACK",
-					},
-				})
-			}
-
-			// TODO 同期に失敗したらエラーを通知して終了
-			{
-				s.pusher.Push(&event.PushMessage{
-					SessionID: sessionID,
-					Msg: &entity.Event{
-						Type: "INTERRUPT",
-					},
-				})
-				s.tm.StopTimer(sessionID)
+			timer, nextTrack, err := s.handleTrackEnd(ctx, sessionID)
+			if err != nil {
+				fmt.Printf("handleTrackEnd: %v", err)
 				return
 			}
-
+			if !nextTrack {
+				fmt.Printf("session id=%s: no next track", sessionID)
+				return
+			}
+			triggerAfterTrackEnd = timer
 		}
 	}
+}
+
+// handleTrackEnd はある一曲の再生が終わったときの処理を行います。
+func (s *SessionUseCase) handleTrackEnd(ctx context.Context, sessionID string) (triggerAfterTrackEnd *entity.SyncCheckTimer, nextTrack bool, err error) {
+	sess, err := s.sessionRepo.FindByID(sessionID)
+	if err != nil {
+		return nil, false, fmt.Errorf("find session id=%s: %v", sessionID, err)
+	}
+	defer func() {
+		if deferErr := s.sessionRepo.Update(sess); err != nil {
+			err = fmt.Errorf("update session id=%s: %v: %w", sess.ID, deferErr, err)
+		}
+	}()
+
+	if err := sess.GoNextTrack(); err != nil && errors.Is(err, entity.ErrSessionAllTracksFinished) {
+		s.handleAllTrackFinish(sess)
+		return nil, false, nil
+	}
+
+	playingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
+	if err != nil {
+		if errors.Is(err, entity.ErrActiveDeviceNotFound) {
+			s.handleInterrupt(sess)
+			return nil, false, nil
+		}
+		return nil, false, fmt.Errorf("get currently playing info id=%s: %v", sessionID, err)
+	}
+	fmt.Println(sess)
+
+	if err := sess.IsPlayingCorrectTrack(playingInfo); err != nil {
+		s.handleInterrupt(sess)
+		return nil, false, nil
+
+	}
+	s.pusher.Push(&event.PushMessage{
+		SessionID: sessionID,
+		Msg:       entity.EventNextTrack,
+	})
+
+	triggerAfterTrackEnd = s.tm.CreateTimer(sessionID, playingInfo.Remain()+syncCheckOffset)
+	return triggerAfterTrackEnd, true, nil
+
+}
+
+// handleAllTrackFinish はキューの全ての曲の再生が終わったときの処理を行います。
+func (s *SessionUseCase) handleAllTrackFinish(sess *entity.Session) {
+	s.pusher.Push(&event.PushMessage{
+		SessionID: sess.ID,
+		Msg:       entity.EventStop,
+	})
+}
+
+// handleInterrupt はSpotifyとの同期が取れていないときの処理を行います。
+func (s *SessionUseCase) handleInterrupt(sess *entity.Session) {
+	if err := sess.MoveToPause(); err != nil {
+		// 必ずPlayされているのでこのエラーになることはないはず
+		fmt.Printf("failed to move to pause: id=%s: %v", sess.ID, err)
+	}
+	s.pusher.Push(&event.PushMessage{
+		SessionID: sess.ID,
+		Msg:       entity.EventInterrupt,
+	})
+	s.tm.StopTimer(sess.ID)
 }
 
 // SetDevice は指定されたidのセッションの作成者と再生する端末を紐付けて再生するデバイスを指定します。

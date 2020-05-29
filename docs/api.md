@@ -446,6 +446,14 @@ Spotifyで曲の検索を行います。
 }
 ```
 
+### STOP
+全ての曲の再生が終了した際に発されるイベントです。
+```json
+{
+  "type": "STOP"
+}
+```
+
 #### RESUME
 sessionの再生が再開された際に発されるイベントです。
 ```json
@@ -461,7 +469,7 @@ Spotifyの本体アプリ側で操作されて、Relaym側との同期が取れ�
 
 ```json
 {
-"type": "INTERRUPT",
+"type": "INTERRUPT"
 }
 ```
 
