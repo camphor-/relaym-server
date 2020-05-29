@@ -42,13 +42,17 @@ func NewSyncCheckTimerManager() *SyncCheckTimerManager {
 	}
 }
 
-// CreateTimer は与えられたセッションの同期チェック用のタイマーを作成するか既存のタイマーを返します。
+// CreateTimer は与えられたセッションの同期チェック用のタイマーを作成します。
+// 既存のタイマーが存在する場合はstopしてから新しいタイマーを作成します。
 func (m *SyncCheckTimerManager) CreateTimer(sessionID string, d time.Duration) *SyncCheckTimer {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	if existing, ok := m.timers[sessionID]; ok {
-		return existing
+		// 本来ならStopのGoDocコメントにある通り、<-t.Cとして、チャネルが空になっていることを確認すべきだが、
+		// ExpireCh()の呼び出し側で受け取っているので問題ない。
+		existing.timer.Stop()
+		close(existing.stopCh)
 	}
 	timer := newSyncCheckTimer(d)
 	m.timers[sessionID] = timer

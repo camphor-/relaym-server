@@ -107,12 +107,15 @@ func TestSyncCheckTimerManager_CreateTimer(t *testing.T) {
 			ignoreCmp: true,
 		},
 		{
-			name:      "すでにタイマーが存在するとき既存のタイマーを返す",
+			name:      "すでにタイマーが存在するときでも新規のタイマーを返す",
 			timers:    map[string]*SyncCheckTimer{"sessionID": timer},
 			sessionID: "sessionID",
 			d:         time.Second,
-			want:      timer,
-			ignoreCmp: false,
+			want: &SyncCheckTimer{
+				timer:  time.NewTimer(time.Second),
+				stopCh: make(chan struct{}, 1),
+			},
+			ignoreCmp: true,
 		},
 	}
 	for _, tt := range tests {
