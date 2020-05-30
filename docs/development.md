@@ -63,6 +63,7 @@ $ ${EDITOR} env.secret
 $ sudo vim /etc/hosts
 
 127.0.0.1 relaym.local # これを追加
+::1 relaym.local # これを追加
  ```
 
 
