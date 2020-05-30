@@ -174,7 +174,7 @@ func (h *SessionHandler) toSessionRes(session *entity.SessionWithUser, device *e
 		},
 		Playback: playbackJSON{
 			State: stateJSON{
-				Type: "STOP",
+				Type: session.StateType.String(),
 			},
 			Device: devices,
 		},
