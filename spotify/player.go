@@ -84,7 +84,7 @@ func (c *Client) Pause(ctx context.Context, deviceID string) error {
 // 設定が反映されたか確認するには CurrentlyPlaying() を叩く必要があります。
 // プレミアム会員必須
 func (c *Client) AddToQueue(ctx context.Context, trackURI string, deviceID string) error {
-	trackID := strings.Replace(trackURI, "spotify:track", "", 1)
+	trackID := strings.Replace(trackURI, "spotify:track:", "", 1)
 
 	token, ok := service.GetTokenFromContext(ctx)
 	if !ok {
