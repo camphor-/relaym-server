@@ -21,16 +21,18 @@ type SessionUseCase struct {
 	sessionRepo repository.Session
 	userRepo    repository.User
 	playerCli   spotify.Player
+	trackCli    spotify.TrackClient
 	pusher      event.Pusher
 }
 
 // NewSessionUseCase はSessionUseCaseのポインタを生成します。
-func NewSessionUseCase(sessionRepo repository.Session, userRepo repository.User, playerCli spotify.Player, pusher event.Pusher) *SessionUseCase {
+func NewSessionUseCase(sessionRepo repository.Session, userRepo repository.User, playerCli spotify.Player, trackCli spotify.TrackClient, pusher event.Pusher) *SessionUseCase {
 	return &SessionUseCase{
 		tm:          entity.NewSyncCheckTimerManager(),
 		sessionRepo: sessionRepo,
 		userRepo:    userRepo,
 		playerCli:   playerCli,
+		trackCli:    trackCli,
 		pusher:      pusher,
 	}
 }
@@ -67,7 +69,7 @@ func (s *SessionUseCase) AddQueueTrack(ctx context.Context, sessionID string, tr
 func (s *SessionUseCase) CreateSession(sessionName string, creatorID string) (*entity.SessionWithUser, error) {
 	creator, err := s.userRepo.FindByID(creatorID)
 	if err != nil {
-		return nil, fmt.Errorf("CreateSession sessionName=%s: %w", sessionName, err)
+		return nil, fmt.Errorf("FindByID userID=%s: %w", creatorID, err)
 	}
 
 	newSession, err := entity.NewSession(sessionName, creatorID)
@@ -293,4 +295,33 @@ func (s *SessionUseCase) SetDevice(ctx context.Context, sessionID string, device
 	}
 
 	return nil
+}
+
+// GetSession は指定されたidからsessionの情報を返します
+func (s *SessionUseCase) GetSession(ctx context.Context, sessionID string) (*entity.SessionWithUser, []*entity.Track, *entity.CurrentPlayingInfo, error) {
+	session, err := s.sessionRepo.FindByID(sessionID)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("FindByID sessionID=%s: %w", sessionID, err)
+	}
+
+	creator, err := s.userRepo.FindByID(session.CreatorID)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("FindByID userID=%s: %w", session.CreatorID, err)
+	}
+
+	tracks := make([]*entity.Track, len(session.QueueTracks))
+	for i, queueTrack := range session.QueueTracks {
+		track, err := s.trackCli.GetTrackFromURI(ctx, queueTrack.URI)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("get track: track_uri=%s: %w", queueTrack.URI, err)
+		}
+		tracks[i] = track
+	}
+
+	cpi, err := s.playerCli.CurrentlyPlaying(ctx)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("CurrentlyPlaying: %w", err)
+	}
+
+	return entity.NewSessionWithUser(session, creator), tracks, cpi, nil
 }
