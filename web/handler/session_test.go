@@ -221,7 +221,7 @@ func TestSessionHandler_Playback(t *testing.T) {
 			tt.prepareMockUserRepoFn(mockUserRepo)
 			mockSessionRepo := mock_repository.NewMockSession(ctrl)
 			tt.prepareMockSessionRepoFn(mockSessionRepo)
-			uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, mockPusher)
+			uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, nil, mockPusher)
 			h := &SessionHandler{
 				uc: uc,
 			}
@@ -343,7 +343,7 @@ func TestSessionHandler_SetDevice(t *testing.T) {
 			mockUserRepo := mock_repository.NewMockUser(ctrl)
 			tt.prepareMockUserRepoFn(mockUserRepo)
 
-			uc := usecase.NewSessionUseCase(mockRepo, mockUserRepo, nil, nil)
+			uc := usecase.NewSessionUseCase(mockRepo, mockUserRepo, nil, nil, nil)
 			h := &SessionHandler{uc: uc}
 
 			err := h.SetDevice(c)
@@ -371,11 +371,11 @@ func TestSessionHandler_PostSession(t *testing.T) {
 			State: stateJSON{
 				Type: "STOP",
 			},
-			Device: nil,
+			Device: deviceJSON{},
 		},
 		Queue: queueJSON{
 			Head:   0,
-			Tracks: nil,
+			Tracks: []*trackJSON{},
 		},
 	}
 	user := &entity.User{
@@ -447,7 +447,7 @@ func TestSessionHandler_PostSession(t *testing.T) {
 			tt.prepareMockSessionRepoFn(mockSessionRepo)
 			mockUserRepo := mock_repository.NewMockUser(ctrl)
 			tt.prepareMockUserRepoFn(mockUserRepo)
-			uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, mockPusher)
+			uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, nil, mockPusher)
 			h := &SessionHandler{
 				uc: uc,
 			}
@@ -486,7 +486,7 @@ func TestSessionHandler_AddQueue(t *testing.T) {
 		QueueHead: 0,
 		QueueTracks: []*entity.QueueTrack{{
 			Index:     0,
-			URI:       "spotify:track:existed_session_uri",
+			URI:       "spotify:track:track_uri",
 			SessionID: "sessionID",
 		},
 		},
@@ -575,7 +575,7 @@ func TestSessionHandler_AddQueue(t *testing.T) {
 			tt.prepareMockUserRepoFn(mockUserRepo)
 			mockSessionRepo := mock_repository.NewMockSession(ctrl)
 			tt.prepareMockSessionRepoFn(mockSessionRepo)
-			uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, mockPusher)
+			uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, nil, mockPusher)
 			h := &SessionHandler{
 				uc: uc,
 			}
@@ -587,6 +587,241 @@ func TestSessionHandler_AddQueue(t *testing.T) {
 			// ステータスコードのチェック
 			if er, ok := err.(*echo.HTTPError); ok && er.Code != tt.wantCode {
 				t.Errorf("Playback() code = %d, want = %d", rec.Code, tt.wantCode)
+			}
+		})
+	}
+}
+
+func TestSessionHandler_GetSession(t *testing.T) {
+	session := &entity.Session{
+		ID:        "sessionID",
+		Name:      "sessionName",
+		CreatorID: "creatorID",
+		DeviceID:  "sessionDeviceID",
+		StateType: "PLAY",
+		QueueHead: 0,
+		QueueTracks: []*entity.QueueTrack{
+			{
+				Index:     0,
+				URI:       "spotify:track:06QTSGUEgcmKwiEJ0IMPig",
+				SessionID: "sessionID",
+			},
+		},
+	}
+	user := &entity.User{
+		ID:            "creatorID",
+		SpotifyUserID: "creatorSpotifyUserID",
+		DisplayName:   "creatorDisplayName",
+	}
+	artists := []*entity.Artist{
+		{
+			Name: "MONOEYES",
+		},
+	}
+
+	albumImages := []*entity.AlbumImage{
+		{
+			URL:    "https://i.scdn.co/image/ab67616d0000b273b48630d6efcebca2596120c4",
+			Height: 640,
+			Width:  640,
+		},
+	}
+
+	track := &entity.Track{
+		URI:      "spotify:track:06QTSGUEgcmKwiEJ0IMPig",
+		ID:       "06QTSGUEgcmKwiEJ0IMPig",
+		Name:     "Borderland",
+		Duration: 213066000000,
+		Artists:  artists,
+		URL:      "https://open.spotify.com/track/06QTSGUEgcmKwiEJ0IMPig",
+		Album: &entity.Album{
+			Name:   "Interstate 46 E.P.",
+			Images: albumImages,
+		},
+	}
+	device := &entity.Device{
+		ID:           "sessionDeviceID",
+		IsRestricted: false,
+		Name:         "hogeさんのiPhone11",
+	}
+
+	cpi := &entity.CurrentPlayingInfo{
+		Playing:  false,
+		Progress: 0,
+		Track:    track,
+		Device:   device,
+	}
+
+	albumImageJSONs := []*albumImageJSON{
+		{
+			URL:    "https://i.scdn.co/image/ab67616d0000b273b48630d6efcebca2596120c4",
+			Height: 640,
+			Width:  640,
+		},
+	}
+
+	artistJSONs := []*artistJSON{
+		{
+			Name: "MONOEYES",
+		},
+	}
+
+	trackJSONs := []*trackJSON{
+		{
+			URI:      "spotify:track:06QTSGUEgcmKwiEJ0IMPig",
+			ID:       "06QTSGUEgcmKwiEJ0IMPig",
+			Name:     "Borderland",
+			Duration: 213066,
+			Artists:  artistJSONs,
+			URL:      "https://open.spotify.com/track/06QTSGUEgcmKwiEJ0IMPig",
+			Album: &albumJSON{
+				Name:   "Interstate 46 E.P.",
+				Images: albumImageJSONs,
+			},
+		},
+	}
+
+	sessionResponse := &sessionRes{
+		ID:   "sessionID",
+		Name: "sessionName",
+		Creator: creatorJSON{
+			ID:          "creatorID",
+			DisplayName: "creatorDisplayName",
+		},
+		Playback: playbackJSON{
+			State: stateJSON{
+				Type: "STOP",
+			},
+			Device: deviceJSON{
+				ID:           device.ID,
+				IsRestricted: device.IsRestricted,
+				Name:         device.Name,
+			},
+		},
+		Queue: queueJSON{
+			Head:   0,
+			Tracks: trackJSONs,
+		},
+	}
+
+	tests := []struct {
+		name                     string
+		sessionID                string
+		prepareMockPlayerFn      func(m *mock_spotify.MockPlayer)
+		prepareMockPusherFn      func(m *mock_event.MockPusher)
+		prepareMockTrackCliFn    func(m *mock_spotify.MockTrackClient)
+		prepareMockUserRepoFn    func(m *mock_repository.MockUser)
+		prepareMockSessionRepoFn func(m *mock_repository.MockSession)
+		want                     *sessionRes
+		wantErr                  bool
+		wantCode                 int
+	}{
+		{
+			name:      "与えられたIDのsessionが存在するとき正常に動作する",
+			sessionID: "sessionID",
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().CurrentlyPlaying(gomock.Any()).Return(cpi, nil)
+			},
+			prepareMockPusherFn: func(m *mock_event.MockPusher) {},
+			prepareMockTrackCliFn: func(m *mock_spotify.MockTrackClient) {
+				m.EXPECT().GetTrackFromURI(gomock.Any(), "spotify:track:06QTSGUEgcmKwiEJ0IMPig").Return(track, nil)
+			},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {
+				m.EXPECT().FindByID("creatorID").Return(user, nil)
+			},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("sessionID").Return(session, nil)
+			},
+			want:     sessionResponse,
+			wantErr:  false,
+			wantCode: http.StatusOK,
+		},
+		{
+			name:      "IDを渡さなかった時400",
+			sessionID: "",
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+			},
+			prepareMockPusherFn: func(m *mock_event.MockPusher) {},
+			prepareMockTrackCliFn: func(m *mock_spotify.MockTrackClient) {
+			},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {
+			},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+			},
+			want:     nil,
+			wantErr:  true,
+			wantCode: http.StatusBadRequest,
+		},
+		{
+			name:      "存在しないsessionIDを渡した時404",
+			sessionID: "non_exist_sessionID",
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+			},
+			prepareMockPusherFn: func(m *mock_event.MockPusher) {},
+			prepareMockTrackCliFn: func(m *mock_spotify.MockTrackClient) {
+			},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {
+			},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("non_exist_sessionID").Return(nil, entity.ErrSessionNotFound)
+			},
+			want:     nil,
+			wantErr:  true,
+			wantCode: http.StatusNotFound,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// httptestの準備
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			c.SetPath("/sessions/:id")
+			c.SetParamNames("id")
+			c.SetParamValues(tt.sessionID)
+
+			// モックの準備
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			mockPlayer := mock_spotify.NewMockPlayer(ctrl)
+			tt.prepareMockPlayerFn(mockPlayer)
+			mockPusher := mock_event.NewMockPusher(ctrl)
+			tt.prepareMockPusherFn(mockPusher)
+			mockSessionRepo := mock_repository.NewMockSession(ctrl)
+			tt.prepareMockSessionRepoFn(mockSessionRepo)
+			mockUserRepo := mock_repository.NewMockUser(ctrl)
+			tt.prepareMockUserRepoFn(mockUserRepo)
+			mockTrackCli := mock_spotify.NewMockTrackClient(ctrl)
+			tt.prepareMockTrackCliFn(mockTrackCli)
+			uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, mockTrackCli, mockPusher)
+			h := &SessionHandler{
+				uc: uc,
+			}
+			err := h.GetSession(c)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetSession() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			// ステータスコードのチェック
+			if er, ok := err.(*echo.HTTPError); (ok && er.Code != tt.wantCode) || (!ok && rec.Code != tt.wantCode) {
+				t.Errorf("GetSession() code = %d, want = %d", rec.Code, tt.wantCode)
+				return
+			}
+
+			if !tt.wantErr {
+				got := &sessionRes{}
+				err := json.Unmarshal(rec.Body.Bytes(), got)
+				if err != nil {
+					t.Fatal(err)
+					return
+				}
+				opts := []cmp.Option{cmpopts.IgnoreFields(sessionRes{}, "ID")}
+				if !cmp.Equal(got, tt.want, opts...) {
+					t.Errorf("GetSession() diff = %v", cmp.Diff(got, tt.want, opts...))
+				}
 			}
 		})
 	}
