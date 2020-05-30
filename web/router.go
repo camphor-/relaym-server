@@ -59,6 +59,7 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, session
 	authedSession.PUT("/:id/devices", sessionHandler.SetDevice)
 
 	noAuthedSession := v3.Group("/sessions")
+	noAuthedSession.GET("/:id", sessionHandler.GetSession)
 	noAuthedSession.PUT("/:id/playback", sessionHandler.Playback)
 	return e
 }
