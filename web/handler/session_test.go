@@ -598,7 +598,7 @@ func TestSessionHandler_GetSession(t *testing.T) {
 		Name:      "sessionName",
 		CreatorID: "creatorID",
 		DeviceID:  "sessionDeviceID",
-		StateType: "PLAY",
+		StateType: "STOP",
 		QueueHead: 0,
 		QueueTracks: []*entity.QueueTrack{
 			{
@@ -627,16 +627,18 @@ func TestSessionHandler_GetSession(t *testing.T) {
 		},
 	}
 
-	track := &entity.Track{
-		URI:      "spotify:track:06QTSGUEgcmKwiEJ0IMPig",
-		ID:       "06QTSGUEgcmKwiEJ0IMPig",
-		Name:     "Borderland",
-		Duration: 213066000000,
-		Artists:  artists,
-		URL:      "https://open.spotify.com/track/06QTSGUEgcmKwiEJ0IMPig",
-		Album: &entity.Album{
-			Name:   "Interstate 46 E.P.",
-			Images: albumImages,
+	tracks := []*entity.Track{
+		{
+			URI:      "spotify:track:06QTSGUEgcmKwiEJ0IMPig",
+			ID:       "06QTSGUEgcmKwiEJ0IMPig",
+			Name:     "Borderland",
+			Duration: 213066000000,
+			Artists:  artists,
+			URL:      "https://open.spotify.com/track/06QTSGUEgcmKwiEJ0IMPig",
+			Album: &entity.Album{
+				Name:   "Interstate 46 E.P.",
+				Images: albumImages,
+			},
 		},
 	}
 	device := &entity.Device{
@@ -648,7 +650,7 @@ func TestSessionHandler_GetSession(t *testing.T) {
 	cpi := &entity.CurrentPlayingInfo{
 		Playing:  false,
 		Progress: 0,
-		Track:    track,
+		Track:    tracks[0],
 		Device:   device,
 	}
 
@@ -724,7 +726,7 @@ func TestSessionHandler_GetSession(t *testing.T) {
 			},
 			prepareMockPusherFn: func(m *mock_event.MockPusher) {},
 			prepareMockTrackCliFn: func(m *mock_spotify.MockTrackClient) {
-				m.EXPECT().GetTrackFromURI(gomock.Any(), "spotify:track:06QTSGUEgcmKwiEJ0IMPig").Return(track, nil)
+				m.EXPECT().GetTracksFromURI(gomock.Any(), []string{"spotify:track:06QTSGUEgcmKwiEJ0IMPig"}).Return(tracks, nil)
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {
 				m.EXPECT().FindByID("creatorID").Return(user, nil)
@@ -735,22 +737,6 @@ func TestSessionHandler_GetSession(t *testing.T) {
 			want:     sessionResponse,
 			wantErr:  false,
 			wantCode: http.StatusOK,
-		},
-		{
-			name:      "IDを渡さなかった時400",
-			sessionID: "",
-			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
-			},
-			prepareMockPusherFn: func(m *mock_event.MockPusher) {},
-			prepareMockTrackCliFn: func(m *mock_spotify.MockTrackClient) {
-			},
-			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {
-			},
-			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-			},
-			want:     nil,
-			wantErr:  true,
-			wantCode: http.StatusBadRequest,
 		},
 		{
 			name:      "存在しないsessionIDを渡した時404",

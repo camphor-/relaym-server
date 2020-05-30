@@ -309,13 +309,14 @@ func (s *SessionUseCase) GetSession(ctx context.Context, sessionID string) (*ent
 		return nil, nil, nil, fmt.Errorf("FindByID userID=%s: %w", session.CreatorID, err)
 	}
 
-	tracks := make([]*entity.Track, len(session.QueueTracks))
+	trackURIs := make([]string, len(session.QueueTracks))
 	for i, queueTrack := range session.QueueTracks {
-		track, err := s.trackCli.GetTrackFromURI(ctx, queueTrack.URI)
-		if err != nil {
-			return nil, nil, nil, fmt.Errorf("get track: track_uri=%s: %w", queueTrack.URI, err)
-		}
-		tracks[i] = track
+		trackURIs[i] = queueTrack.URI
+	}
+
+	tracks, err := s.trackCli.GetTracksFromURI(ctx, trackURIs)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("get tracks: track_uris=%s: %w", trackURIs, err)
 	}
 
 	cpi, err := s.playerCli.CurrentlyPlaying(ctx)

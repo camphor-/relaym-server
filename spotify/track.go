@@ -27,20 +27,30 @@ func (c *Client) Search(ctx context.Context, q string) ([]*entity.Track, error) 
 }
 
 // GetTrackFromURI はSpotify APIを通して、与えられたTrack URIを用い音楽を取得します。
-func (c *Client) GetTrackFromURI(ctx context.Context, trackURI string) (*entity.Track, error) {
+func (c *Client) GetTracksFromURI(ctx context.Context, trackURIs []string) ([]*entity.Track, error) {
 	token, ok := service.GetTokenFromContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("token not found")
 	}
-
-	id := strings.Replace(trackURI, "spotify:track", "", 1)
 	cli := c.auth.NewClient(token)
 
-	track, err := cli.GetTrack(spotify.ID(id))
-	if err != nil {
-		return nil, fmt.Errorf("get track id=%s: %w", id, err)
+	ids := make([]spotify.ID, len(trackURIs))
+	for i, trackURI := range trackURIs {
+		id := strings.Replace(trackURI, "spotify:track:", "", 1)
+		ids[i] = spotify.ID(id)
 	}
-	return c.toTrack(track), nil
+
+	resultTracks, err := cli.GetTracks(ids...)
+	if err != nil {
+		return nil, fmt.Errorf("get track uris=%s: %w", trackURIs, err)
+	}
+
+	tracks := make([]*entity.Track, len(resultTracks))
+	for i, rt := range resultTracks {
+		tracks[i] = c.toTrack(rt)
+	}
+
+	return tracks, nil
 }
 
 func (c *Client) toTracks(resultTracks []spotify.FullTrack) []*entity.Track {
