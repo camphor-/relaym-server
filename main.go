@@ -41,7 +41,7 @@ func main() {
 
 	userUC := usecase.NewUserUseCase(spotifyCli, userRepo)
 	authUC := usecase.NewAuthUseCase(spotifyCli, spotifyCli, authRepo, userRepo)
-	sessionUC := usecase.NewSessionUseCase(sessionRepo, userRepo, spotifyCli, hub)
+	sessionUC := usecase.NewSessionUseCase(sessionRepo, userRepo, spotifyCli, spotifyCli, hub)
 	trackUC := usecase.NewTrackUseCase(spotifyCli)
 
 	s := web.NewServer(authUC, userUC, sessionUC, trackUC, hub)

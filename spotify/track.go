@@ -3,6 +3,7 @@ package spotify
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/camphor-/relaym-server/domain/entity"
@@ -23,6 +24,23 @@ func (c *Client) Search(ctx context.Context, q string) ([]*entity.Track, error) 
 		return nil, fmt.Errorf("search q=%s: %w", q, err)
 	}
 	return c.toTracks(result.Tracks.Tracks), nil
+}
+
+// GetTrackFromURI はSpotify APIを通して、与えられたTrack URIを用い音楽を取得します。
+func (c *Client) GetTrackFromURI(ctx context.Context, trackURI string) (*entity.Track, error) {
+	token, ok := service.GetTokenFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("token not found")
+	}
+
+	id := strings.Replace(trackURI, "spotify:track", "", 1)
+	cli := c.auth.NewClient(token)
+
+	track, err := cli.GetTrack(spotify.ID(id))
+	if err != nil {
+		return nil, fmt.Errorf("get track id=%s: %w", id, err)
+	}
+	return c.toTrack(track), nil
 }
 
 func (c *Client) toTracks(resultTracks []spotify.FullTrack) []*entity.Track {

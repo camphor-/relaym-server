@@ -11,4 +11,5 @@ import (
 // TrackClient はSpotifyの音楽に関連したAPIを呼び出すためのインターフェイスです。
 type TrackClient interface {
 	Search(ctx context.Context, q string) ([]*entity.Track, error)
+	GetTrackFromURI(ctx context.Context, id string) (*entity.Track, error)
 }
