@@ -51,9 +51,6 @@ func (h *SessionHandler) PostSession(c echo.Context) error {
 func (h *SessionHandler) GetSession(c echo.Context) error {
 	ctx := c.Request().Context()
 	id := c.Param("id")
-	if id == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "empty session id")
-	}
 
 	session, tracks, playingInfo, err := h.uc.GetSession(ctx, id)
 	if err != nil {
