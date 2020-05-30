@@ -371,7 +371,7 @@ func TestSessionHandler_PostSession(t *testing.T) {
 			State: stateJSON{
 				Type: "STOP",
 			},
-			Device: deviceJSON{},
+			Device: nil,
 		},
 		Queue: queueJSON{
 			Head:   0,
@@ -694,7 +694,7 @@ func TestSessionHandler_GetSession(t *testing.T) {
 			State: stateJSON{
 				Type: "STOP",
 			},
-			Device: deviceJSON{
+			Device: &deviceJSON{
 				ID:           device.ID,
 				IsRestricted: device.IsRestricted,
 				Name:         device.Name,

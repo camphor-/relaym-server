@@ -157,9 +157,9 @@ func (h *SessionHandler) SetDevice(c echo.Context) error {
 }
 
 func (h *SessionHandler) toSessionRes(session *entity.SessionWithUser, device *entity.Device, tracks []*entity.Track) *sessionRes {
-	devices := deviceJSON{}
+	var dJ *deviceJSON = nil
 	if device != nil {
-		devices = deviceJSON{
+		dJ = &deviceJSON{
 			ID:           device.ID,
 			IsRestricted: device.IsRestricted,
 			Name:         device.Name,
@@ -176,7 +176,7 @@ func (h *SessionHandler) toSessionRes(session *entity.SessionWithUser, device *e
 			State: stateJSON{
 				Type: session.StateType.String(),
 			},
-			Device: devices,
+			Device: dJ,
 		},
 		Queue: queueJSON{
 			Head:   session.QueueHead,
@@ -199,8 +199,8 @@ type creatorJSON struct {
 }
 
 type playbackJSON struct {
-	State  stateJSON  `json:"state"`
-	Device deviceJSON `json:"device"`
+	State  stateJSON   `json:"state"`
+	Device *deviceJSON `json:"device"`
 }
 type stateJSON struct {
 	Type string `json:"type"`
