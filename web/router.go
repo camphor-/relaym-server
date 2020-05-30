@@ -56,6 +56,7 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, session
 	user.GET("/me/devices", userHandler.GetActiveDevices)
 
 	authedSession := authed.Group("/sessions")
+	authedSession.POST("", sessionHandler.PostSession)
 	authedSession.PUT("/:id/devices", sessionHandler.SetDevice)
 
 	noAuthedSession := v3.Group("/sessions")
