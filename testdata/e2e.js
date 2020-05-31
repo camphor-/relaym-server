@@ -75,7 +75,7 @@ const playRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session.
     "mode": "cors",
     "credentials": "include"
 });
-console.assert(createSessionRes.ok,"曲の再生に失敗しました",playRes.status)
+console.assert(playRes.ok,"曲の再生に失敗しました",playRes.status)
 
 const sleep = msec => new Promise(resolve => setTimeout(resolve, msec))
 await sleep(5000)
