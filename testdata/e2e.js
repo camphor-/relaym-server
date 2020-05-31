@@ -26,7 +26,7 @@ const getDevicesRes = await fetch("http://relaym.local:8080/api/v3/users/me/devi
     "mode": "cors",
     "credentials": "include"
 });
-console.assert(getMeRes.ok,"デバイスの取得に失敗しました",getDevicesRes.status)
+console.assert(getDevicesRes.ok,"デバイスの取得に失敗しました",getDevicesRes.status)
 const devices = await getDevicesRes.json()
 console.log(devices)
 
