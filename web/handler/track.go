@@ -32,11 +32,11 @@ func (h *TrackHandler) SearchTracks(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return c.JSON(http.StatusOK, &tracksRes{
-		Tracks: h.toTrackJSON(tracks),
+		Tracks: toTrackJSON(tracks),
 	})
 }
 
-func (h *TrackHandler) toTrackJSON(tracks []*entity.Track) []*trackJSON {
+func toTrackJSON(tracks []*entity.Track) []*trackJSON {
 	trackJSONs := make([]*trackJSON, len(tracks))
 
 	for i, track := range tracks {
@@ -45,11 +45,11 @@ func (h *TrackHandler) toTrackJSON(tracks []*entity.Track) []*trackJSON {
 			ID:       track.ID,
 			Name:     track.Name,
 			Duration: track.Duration.Milliseconds(),
-			Artists:  h.toArtistJSON(track),
+			Artists:  toArtistJSON(track),
 			URL:      track.URL,
 			Album: &albumJSON{
 				Name:   track.Album.Name,
-				Images: h.toAlbumImageJSON(track),
+				Images: toAlbumImageJSON(track),
 			},
 		}
 	}
@@ -57,7 +57,7 @@ func (h *TrackHandler) toTrackJSON(tracks []*entity.Track) []*trackJSON {
 	return trackJSONs
 }
 
-func (h *TrackHandler) toArtistJSON(track *entity.Track) []*artistJSON {
+func toArtistJSON(track *entity.Track) []*artistJSON {
 	artistJSONs := make([]*artistJSON, len(track.Artists))
 	for i, artist := range track.Artists {
 		artistJSONs[i] = &artistJSON{
@@ -68,7 +68,7 @@ func (h *TrackHandler) toArtistJSON(track *entity.Track) []*artistJSON {
 	return artistJSONs
 }
 
-func (h *TrackHandler) toAlbumImageJSON(track *entity.Track) []*albumImageJSON {
+func toAlbumImageJSON(track *entity.Track) []*albumImageJSON {
 	albumImageJSONs := make([]*albumImageJSON, len(track.Album.Images))
 	for i, albumImage := range track.Album.Images {
 		albumImageJSONs[i] = &albumImageJSON{

@@ -300,7 +300,7 @@ func TestSessionUseCase_handleTrackEnd(t *testing.T) {
 			tt.prepareMockUserRepoFn(mockUserRepo)
 			mockSessionRepo := mock_repository.NewMockSession(ctrl)
 			tt.prepareMockSessionRepoFn(mockSessionRepo)
-			s := NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, mockPusher)
+			s := NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, nil, mockPusher)
 
 			gotTriggerAfterTrackEnd, gotNextTrack, err := s.handleTrackEnd(context.Background(), tt.sessionID)
 			if (err != nil) != tt.wantErr {

@@ -44,28 +44,22 @@ func (h *SessionHandler) PostSession(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	return c.JSON(http.StatusCreated, h.toSessionRes(session))
+	return c.JSON(http.StatusCreated, h.toSessionRes(session, nil, nil))
 }
 
-func (h *SessionHandler) toSessionRes(session *entity.SessionWithUser) *sessionRes {
-	return &sessionRes{
-		ID:   session.ID,
-		Name: session.Name,
-		Creator: creatorJSON{
-			ID:          session.Creator.ID,
-			DisplayName: session.Creator.DisplayName,
-		},
-		Playback: playbackJSON{
-			State: stateJSON{
-				Type: "STOP",
-			},
-			Device: nil, //TODO: deviceを取得し、deviceJSONを作成する
-		},
-		Queue: queueJSON{
-			Head:   session.QueueHead,
-			Tracks: nil, //TODO: queueTrackのsessionIDからsessionを取得し、trackJSONを作成する
-		},
+// GetSession は GET /sessions/:id に対応するハンドラーです。
+func (h *SessionHandler) GetSession(c echo.Context) error {
+	ctx := c.Request().Context()
+	id := c.Param("id")
+
+	session, tracks, playingInfo, err := h.uc.GetSession(ctx, id)
+	if err != nil {
+		if errors.Is(err, entity.ErrSessionNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound)
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
+	return c.JSON(http.StatusOK, h.toSessionRes(session, playingInfo.Device, tracks))
 }
 
 // AddQueue は POST /sessions/:id/queue に対応するハンドラーです。
@@ -162,6 +156,35 @@ func (h *SessionHandler) SetDevice(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+func (h *SessionHandler) toSessionRes(session *entity.SessionWithUser, device *entity.Device, tracks []*entity.Track) *sessionRes {
+	var dJ *deviceJSON = nil
+	if device != nil {
+		dJ = &deviceJSON{
+			ID:           device.ID,
+			IsRestricted: device.IsRestricted,
+			Name:         device.Name,
+		}
+	}
+	return &sessionRes{
+		ID:   session.ID,
+		Name: session.Name,
+		Creator: creatorJSON{
+			ID:          session.Creator.ID,
+			DisplayName: session.Creator.DisplayName,
+		},
+		Playback: playbackJSON{
+			State: stateJSON{
+				Type: session.StateType.String(),
+			},
+			Device: dJ,
+		},
+		Queue: queueJSON{
+			Head:   session.QueueHead,
+			Tracks: toTrackJSON(tracks),
+		},
+	}
+}
+
 type sessionRes struct {
 	ID       string       `json:"id"`
 	Name     string       `json:"name"`
@@ -176,8 +199,8 @@ type creatorJSON struct {
 }
 
 type playbackJSON struct {
-	State  stateJSON     `json:"state"`
-	Device []*deviceJSON `json:"device"`
+	State  stateJSON   `json:"state"`
+	Device *deviceJSON `json:"device"`
 }
 type stateJSON struct {
 	Type string `json:"type"`

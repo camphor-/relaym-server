@@ -21,15 +21,24 @@ func (c *Client) CurrentlyPlaying(ctx context.Context) (*entity.CurrentPlayingIn
 		return nil, errors.New("token not found")
 	}
 	cli := c.auth.NewClient(token)
-	cp, err := cli.PlayerCurrentlyPlaying()
+	ps, err := cli.PlayerState()
 	if convErr := c.convertPlayerError(err); convErr != nil {
 		return nil, fmt.Errorf("spotify api: currently playing: %w", convErr)
 	}
 	return &entity.CurrentPlayingInfo{
-		Playing:  cp.Playing,
-		Progress: time.Duration(cp.Progress) * time.Millisecond,
-		Track:    c.toTrack(cp.Item),
+		Playing:  ps.Playing,
+		Progress: time.Duration(ps.Progress) * time.Millisecond,
+		Track:    c.toTrack(ps.Item),
+		Device:   c.toDevice(ps.Device),
 	}, nil
+}
+
+func (c *Client) toDevice(device spotify.PlayerDevice) *entity.Device {
+	return &entity.Device{
+		ID:           string(device.ID),
+		IsRestricted: device.Restricted,
+		Name:         device.Name,
+	}
 }
 
 // Play は曲を再生し始めるか現在再生途中の曲の再生を再開するAPIです。deviceIDが空の場合はデフォルトのデバイスで再生されます。

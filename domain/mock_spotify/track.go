@@ -48,3 +48,18 @@ func (mr *MockTrackClientMockRecorder) Search(ctx, q interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Search", reflect.TypeOf((*MockTrackClient)(nil).Search), ctx, q)
 }
+
+// GetTracksFromURI mocks base method
+func (m *MockTrackClient) GetTracksFromURI(ctx context.Context, trackURIs []string) ([]*entity.Track, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTracksFromURI", ctx, trackURIs)
+	ret0, _ := ret[0].([]*entity.Track)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTracksFromURI indicates an expected call of GetTracksFromURI
+func (mr *MockTrackClientMockRecorder) GetTracksFromURI(ctx, trackURIs interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTracksFromURI", reflect.TypeOf((*MockTrackClient)(nil).GetTracksFromURI), ctx, trackURIs)
+}

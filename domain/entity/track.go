@@ -33,6 +33,7 @@ type CurrentPlayingInfo struct {
 	Playing  bool
 	Progress time.Duration
 	Track    *Track
+	Device   *Device
 }
 
 // Remain は残りの再生時間を計算します。

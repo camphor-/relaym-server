@@ -61,6 +61,7 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, session
 	authedSession.POST("/:id/queue", sessionHandler.AddQueue)
 
 	noAuthedSession := v3.Group("/sessions")
+	noAuthedSession.GET("/:id", sessionHandler.GetSession)
 	noAuthedSession.PUT("/:id/playback", sessionHandler.Playback)
 	return e
 }
