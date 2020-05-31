@@ -92,7 +92,7 @@ const pauseRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session
     "mode": "cors",
     "credentials": "include"
 });
-console.assert(createSessionRes.ok,"曲の一時停止に失敗しました",pauseRes.status)
+console.assert(pauseRes.ok,"曲の一時停止に失敗しました",pauseRes.status)
 await sleep(5000)
 
 console.log("----------STEP7 : 再度再生----------")
