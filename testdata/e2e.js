@@ -61,7 +61,7 @@ const addQueueRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${sess
     "mode": "cors",
     "credentials": "include"
 });
-console.assert(createSessionRes.ok,"キューへの追加に失敗しました",addQueueRes.status)
+console.assert(addQueueRes.ok,"キューへの追加に失敗しました",addQueueRes.status)
 
 console.log("----------STEP5 : 再生----------")
 
