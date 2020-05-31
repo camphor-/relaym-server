@@ -107,4 +107,4 @@ const rePlayRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${sessio
     "mode": "cors",
     "credentials": "include"
 });
-console.assert(createSessionRes.ok,"曲の再度再生に失敗しました",rePlayRes.status)
+console.assert(rePlayRes.ok,"曲の再度再生に失敗しました",rePlayRes.status)
