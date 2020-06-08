@@ -92,6 +92,27 @@ func (s *Session) IsPlayingCorrectTrack(playingInfo *CurrentPlayingInfo) error {
 	return nil
 }
 
+// ShouldCallAddQueueAPINow は今すぐキューに追加するAPIを叩くかどうか判定します。
+// 最初の再生開始時(Stop→Play時)は一気にキューに追加するけど、それ以外のときは随時追加したいので、
+// それをチェックするために使います。
+func (s *Session) ShouldCallAddQueueAPINow() bool {
+	return s.StateType == Play || s.StateType == Pause
+}
+
+// IsResume は次のStateTypeへの移行がポーズからの再開かどうかを返します、
+func (s *Session) IsResume(nextState StateType) bool {
+	return s.StateType == Pause && nextState == Play
+}
+
+// TrackURIs は track URIのスライスを返します。
+func (s *Session) TrackURIs() []string {
+	uris := make([]string, len(s.QueueTracks))
+	for i := 0; i < len(s.QueueTracks); i++ {
+		uris[i] = s.QueueTracks[i].URI
+	}
+	return uris
+}
+
 type StateType string
 
 const (

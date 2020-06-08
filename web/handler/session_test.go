@@ -72,7 +72,7 @@ func TestSessionHandler_Playback(t *testing.T) {
 					Name:        "session_name",
 					CreatorID:   "creator_id",
 					QueueHead:   0,
-					StateType:   "PLAY",
+					StateType:   entity.Pause,
 					QueueTracks: nil,
 				}, nil)
 			},
@@ -80,7 +80,49 @@ func TestSessionHandler_Playback(t *testing.T) {
 			wantCode: http.StatusForbidden,
 		},
 		{
-			name:      "PLAYで正しく再生リクエストが処理されたとき202",
+			name:      "PLAYでStateTypeがSTOPのときは全てのキューと一緒に再生をし始めて202",
+			sessionID: "sessionID",
+			body:      `{"state": "PLAY"}`,
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().PlayWithTracks(gomock.Any(), "",
+					[]string{"spotify:track:5uQ0vKy2973Y9IUCd1wMEF", "spotify:track:49BRCNV7E94s7Q2FUhhT3w"}).Return(nil)
+			},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockPusherFn: func(m *mock_event.MockPusher) {
+				m.EXPECT().Push(&event.PushMessage{
+					SessionID: "sessionID",
+					Msg:       entity.EventPlay,
+				})
+			},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+					ID:        "sessionID",
+					Name:      "session_name",
+					CreatorID: "creator_id",
+					QueueHead: 0,
+					StateType: entity.Stop,
+					QueueTracks: []*entity.QueueTrack{
+						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
+					},
+				}, nil)
+				m.EXPECT().Update(&entity.Session{
+					ID:        "sessionID",
+					Name:      "session_name",
+					CreatorID: "creator_id",
+					QueueHead: 0,
+					StateType: "PLAY",
+					QueueTracks: []*entity.QueueTrack{
+						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
+					},
+				}).Return(nil)
+			},
+			wantErr:  false,
+			wantCode: http.StatusAccepted,
+		},
+		{
+			name:      "PLAYでStateTypeがPauseのときはキューはいじらず再生をし始めて202",
 			sessionID: "sessionID",
 			body:      `{"state": "PLAY"}`,
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
@@ -95,20 +137,26 @@ func TestSessionHandler_Playback(t *testing.T) {
 			},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
 				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
-					ID:          "sessionID",
-					Name:        "session_name",
-					CreatorID:   "creator_id",
-					QueueHead:   0,
-					StateType:   "STOP",
-					QueueTracks: nil,
+					ID:        "sessionID",
+					Name:      "session_name",
+					CreatorID: "creator_id",
+					QueueHead: 0,
+					StateType: entity.Pause,
+					QueueTracks: []*entity.QueueTrack{
+						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
+					},
 				}, nil)
 				m.EXPECT().Update(&entity.Session{
-					ID:          "sessionID",
-					Name:        "session_name",
-					CreatorID:   "creator_id",
-					QueueHead:   0,
-					StateType:   "PLAY",
-					QueueTracks: nil,
+					ID:        "sessionID",
+					Name:      "session_name",
+					CreatorID: "creator_id",
+					QueueHead: 0,
+					StateType: "PLAY",
+					QueueTracks: []*entity.QueueTrack{
+						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
+					},
 				}).Return(nil)
 			},
 			wantErr:  false,
@@ -182,7 +230,7 @@ func TestSessionHandler_Playback(t *testing.T) {
 					Name:        "session_name",
 					CreatorID:   "creator_id",
 					QueueHead:   0,
-					StateType:   "PLAY",
+					StateType:   "PAUSE",
 					QueueTracks: nil,
 				}, nil)
 				m.EXPECT().Update(&entity.Session{
@@ -581,12 +629,12 @@ func TestSessionHandler_AddQueue(t *testing.T) {
 			}
 			err := h.AddQueue(c)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Playback() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("AddQueue() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
 			// ステータスコードのチェック
 			if er, ok := err.(*echo.HTTPError); ok && er.Code != tt.wantCode {
-				t.Errorf("Playback() code = %d, want = %d", rec.Code, tt.wantCode)
+				t.Errorf("AddQueue() code = %d, want = %d", rec.Code, tt.wantCode)
 			}
 		})
 	}

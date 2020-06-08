@@ -48,9 +48,9 @@ console.assert(createSessionRes.ok,"セッションの作成に失敗しまし�
 const session = await createSessionRes.json()
 console.log(session)
 
-console.log("----------STEP4 : セッションに曲を追加----------")
+console.log("----------STEP4 : セッションに曲を追加(1曲目)----------")
 
-const trackURI = 'spotify:track:49BRCNV7E94s7Q2FUhhT3w'
+const trackURI = 'spotify:track:5uQ0vKy2973Y9IUCd1wMEF'
 const addQueueRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session.id}/queue`, {
     "headers": {
         "X-CSRF-TOKEN": "a",
@@ -63,7 +63,22 @@ const addQueueRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${sess
 });
 console.assert(addQueueRes.ok,"キューへの追加に失敗しました",addQueueRes.status)
 
-console.log("----------STEP5 : 再生----------")
+console.log("----------STEP5 : セッションに曲を追加(2曲目)----------")
+
+const secondTrackURI = 'spotify:track:49BRCNV7E94s7Q2FUhhT3w'
+const secondAddQueueRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session.id}/queue`, {
+    "headers": {
+        "X-CSRF-TOKEN": "a",
+        "content-type":"application/json"
+    },
+    "body": `{"uri":"${secondTrackURI}"}`,
+    "method": "POST",
+    "mode": "cors",
+    "credentials": "include"
+});
+console.assert(secondAddQueueRes.ok,"2曲目キューへの追加に失敗しました",secondAddQueueRes.status)
+
+console.log("----------STEP6 : 再生----------")
 
 const playRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session.id}/playback`, {
     "headers": {
@@ -80,7 +95,7 @@ console.assert(playRes.ok,"曲の再生に失敗しました",playRes.status)
 const sleep = msec => new Promise(resolve => setTimeout(resolve, msec))
 await sleep(5000)
 
-console.log("----------STEP6 : 一時停止----------")
+console.log("----------STEP7 : 一時停止----------")
 
 const pauseRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session.id}/playback`, {
     "headers": {
@@ -95,7 +110,7 @@ const pauseRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session
 console.assert(pauseRes.ok,"曲の一時停止に失敗しました",pauseRes.status)
 await sleep(5000)
 
-console.log("----------STEP7 : 再度再生----------")
+console.log("----------STEP8 : 再度再生----------")
 
 const rePlayRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session.id}/playback`, {
     "headers": {
@@ -108,3 +123,18 @@ const rePlayRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${sessio
     "credentials": "include"
 });
 console.assert(rePlayRes.ok,"曲の再度再生に失敗しました",rePlayRes.status)
+
+console.log("----------STEP9 : セッションに曲を追加(三曲目)----------")
+
+const thirdTrackURI = 'spotify:track:49BRCNV7E94s7Q2FUhhT3w'
+const thirdAddQueueRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session.id}/queue`, {
+    "headers": {
+        "X-CSRF-TOKEN": "a",
+        "content-type":"application/json"
+    },
+    "body": `{"uri":"${thirdTrackURI}"}`,
+    "method": "POST",
+    "mode": "cors",
+    "credentials": "include"
+});
+console.assert(thirdAddQueueRes.ok,"3曲目のキューへの追加に失敗しました",thirdAddQueueRes.status)

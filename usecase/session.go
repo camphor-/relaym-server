@@ -52,11 +52,12 @@ func (s *SessionUseCase) AddQueueTrack(ctx context.Context, sessionID string, tr
 		return fmt.Errorf("StoreQueueTrack URI=%s, sessionID=%s: %w", trackURI, sessionID, err)
 	}
 
-	err = s.playerCli.AddToQueue(ctx, trackURI, session.DeviceID)
-	if err != nil {
-		return fmt.Errorf("AddToQueue URI=%s, sessionID=%s: %w", trackURI, sessionID, err)
+	if session.ShouldCallAddQueueAPINow() {
+		err = s.playerCli.AddToQueue(ctx, trackURI, session.DeviceID)
+		if err != nil {
+			return fmt.Errorf("AddToQueue URI=%s, sessionID=%s: %w", trackURI, sessionID, err)
+		}
 	}
-
 	s.pusher.Push(&event.PushMessage{
 		SessionID: sessionID,
 		Msg:       entity.EventAddTrack,
@@ -109,8 +110,14 @@ func (s *SessionUseCase) play(ctx context.Context, sessionID string) error {
 	// TODO: キューに曲がなかったら再生できないようにする
 
 	// TODO : デバイスIDをどっかから読み込む
-	if err := s.playerCli.Play(ctx, ""); err != nil {
-		return fmt.Errorf("call play api: %w", err)
+	if sess.IsResume(entity.Play) {
+		if err := s.playerCli.Play(ctx, ""); err != nil {
+			return fmt.Errorf("call play api: %w", err)
+		}
+	} else {
+		if err := s.playerCli.PlayWithTracks(ctx, "", sess.TrackURIs()); err != nil {
+			return fmt.Errorf("call play api: %w", err)
+		}
 	}
 
 	if err := sess.MoveToPlay(); err != nil {
@@ -246,8 +253,9 @@ func (s *SessionUseCase) handleTrackEnd(ctx context.Context, sessionID string) (
 		SessionID: sessionID,
 		Msg:       entity.EventNextTrack,
 	})
-
 	triggerAfterTrackEnd = s.tm.CreateTimer(sessionID, playingInfo.Remain()+syncCheckOffset)
+	fmt.Println(playingInfo.Remain())
+
 	return triggerAfterTrackEnd, true, nil
 
 }
