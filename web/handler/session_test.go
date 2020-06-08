@@ -62,7 +62,8 @@ func TestSessionHandler_Playback(t *testing.T) {
 			sessionID: "sessionID",
 			body:      `{"state": "PLAY"}`,
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
-				m.EXPECT().Play(gomock.Any(), "").Return(entity.ErrActiveDeviceNotFound)
+				m.EXPECT().SetRepeatMode(gomock.Any(), false).Return(entity.ErrActiveDeviceNotFound)
+
 			},
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
@@ -84,6 +85,8 @@ func TestSessionHandler_Playback(t *testing.T) {
 			sessionID: "sessionID",
 			body:      `{"state": "PLAY"}`,
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().SetRepeatMode(gomock.Any(), false).Return(nil)
+				m.EXPECT().SetShuffleMode(gomock.Any(), false).Return(nil)
 				m.EXPECT().PlayWithTracks(gomock.Any(), "",
 					[]string{"spotify:track:5uQ0vKy2973Y9IUCd1wMEF", "spotify:track:49BRCNV7E94s7Q2FUhhT3w"}).Return(nil)
 			},
@@ -126,6 +129,9 @@ func TestSessionHandler_Playback(t *testing.T) {
 			sessionID: "sessionID",
 			body:      `{"state": "PLAY"}`,
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().SetRepeatMode(gomock.Any(), false).Return(nil)
+
+				m.EXPECT().SetShuffleMode(gomock.Any(), false).Return(nil)
 				m.EXPECT().Play(gomock.Any(), "").Return(nil)
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},

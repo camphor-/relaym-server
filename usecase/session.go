@@ -109,6 +109,14 @@ func (s *SessionUseCase) play(ctx context.Context, sessionID string) error {
 
 	// TODO: キューに曲がなかったら再生できないようにする
 
+	if err := s.playerCli.SetRepeatMode(ctx, false); err != nil {
+		return fmt.Errorf("call set repeat off api: %w", err)
+	}
+
+	if err := s.playerCli.SetShuffleMode(ctx, false); err != nil {
+		return fmt.Errorf("call set repeat off api: %w", err)
+	}
+
 	// TODO : デバイスIDをどっかから読み込む
 	if sess.IsResume(entity.Play) {
 		if err := s.playerCli.Play(ctx, ""); err != nil {
@@ -116,7 +124,7 @@ func (s *SessionUseCase) play(ctx context.Context, sessionID string) error {
 		}
 	} else {
 		if err := s.playerCli.PlayWithTracks(ctx, "", sess.TrackURIs()); err != nil {
-			return fmt.Errorf("call play api: %w", err)
+			return fmt.Errorf("call play ap with tracks %v: %w", sess.TrackURIs(), err)
 		}
 	}
 

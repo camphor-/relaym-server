@@ -162,6 +162,26 @@ func (c *Client) SetRepeatMode(ctx context.Context, on bool) error {
 	return nil
 }
 
+// SetShuffleMode はシャッフルモードの設定を変更するAPIです。
+// APIが非同期で処理がされるため、リクエストが返ってきてもリピートモードの設定が完了しているとは限りません。
+// 設定が反映されたか確認するには CurrentlyPlaying() を叩く必要があります。
+// プレミアム会員必須
+func (c *Client) SetShuffleMode(ctx context.Context, on bool) error {
+	token, ok := service.GetTokenFromContext(ctx)
+	if !ok {
+		return errors.New("token not found")
+	}
+	cli := c.auth.NewClient(token)
+
+	// TODO : デバイスIDを指定する必要がある場合はいじる
+	opt := &spotify.PlayOptions{DeviceID: nil}
+
+	if err := cli.ShuffleOpt(on, opt); c.convertPlayerError(err) != nil {
+		return fmt.Errorf("spotify api: set repeat mode: %w", c.convertPlayerError(err))
+	}
+	return nil
+}
+
 func (c *Client) convertPlayerError(err error) error {
 	if e, ok := err.(spotify.Error); ok {
 		switch {

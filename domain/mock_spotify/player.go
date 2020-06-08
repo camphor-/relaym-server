@@ -118,3 +118,17 @@ func (mr *MockPlayerMockRecorder) SetRepeatMode(ctx, on interface{}) *gomock.Cal
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetRepeatMode", reflect.TypeOf((*MockPlayer)(nil).SetRepeatMode), ctx, on)
 }
+
+// SetShuffleMode mocks base method
+func (m *MockPlayer) SetShuffleMode(ctx context.Context, on bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetShuffleMode", ctx, on)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetShuffleMode indicates an expected call of SetShuffleMode
+func (mr *MockPlayerMockRecorder) SetShuffleMode(ctx, on interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetShuffleMode", reflect.TypeOf((*MockPlayer)(nil).SetShuffleMode), ctx, on)
+}
