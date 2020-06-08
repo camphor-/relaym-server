@@ -12,6 +12,7 @@ import (
 type Player interface {
 	CurrentlyPlaying(ctx context.Context) (*entity.CurrentPlayingInfo, error)
 	Play(ctx context.Context, deviceID string) error
+	PlayWithTracks(ctx context.Context, deviceID string, trackURIs []string) error
 	Pause(ctx context.Context, deviceID string) error
 	AddToQueue(ctx context.Context, trackID string, deviceID string) error
 	SetRepeatMode(ctx context.Context, on bool) error

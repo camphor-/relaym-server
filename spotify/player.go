@@ -65,6 +65,30 @@ func (c *Client) Play(ctx context.Context, deviceID string) error {
 	return nil
 }
 
+// PlayWithTracks は曲を指定して曲を再生し始めるか現在再生途中の曲の再生を再開するAPIです。deviceIDが空の場合はデフォルトのデバイスで再生されます。
+// APIが非同期で処理がされるため、リクエストが返ってきても再生が開始しているとは限りません。
+// 設定が反映されたか確認するには CurrentlyPlaying() を叩く必要があります。
+// プレミアム会員必須
+func (c *Client) PlayWithTracks(ctx context.Context, deviceID string, trackURIs []string) error {
+	token, ok := service.GetTokenFromContext(ctx)
+	if !ok {
+		return errors.New("token not found")
+	}
+	cli := c.auth.NewClient(token)
+
+	opt := &spotify.PlayOptions{DeviceID: nil, URIs: c.toURIs(trackURIs)}
+	if deviceID != "" {
+		spotifyID := spotify.ID(deviceID)
+		opt = &spotify.PlayOptions{DeviceID: &spotifyID}
+	}
+
+	err := cli.PlayOpt(opt)
+	if convErr := c.convertPlayerError(err); convErr != nil {
+		return fmt.Errorf("spotify api: play or resume: %w", convErr)
+	}
+	return nil
+}
+
 // Pause は再生を一時停止します。deviceIDが空の場合はデフォルトのデバイスで再生されます。
 // APIが非同期で処理がされるため、リクエストが返ってきても再生が一時停止されているとは限りません。
 // 設定が反映されたか確認するには CurrentlyPlaying() を叩く必要があります。
@@ -152,4 +176,12 @@ func (c *Client) convertPlayerError(err error) error {
 		}
 	}
 	return err
+}
+
+func (c *Client) toURIs(uris []string) []spotify.URI {
+	sURIs := make([]spotify.URI, len(uris))
+	for i := 0; i < len(uris); i++ {
+		sURIs[i] = spotify.URI(uris[i])
+	}
+	return sURIs
 }

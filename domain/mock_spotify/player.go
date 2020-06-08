@@ -63,6 +63,20 @@ func (mr *MockPlayerMockRecorder) Play(ctx, deviceID interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Play", reflect.TypeOf((*MockPlayer)(nil).Play), ctx, deviceID)
 }
 
+// PlayWithTracks mocks base method
+func (m *MockPlayer) PlayWithTracks(ctx context.Context, deviceID string, trackURIs []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PlayWithTracks", ctx, deviceID, trackURIs)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PlayWithTracks indicates an expected call of PlayWithTracks
+func (mr *MockPlayerMockRecorder) PlayWithTracks(ctx, deviceID, trackURIs interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PlayWithTracks", reflect.TypeOf((*MockPlayer)(nil).PlayWithTracks), ctx, deviceID, trackURIs)
+}
+
 // Pause mocks base method
 func (m *MockPlayer) Pause(ctx context.Context, deviceID string) error {
 	m.ctrl.T.Helper()
