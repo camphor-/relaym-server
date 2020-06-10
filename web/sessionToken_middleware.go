@@ -14,11 +14,11 @@ import (
 
 // SessionTokenMiddlewareはSessionのもつTokenの管理を担当するミドルウェアを管理する構造体です。
 type SessionTokenMiddleware struct {
-	uc *usecase.SessionTokenUseCase
+	uc *usecase.AuthUseCase
 }
 
 // NewSessionTokenMiddleware web.SessionTokenMiddlewareのポインタを生成します。
-func NewSessionTokenMiddleware(uc *usecase.SessionTokenUseCase) *SessionTokenMiddleware {
+func NewSessionTokenMiddleware(uc *usecase.AuthUseCase) *SessionTokenMiddleware {
 	return &SessionTokenMiddleware{uc: uc}
 }
 
@@ -27,20 +27,20 @@ func (m *SessionTokenMiddleware) SetTokenToContext(next echo.HandlerFunc) echo.H
 	return func(c echo.Context) error {
 		sessionID := c.Param("id")
 		if sessionID == "" {
-			c.Logger().Warnf("sessionID not found err=%v", err)
-			return echo.NewHTTPError(http.StatusUnauthorized)
+			c.Logger().Errorf("sessionID not found")
+			return echo.NewHTTPError(http.StatusNotFound)
 		}
 
-		token, err := m.uc.GetTokenBySessionID(sessionID)
+		token, creatorID, err := m.uc.GetTokenBySessionID(sessionID)
 		if err != nil {
 			if errors.Is(err, entity.ErrTokenNotFound) {
 				return echo.NewHTTPError(http.StatusUnauthorized)
 			}
-			c.Logger().Errorf("failed to get token sessionID=%s err=%v", userID, err)
+			c.Logger().Errorf("failed to get token sessionID=%s err=%v", sessionID, err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 
-		newToken, err := m.uc.RefreshAccessToken(sessionID, token)
+		newToken, err := m.uc.RefreshAccessToken(creatorID, token)
 		if err != nil {
 			c.Logger().Errorf("failed to refresh access token: %v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
