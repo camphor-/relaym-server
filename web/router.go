@@ -49,7 +49,6 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, session
 	v3.GET("/ws/:id", wsHandler.WebSocket)
 
 	authed := v3.Group("", NewAuthMiddleware(authUC).Authenticate)
-	authed.GET("/search", trackHandler.SearchTracks)
 
 	user := authed.Group("/users")
 	user.GET("/me", userHandler.GetMe)
@@ -57,6 +56,7 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, session
 
 	authedSession := authed.Group("/sessions")
 	authedSession.POST("", sessionHandler.PostSession)
+	authedSession.GET("/:id/search", trackHandler.SearchTracks)
 	authedSession.PUT("/:id/devices", sessionHandler.SetDevice)
 	authedSession.POST("/:id/queue", sessionHandler.AddQueue)
 	authedSession.PUT("/:id/playback", sessionHandler.Playback)

@@ -343,7 +343,7 @@ Spotifyのアプリが起動していないと一覧に現れません。
 
 
 
-## GET /search
+## GET /sessions/:id/search
 
 ### 概要
 
