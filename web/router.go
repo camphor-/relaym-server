@@ -56,12 +56,12 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, session
 
 	authedSession := authed.Group("/sessions")
 	authedSession.POST("", sessionHandler.PostSession)
-	authedSession.GET("/:id/search", trackHandler.SearchTracks)
 	authedSession.PUT("/:id/devices", sessionHandler.SetDevice)
 	authedSession.POST("/:id/queue", sessionHandler.AddQueue)
-	authedSession.PUT("/:id/playback", sessionHandler.Playback)
 
-	noAuthedSession := v3.Group("/sessions")
+	noAuthedSession := v3.Group("/sessions", NewSessionTokenMiddleware(authUC).SetTokenToContext)
 	noAuthedSession.GET("/:id", sessionHandler.GetSession)
+	noAuthedSession.GET("/:id/search", trackHandler.SearchTracks)
+	noAuthedSession.PUT("/:id/playback", sessionHandler.Playback)
 	return e
 }
