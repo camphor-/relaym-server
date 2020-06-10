@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"golang.org/x/oauth2"
 
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/repository"
@@ -57,6 +58,25 @@ func (r *SessionRepository) FindByID(id string) (*entity.Session, error) {
 		QueueHead:   dto.QueueHead,
 		QueueTracks: queueTracks,
 	}, nil
+}
+
+// FindCreatorTokenBySessionID はSessionIDからCreatorのTokenを取得します
+func (r *SessionRepository) FindCreatorTokenBySessionID(sessionID string) (*oauth2.Token, string, error) {
+	var dto spotifyAuthDTO
+
+	if err := r.dbMap.SelectOne(&dto, "SELECT sa.access_token, sa.refresh_token, sa.expiry, sessions.creator_id AS user_id FROM sessions INNER JOIN spotify_auth AS sa ON sa.user_id = sessions.creator_id"); err == nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, "", fmt.Errorf("select session: %w", entity.ErrSessionNotFound)
+		}
+		return nil, "", fmt.Errorf("select session: %w", err)
+	}
+
+	return &oauth2.Token{
+		AccessToken:  dto.AccessToken,
+		TokenType:    "Bearer",
+		RefreshToken: dto.RefreshToken,
+		Expiry:       dto.Expiry,
+	}, dto.UserID, nil
 }
 
 // StoreSession はSessionをDBに挿入します。
