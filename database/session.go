@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
 	"golang.org/x/oauth2"
 
 	"github.com/camphor-/relaym-server/domain/entity"

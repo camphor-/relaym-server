@@ -17,10 +17,10 @@ import (
 
 // AuthUseCase は認証・認可に関するユースケースです。
 type AuthUseCase struct {
-	authCli  spotify.Auth
-	userCli  spotify.User
-	repo     repository.Auth
-	userRepo repository.User
+	authCli     spotify.Auth
+	userCli     spotify.User
+	repo        repository.Auth
+	userRepo    repository.User
 	sessionRepo repository.Session
 }
 
@@ -138,7 +138,6 @@ func (u *AuthUseCase) RefreshAccessToken(userID string, token *oauth2.Token) (*o
 	}
 	return newToken, nil
 }
-
 
 // GetTokenBySessionID は指定されたidからsessionの持つcreatorのtokenを返します
 func (u *AuthUseCase) GetTokenBySessionID(sessionID string) (*oauth2.Token, string, error) {
