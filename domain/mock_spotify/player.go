@@ -63,6 +63,20 @@ func (mr *MockPlayerMockRecorder) Play(ctx, deviceID interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Play", reflect.TypeOf((*MockPlayer)(nil).Play), ctx, deviceID)
 }
 
+// PlayWithTracks mocks base method
+func (m *MockPlayer) PlayWithTracks(ctx context.Context, deviceID string, trackURIs []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PlayWithTracks", ctx, deviceID, trackURIs)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PlayWithTracks indicates an expected call of PlayWithTracks
+func (mr *MockPlayerMockRecorder) PlayWithTracks(ctx, deviceID, trackURIs interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PlayWithTracks", reflect.TypeOf((*MockPlayer)(nil).PlayWithTracks), ctx, deviceID, trackURIs)
+}
+
 // Pause mocks base method
 func (m *MockPlayer) Pause(ctx context.Context, deviceID string) error {
 	m.ctrl.T.Helper()
@@ -92,15 +106,29 @@ func (mr *MockPlayerMockRecorder) AddToQueue(ctx, trackID, deviceID interface{})
 }
 
 // SetRepeatMode mocks base method
-func (m *MockPlayer) SetRepeatMode(ctx context.Context, on bool) error {
+func (m *MockPlayer) SetRepeatMode(ctx context.Context, on bool, deviceID string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetRepeatMode", ctx, on)
+	ret := m.ctrl.Call(m, "SetRepeatMode", ctx, on, deviceID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SetRepeatMode indicates an expected call of SetRepeatMode
-func (mr *MockPlayerMockRecorder) SetRepeatMode(ctx, on interface{}) *gomock.Call {
+func (mr *MockPlayerMockRecorder) SetRepeatMode(ctx, on, deviceID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetRepeatMode", reflect.TypeOf((*MockPlayer)(nil).SetRepeatMode), ctx, on)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetRepeatMode", reflect.TypeOf((*MockPlayer)(nil).SetRepeatMode), ctx, on, deviceID)
+}
+
+// SetShuffleMode mocks base method
+func (m *MockPlayer) SetShuffleMode(ctx context.Context, on bool, deviceID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetShuffleMode", ctx, on, deviceID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetShuffleMode indicates an expected call of SetShuffleMode
+func (mr *MockPlayerMockRecorder) SetShuffleMode(ctx, on, deviceID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetShuffleMode", reflect.TypeOf((*MockPlayer)(nil).SetShuffleMode), ctx, on, deviceID)
 }
