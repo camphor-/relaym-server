@@ -99,7 +99,7 @@ func (s *Session) ShouldCallAddQueueAPINow() bool {
 	return s.StateType == Play || s.StateType == Pause
 }
 
-// IsResume は次のStateTypeへの移行がポーズからの再開かどうかを返します、
+// IsResume は次のStateTypeへの移行がポーズからの再開かどうかを返します。
 func (s *Session) IsResume(nextState StateType) bool {
 	return s.StateType == Pause && nextState == Play
 }
