@@ -124,7 +124,7 @@ func (s *SessionUseCase) play(ctx context.Context, sessionID string) error {
 		}
 	} else {
 		if err := s.playerCli.PlayWithTracks(ctx, "", sess.TrackURIs()); err != nil {
-			return fmt.Errorf("call play ap with tracks %v: %w", sess.TrackURIs(), err)
+			return fmt.Errorf("call play api with tracks %v: %w", sess.TrackURIs(), err)
 		}
 	}
 
