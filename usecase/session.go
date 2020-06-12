@@ -109,11 +109,11 @@ func (s *SessionUseCase) play(ctx context.Context, sessionID string) error {
 
 	// TODO: キューに曲がなかったら再生できないようにする
 
-	if err := s.playerCli.SetRepeatMode(ctx, false); err != nil {
+	if err := s.playerCli.SetRepeatMode(ctx, false, ""); err != nil {
 		return fmt.Errorf("call set repeat off api: %w", err)
 	}
 
-	if err := s.playerCli.SetShuffleMode(ctx, false); err != nil {
+	if err := s.playerCli.SetShuffleMode(ctx, false, ""); err != nil {
 		return fmt.Errorf("call set repeat off api: %w", err)
 	}
 

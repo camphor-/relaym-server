@@ -141,7 +141,7 @@ func (c *Client) AddToQueue(ctx context.Context, trackURI string, deviceID strin
 // APIが非同期で処理がされるため、リクエストが返ってきてもリピートモードの設定が完了しているとは限りません。
 // 設定が反映されたか確認するには CurrentlyPlaying() を叩く必要があります。
 // プレミアム会員必須
-func (c *Client) SetRepeatMode(ctx context.Context, on bool) error {
+func (c *Client) SetRepeatMode(ctx context.Context, on bool, deviceID string) error {
 	token, ok := service.GetTokenFromContext(ctx)
 	if !ok {
 		return errors.New("token not found")
@@ -153,8 +153,11 @@ func (c *Client) SetRepeatMode(ctx context.Context, on bool) error {
 		state = "context"
 	}
 
-	// TODO : デバイスIDを指定する必要がある場合はいじる
 	opt := &spotify.PlayOptions{DeviceID: nil}
+	if deviceID != "" {
+		spotifyID := spotify.ID(deviceID)
+		opt = &spotify.PlayOptions{DeviceID: &spotifyID}
+	}
 
 	if err := cli.RepeatOpt(state, opt); c.convertPlayerError(err) != nil {
 		return fmt.Errorf("spotify api: set repeat mode: %w", c.convertPlayerError(err))
@@ -166,16 +169,18 @@ func (c *Client) SetRepeatMode(ctx context.Context, on bool) error {
 // APIが非同期で処理がされるため、リクエストが返ってきてもリピートモードの設定が完了しているとは限りません。
 // 設定が反映されたか確認するには CurrentlyPlaying() を叩く必要があります。
 // プレミアム会員必須
-func (c *Client) SetShuffleMode(ctx context.Context, on bool) error {
+func (c *Client) SetShuffleMode(ctx context.Context, on bool, deviceID string) error {
 	token, ok := service.GetTokenFromContext(ctx)
 	if !ok {
 		return errors.New("token not found")
 	}
 	cli := c.auth.NewClient(token)
 
-	// TODO : デバイスIDを指定する必要がある場合はいじる
 	opt := &spotify.PlayOptions{DeviceID: nil}
-
+	if deviceID != "" {
+		spotifyID := spotify.ID(deviceID)
+		opt = &spotify.PlayOptions{DeviceID: &spotifyID}
+	}
 	if err := cli.ShuffleOpt(on, opt); c.convertPlayerError(err) != nil {
 		return fmt.Errorf("spotify api: set repeat mode: %w", c.convertPlayerError(err))
 	}
