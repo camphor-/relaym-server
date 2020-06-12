@@ -5,11 +5,9 @@ import (
 	"net/http"
 
 	"github.com/camphor-/relaym-server/domain/entity"
-	"github.com/camphor-/relaym-server/domain/service"
 	"github.com/camphor-/relaym-server/usecase"
 
 	"github.com/labstack/echo/v4"
-	"golang.org/x/oauth2"
 )
 
 // SessionTokenMiddlewareはSessionのもつTokenの管理を担当するミドルウェアを管理する構造体です。
@@ -47,14 +45,7 @@ func (m *SessionTokenMiddleware) SetTokenToContext(next echo.HandlerFunc) echo.H
 		}
 		token = newToken
 
-		c = setTokenToContext(c, token)
+		c = setToContext(c, creatorID, token)
 		return next(c)
 	}
-}
-
-func setTokenToContext(c echo.Context, token *oauth2.Token) echo.Context {
-	ctx := c.Request().Context()
-	ctx = service.SetTokenToContext(ctx, token)
-	c.SetRequest(c.Request().WithContext(ctx))
-	return c
 }
