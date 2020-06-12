@@ -65,7 +65,7 @@ func (r *SessionRepository) FindByID(id string) (*entity.Session, error) {
 func (r *SessionRepository) FindCreatorTokenBySessionID(sessionID string) (*oauth2.Token, string, error) {
 	var dto spotifyAuthDTO
 
-	if err := r.dbMap.SelectOne(&dto, "SELECT sa.access_token, sa.refresh_token, sa.expiry, sessions.creator_id AS user_id FROM sessions INNER JOIN spotify_auth AS sa ON sa.user_id = sessions.creator_id"); err == nil {
+	if err := r.dbMap.SelectOne(&dto, "SELECT sa.access_token, sa.refresh_token, sa.expiry, sessions.creator_id AS user_id FROM sessions INNER JOIN spotify_auth AS sa ON sa.user_id = sessions.creator_id WHERE sessions.id = ?", sessionID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, "", fmt.Errorf("select session: %w", entity.ErrSessionNotFound)
 		}
