@@ -44,6 +44,16 @@ func TestSessionTokenMiddleware_SetTokenToContext(t *testing.T) {
 			wantCode:        http.StatusInternalServerError,
 		},
 		{
+			name:               "IDがセットされていないと404",
+			sessionID:          "",
+			prepareSessionRepo: func(r *mock_repository.MockSession) {},
+			prepareAuthRepo:    func(r *mock_repository.MockAuth) {},
+			prepareAuthCli:     func(c *mock_spotify.MockAuth) {},
+			next:               nil,
+			wantErr:            true,
+			wantCode:           http.StatusNotFound,
+		},
+		{
 			name:      "DBから取得したアクセストークンが正しくContextにセットされる",
 			sessionID: "sessionID",
 			prepareSessionRepo: func(r *mock_repository.MockSession) {
