@@ -259,7 +259,7 @@ func (s *SessionUseCase) handleTrackEnd(ctx context.Context, sessionID string) (
 	}
 	s.pusher.Push(&event.PushMessage{
 		SessionID: sessionID,
-		Msg:       entity.EventNextTrack,
+		Msg:       entity.NewEventNextTrack(sess.QueueHead),
 	})
 	triggerAfterTrackEnd = s.tm.CreateTimer(sessionID, playingInfo.Remain()+syncCheckOffset)
 	fmt.Println(playingInfo.Remain())

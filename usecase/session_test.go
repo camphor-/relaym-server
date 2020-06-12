@@ -98,7 +98,7 @@ func TestSessionUseCase_handleTrackEnd(t *testing.T) {
 			prepareMockPusherFn: func(m *mock_event.MockPusher) {
 				m.EXPECT().Push(&event.PushMessage{
 					SessionID: "sessionID",
-					Msg:       entity.EventNextTrack,
+					Msg:       entity.NewEventNextTrack(1),
 				})
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},

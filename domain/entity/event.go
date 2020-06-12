@@ -3,6 +3,7 @@ package entity
 // Event はクライアントに送信するイベントを表します。
 type Event struct {
 	Type string `json:"type"`
+	Head *int   `json:"head,omitempty"`
 }
 
 var (
@@ -21,12 +22,6 @@ var (
 		Type: "PAUSE",
 	}
 
-	// EventNextTrack はセッションの曲の再生が (正常に) 次の曲に移った際に発されるイベントです。
-	// キューの現在再生している曲の位置が含まれます。
-	EventNextTrack = &Event{
-		Type: "NEXTTRACK",
-	}
-
 	// EventStop は全ての曲の再生が終了した際に発されるイベントです。
 	EventStop = &Event{
 		Type: "STOP",
@@ -38,3 +33,12 @@ var (
 		Type: "INTERRUPT",
 	}
 )
+
+// NewEventNextTrack はセッションの曲の再生が (正常に) 次の曲に移った際に発されるイベントを生成します。
+// キューの現在再生している曲の位置が含まれます。
+func NewEventNextTrack(head int) *Event {
+	return &Event{
+		Type: "NEXTTRACK",
+		Head: &head,
+	}
+}
