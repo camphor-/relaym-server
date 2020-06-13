@@ -64,7 +64,7 @@ func TestAuthMiddleware_Authenticate(t *testing.T) {
 			wantCode:       http.StatusUnauthorized,
 		},
 		{
-			name: "DBからアクセストークンの取得に失敗すると401",
+			name: "DBからアクセストークンの取得に失敗すると500",
 			prepareRequest: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{
 					Name:     "session",
@@ -244,7 +244,7 @@ func TestAuthMiddleware_Authenticate(t *testing.T) {
 			authCli := mock_spotify.NewMockAuth(ctrl)
 			tt.prepareAuthCli(authCli)
 
-			m := &AuthMiddleware{uc: usecase.NewAuthUseCase(authCli, nil, authRepo, nil)}
+			m := &AuthMiddleware{uc: usecase.NewAuthUseCase(authCli, nil, authRepo, nil, nil)}
 			err := m.Authenticate(tt.next)(c)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("AuthMiddleware.Authenticate() error = %v, wantErr %v", err, tt.wantErr)

@@ -17,15 +17,16 @@ import (
 
 // AuthUseCase は認証・認可に関するユースケースです。
 type AuthUseCase struct {
-	authCli  spotify.Auth
-	userCli  spotify.User
-	repo     repository.Auth
-	userRepo repository.User
+	authCli     spotify.Auth
+	userCli     spotify.User
+	repo        repository.Auth
+	userRepo    repository.User
+	sessionRepo repository.Session
 }
 
 // NewAuthUseCase はAuthUseCaseのポインタを生成します。
-func NewAuthUseCase(authCli spotify.Auth, userCli spotify.User, repo repository.Auth, userRepo repository.User) *AuthUseCase {
-	return &AuthUseCase{authCli: authCli, userCli: userCli, repo: repo, userRepo: userRepo}
+func NewAuthUseCase(authCli spotify.Auth, userCli spotify.User, repo repository.Auth, userRepo repository.User, sessionRepo repository.Session) *AuthUseCase {
+	return &AuthUseCase{authCli: authCli, userCli: userCli, repo: repo, userRepo: userRepo, sessionRepo: sessionRepo}
 }
 
 // GetAuthURL はSpotifyの認可画面のリンクを生成します。
@@ -136,4 +137,14 @@ func (u *AuthUseCase) RefreshAccessToken(userID string, token *oauth2.Token) (*o
 		return nil, fmt.Errorf("update new token: %w", err)
 	}
 	return newToken, nil
+}
+
+// GetTokenAndCreatorIDBySessionID は指定されたidからsessionの持つcreatorのtokenを返します
+func (u *AuthUseCase) GetTokenAndCreatorIDBySessionID(sessionID string) (*oauth2.Token, string, error) {
+	token, creatorID, err := u.sessionRepo.FindCreatorTokenBySessionID(sessionID)
+	if err != nil {
+		return nil, "", fmt.Errorf("FindCreatorTokenBySessionID: sessionID=%s: %w", sessionID, err)
+	}
+
+	return token, creatorID, nil
 }

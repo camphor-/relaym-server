@@ -19,7 +19,7 @@ func SetUserIDToContext(ctx context.Context, userID string) context.Context {
 	return context.WithValue(ctx, userIDKey, userID)
 }
 
-// SetTokenToContext はトークンをContextにセットします。
+// SetCreatorTokenToContext はトークンをContextにセットします。
 func SetTokenToContext(ctx context.Context, token *oauth2.Token) context.Context {
 	return context.WithValue(ctx, tokenKey, token)
 

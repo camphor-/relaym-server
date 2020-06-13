@@ -3,6 +3,11 @@ package database
 import (
 	"errors"
 	"testing"
+	"time"
+
+	"github.com/google/go-cmp/cmp/cmpopts"
+
+	"golang.org/x/oauth2"
 
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/google/go-cmp/cmp"
@@ -458,4 +463,89 @@ func findQueueTrackByIndexAndSessionID(queueTracks []*entity.QueueTrack, index i
 		}
 	}
 	return nil, errors.New("Not Found")
+}
+
+func TestSessionRepository_FindCreatorTokenBySessionID(t *testing.T) {
+	// Prepare
+	dbMap, err := NewDB()
+	if err != nil {
+		t.Fatal(err)
+	}
+	dbMap.AddTableWithName(spotifyAuthDTO{}, "spotify_auth")
+	dbMap.AddTableWithName(userDTO{}, "users")
+	dbMap.AddTableWithName(sessionDTO{}, "sessions")
+	truncateTable(t, dbMap)
+	if err := dbMap.Insert(&userDTO{ID: "creator_user_id", SpotifyUserID: "new_user_spotify"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := dbMap.Insert(&spotifyAuthDTO{
+		UserID:       "creator_user_id",
+		AccessToken:  "access_token",
+		RefreshToken: "refresh_token",
+		Expiry:       time.Date(2020, 1, 2, 0, 0, 0, 0, time.UTC),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := dbMap.Insert(&sessionDTO{
+		ID:        "exist_session_id",
+		Name:      "session_name",
+		CreatorID: "creator_user_id",
+		QueueHead: 0,
+		StateType: "STOP",
+		DeviceID:  "device_id",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name          string
+		sessionID     string
+		wantToken     *oauth2.Token
+		wantCreatorID string
+		wantErr       error
+	}{
+		{
+			name:      "正常系",
+			sessionID: "exist_session_id",
+			wantToken: &oauth2.Token{
+				AccessToken:  "access_token",
+				TokenType:    "Bearer",
+				RefreshToken: "refresh_token",
+				Expiry:       time.Date(2020, 1, 2, 0, 0, 0, 0, time.UTC),
+			},
+			wantCreatorID: "creator_user_id",
+			wantErr:       nil,
+		},
+		{
+			name:          "sessionが存在しないとErrSessionNotFound",
+			sessionID:     "not_exist_session_id",
+			wantToken:     nil,
+			wantCreatorID: "",
+			wantErr:       entity.ErrSessionNotFound,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &SessionRepository{
+				dbMap: dbMap,
+			}
+			token, creatorID, err := r.FindCreatorTokenBySessionID(tt.sessionID)
+
+			if !errors.Is(err, tt.wantErr) {
+				t.Errorf("SessionRepository.FindCreatorTokenBySessionID() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			opt := cmpopts.IgnoreUnexported(oauth2.Token{})
+			if !cmp.Equal(token, tt.wantToken, opt) {
+				t.Errorf("SessionRepository.FindCreatorTokenBySessionID() diff = %v", cmp.Diff(token, tt.wantToken))
+				return
+			}
+
+			if creatorID != tt.wantCreatorID {
+				t.Errorf("SessionRepository.FindCreatorTokenBySessionID() diff = %v", cmp.Diff(creatorID, tt.wantCreatorID))
+				return
+			}
+		})
+	}
 }

@@ -7,6 +7,7 @@ package mock_repository
 import (
 	entity "github.com/camphor-/relaym-server/domain/entity"
 	gomock "github.com/golang/mock/gomock"
+	oauth2 "golang.org/x/oauth2"
 	reflect "reflect"
 )
 
@@ -88,4 +89,20 @@ func (m *MockSession) StoreQueueTrack(arg0 *entity.QueueTrackToStore) error {
 func (mr *MockSessionMockRecorder) StoreQueueTrack(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreQueueTrack", reflect.TypeOf((*MockSession)(nil).StoreQueueTrack), arg0)
+}
+
+// FindCreatorTokenBySessionID mocks base method
+func (m *MockSession) FindCreatorTokenBySessionID(arg0 string) (*oauth2.Token, string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindCreatorTokenBySessionID", arg0)
+	ret0, _ := ret[0].(*oauth2.Token)
+	ret1, _ := ret[1].(string)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// FindCreatorTokenBySessionID indicates an expected call of FindCreatorTokenBySessionID
+func (mr *MockSessionMockRecorder) FindCreatorTokenBySessionID(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindCreatorTokenBySessionID", reflect.TypeOf((*MockSession)(nil).FindCreatorTokenBySessionID), arg0)
 }

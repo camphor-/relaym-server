@@ -100,7 +100,7 @@ func TestAuthHandler_Login(t *testing.T) {
 			mockAuthSpo := mock_spotify.NewMockAuth(ctrl)
 			tt.prepareMockAuthSpoFn(mockAuthSpo)
 			h := &AuthHandler{
-				authUC:      usecase.NewAuthUseCase(mockAuthSpo, nil, mockAuthRepo, nil),
+				authUC:      usecase.NewAuthUseCase(mockAuthSpo, nil, mockAuthRepo, nil, nil),
 				frontendURL: tt.frontendURL,
 			}
 
@@ -320,7 +320,7 @@ func TestAuthHandler_Callback(t *testing.T) {
 			mockUserRepo := mock_repository.NewMockUser(ctrl)
 			tt.prepareMockUserRepoFn(mockUserRepo)
 
-			uc := usecase.NewAuthUseCase(mockAuthSpo, mockUserSpo, mockAuthRepo, mockUserRepo)
+			uc := usecase.NewAuthUseCase(mockAuthSpo, mockUserSpo, mockAuthRepo, mockUserRepo, nil)
 			h := &AuthHandler{
 				authUC:      uc,
 				frontendURL: tt.frontendURL,

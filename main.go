@@ -40,7 +40,7 @@ func main() {
 	sessionRepo := database.NewSessionRepository(dbMap)
 
 	userUC := usecase.NewUserUseCase(spotifyCli, userRepo)
-	authUC := usecase.NewAuthUseCase(spotifyCli, spotifyCli, authRepo, userRepo)
+	authUC := usecase.NewAuthUseCase(spotifyCli, spotifyCli, authRepo, userRepo, sessionRepo)
 	sessionUC := usecase.NewSessionUseCase(sessionRepo, userRepo, spotifyCli, spotifyCli, hub)
 	trackUC := usecase.NewTrackUseCase(spotifyCli)
 
