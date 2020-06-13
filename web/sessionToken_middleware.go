@@ -20,8 +20,8 @@ func NewCreatorTokenMiddleware(uc *usecase.AuthUseCase) *CreatorTokenMiddleware 
 	return &CreatorTokenMiddleware{uc: uc}
 }
 
-// SetTokenToContext はSessionIDからSessionのCreatorがもつAccessTokenをContextにセットします
-func (m *CreatorTokenMiddleware) SetTokenToContext(next echo.HandlerFunc) echo.HandlerFunc {
+// SetCreatorTokenToContext はSessionIDからSessionのCreatorがもつAccessTokenをContextにセットします
+func (m *CreatorTokenMiddleware) SetCreatorTokenToContext(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		sessionID := c.Param("id")
 		if sessionID == "" {
