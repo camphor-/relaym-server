@@ -69,14 +69,14 @@ func TestSessionTokenMiddleware_SetTokenToContext(t *testing.T) {
 			next: func(c echo.Context) error {
 				userID, ok := service.GetUserIDFromContext(c.Request().Context())
 				if !ok {
-					t.Errorf("SessionTokenMiddleware.SetTokenToContext() userID not found in context")
+					t.Errorf("CreatorTokenMiddleware.SetTokenToContext() userID not found in context")
 				}
 				if userID != "userID" {
-					t.Errorf("SessionTokenMiddleware.SetTokenToContext() userID %s, but want %s", userID, "userID")
+					t.Errorf("CreatorTokenMiddleware.SetTokenToContext() userID %s, but want %s", userID, "userID")
 				}
 				token, ok := service.GetTokenFromContext(c.Request().Context())
 				if !ok {
-					t.Errorf("SessionTokenMiddleware.SetTokenToContext() token not found in context")
+					t.Errorf("CreatorTokenMiddleware.SetTokenToContext() token not found in context")
 				}
 				want := &oauth2.Token{
 					AccessToken:  "access_token",
@@ -86,7 +86,7 @@ func TestSessionTokenMiddleware_SetTokenToContext(t *testing.T) {
 				}
 				opt := cmpopts.IgnoreUnexported(oauth2.Token{})
 				if !cmp.Equal(want, token, opt) {
-					t.Errorf("SessionTokenMiddleware.SetTokenToContext() token diff = %s", cmp.Diff(want, token, opt))
+					t.Errorf("CreatorTokenMiddleware.SetTokenToContext() token diff = %s", cmp.Diff(want, token, opt))
 				}
 				return nil
 			},
@@ -128,14 +128,14 @@ func TestSessionTokenMiddleware_SetTokenToContext(t *testing.T) {
 			next: func(c echo.Context) error {
 				userID, ok := service.GetUserIDFromContext(c.Request().Context())
 				if !ok {
-					t.Errorf("SessionTokenMiddleware.SetTokenToContext() userID not found in context")
+					t.Errorf("CreatorTokenMiddleware.SetTokenToContext() userID not found in context")
 				}
 				if userID != "userID" {
-					t.Errorf("SessionTokenMiddleware.SetTokenToContext() userID %s, but want %s", userID, "userID")
+					t.Errorf("CreatorTokenMiddleware.SetTokenToContext() userID %s, but want %s", userID, "userID")
 				}
 				token, ok := service.GetTokenFromContext(c.Request().Context())
 				if !ok {
-					t.Errorf("SessionTokenMiddleware.SetTokenToContext() token not found in context")
+					t.Errorf("CreatorTokenMiddleware.SetTokenToContext() token not found in context")
 				}
 				want := &oauth2.Token{
 					AccessToken:  "new_access_token",
@@ -145,7 +145,7 @@ func TestSessionTokenMiddleware_SetTokenToContext(t *testing.T) {
 				}
 				opt := cmpopts.IgnoreUnexported(oauth2.Token{})
 				if !cmp.Equal(want, token, opt) {
-					t.Errorf("SessionTokenMiddleware.SetTokenToContext() token diff = %s", cmp.Diff(want, token, opt))
+					t.Errorf("CreatorTokenMiddleware.SetTokenToContext() token diff = %s", cmp.Diff(want, token, opt))
 				}
 				return nil
 			},
@@ -175,16 +175,16 @@ func TestSessionTokenMiddleware_SetTokenToContext(t *testing.T) {
 			authCli := mock_spotify.NewMockAuth(ctrl)
 			tt.prepareAuthCli(authCli)
 
-			m := &SessionTokenMiddleware{uc: usecase.NewAuthUseCase(authCli, nil, authRepo, nil, sessionRepo)}
+			m := &CreatorTokenMiddleware{uc: usecase.NewAuthUseCase(authCli, nil, authRepo, nil, sessionRepo)}
 			err := m.SetTokenToContext(tt.next)(c)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("SessionTokenMiddleware.SetTokenToContext() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("CreatorTokenMiddleware.SetTokenToContext() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
 			// ステータスコードのチェック
 			if er, ok := err.(*echo.HTTPError); (ok && er.Code != tt.wantCode) || (!ok && rec.Code != tt.wantCode) {
-				t.Errorf("SessionTokenMiddleware.SetTokenToContext() code = %d, want = %d", rec.Code, tt.wantCode)
+				t.Errorf("CreatorTokenMiddleware.SetTokenToContext() code = %d, want = %d", rec.Code, tt.wantCode)
 				return
 			}
 		})

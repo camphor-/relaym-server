@@ -10,18 +10,18 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// SessionTokenMiddlewareはSessionのもつTokenの管理を担当するミドルウェアを管理する構造体です。
-type SessionTokenMiddleware struct {
+// CreatorTokenMiddlewareはSessionのCreatorがもつAccessTokenの管理を担当するミドルウェアを管理する構造体です。
+type CreatorTokenMiddleware struct {
 	uc *usecase.AuthUseCase
 }
 
-// NewSessionTokenMiddleware web.SessionTokenMiddlewareのポインタを生成します。
-func NewSessionTokenMiddleware(uc *usecase.AuthUseCase) *SessionTokenMiddleware {
-	return &SessionTokenMiddleware{uc: uc}
+// NewCreatorTokenMiddleware web.CreatorTokenMiddlewareのポインタを生成します。
+func NewCreatorTokenMiddleware(uc *usecase.AuthUseCase) *CreatorTokenMiddleware {
+	return &CreatorTokenMiddleware{uc: uc}
 }
 
-// SetTokenToContext はSessionIDからSessionのもつTokenをContextにセットします
-func (m *SessionTokenMiddleware) SetTokenToContext(next echo.HandlerFunc) echo.HandlerFunc {
+// SetTokenToContext はSessionIDからSessionのCreatorがもつAccessTokenをContextにセットします
+func (m *CreatorTokenMiddleware) SetTokenToContext(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		sessionID := c.Param("id")
 		if sessionID == "" {

@@ -59,7 +59,7 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, session
 	authedSession.PUT("/:id/devices", sessionHandler.SetDevice)
 	authedSession.POST("/:id/queue", sessionHandler.AddQueue)
 
-	noAuthedSession := v3.Group("/sessions", NewSessionTokenMiddleware(authUC).SetTokenToContext)
+	noAuthedSession := v3.Group("/sessions", NewCreatorTokenMiddleware(authUC).SetTokenToContext)
 	noAuthedSession.GET("/:id", sessionHandler.GetSession)
 	noAuthedSession.GET("/:id/search", trackHandler.SearchTracks)
 	noAuthedSession.PUT("/:id/playback", sessionHandler.Playback)
