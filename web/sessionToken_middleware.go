@@ -29,7 +29,7 @@ func (m *SessionTokenMiddleware) SetTokenToContext(next echo.HandlerFunc) echo.H
 			return echo.NewHTTPError(http.StatusNotFound)
 		}
 
-		token, creatorID, err := m.uc.GetTokenBySessionID(sessionID)
+		token, creatorID, err := m.uc.GetTokenAndCreatorIDBySessionID(sessionID)
 		if err != nil {
 			if errors.Is(err, entity.ErrTokenNotFound) {
 				return echo.NewHTTPError(http.StatusUnauthorized)
