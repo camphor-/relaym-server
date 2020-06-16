@@ -104,6 +104,11 @@ func (s *Session) IsResume(nextState StateType) bool {
 	return s.StateType == Pause && nextState == Play
 }
 
+// IsPlaying は現在のStateTypeがPlayかどうか返します。
+func (s *Session) IsPlaying() bool {
+	return s.StateType == Play
+}
+
 // TrackURIs は track URIのスライスを返します。
 func (s *Session) TrackURIs() []string {
 	uris := make([]string, len(s.QueueTracks))
