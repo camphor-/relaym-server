@@ -67,6 +67,15 @@ func (s *Session) MoveToPause() error {
 	return fmt.Errorf("state type from %s to Pause: %w", s.StateType, ErrChangeSessionStateNotPermit)
 }
 
+// MoveToStop はセッションのStateTypeをStopに状態遷移します。
+func (s *Session) MoveToStop() error {
+	if s.StateType == Pause {
+		return fmt.Errorf("state type from Pause to Stop: %w", ErrChangeSessionStateNotPermit)
+	}
+	s.StateType = Stop
+	return nil
+}
+
 // IsCreator は指定されたユーザがセッションの作成者かどうか返します。
 func (s *Session) IsCreator(userID string) bool {
 	return s.CreatorID == userID
@@ -86,8 +95,7 @@ func (s *Session) GoNextTrack() error {
 // IsPlayingCorrectTrack は現在の再生状況がセッションの状況と一致しているかチェックします。
 func (s *Session) IsPlayingCorrectTrack(playingInfo *CurrentPlayingInfo) error {
 	if playingInfo.Track == nil || s.QueueTracks[s.QueueHead].URI != playingInfo.Track.URI {
-		fmt.Printf("session playing different track: queue track %s, but playing track %v\n", s.QueueTracks[s.QueueHead].URI, playingInfo.Track)
-		return ErrSessionPlayingDifferentTrack
+		return fmt.Errorf("session playing different track: queue track %s, but playing track %v: %w", s.QueueTracks[s.QueueHead].URI, playingInfo.Track, ErrSessionPlayingDifferentTrack)
 	}
 	return nil
 }

@@ -25,7 +25,7 @@ func (s *SyncCheckTimer) StopCh() <-chan struct{} {
 func newSyncCheckTimer(d time.Duration) *SyncCheckTimer {
 	return &SyncCheckTimer{
 		timer:  time.NewTimer(d),
-		stopCh: make(chan struct{}, 1),
+		stopCh: make(chan struct{}, 2),
 	}
 }
 
@@ -68,6 +68,18 @@ func (m *SyncCheckTimerManager) StopTimer(sessionID string) {
 		if !timer.timer.Stop() {
 			<-timer.timer.C
 		}
+		close(timer.stopCh)
+		delete(m.timers, sessionID)
+	}
+}
+
+// DeleteTimer は与えられたセッションのタイマーを削除します。
+// StopTimerと異なり、すでにタイマーがExpireしてるときしか使えません。
+func (m *SyncCheckTimerManager) DeleteTimer(sessionID string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if timer, ok := m.timers[sessionID]; ok {
 		close(timer.stopCh)
 		delete(m.timers, sessionID)
 	}
