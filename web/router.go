@@ -28,17 +28,14 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, session
 		},
 	}))
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"relaym.local:3000"}, // TODO : 環境変数から読み込むようにする
+		AllowOrigins: []string{config.CORSAllowOrigin()},
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
 	}))
 
 	userHandler := handler.NewUserHandler(userUC)
 	trackHandler := handler.NewTrackHandler(trackUC)
 	sessionHandler := handler.NewSessionHandler(sessionUC)
-
-	// TODO フロントエンドのURLを環境変数で指定する
-	authHandler := handler.NewAuthHandler(authUC, "http://relaym.local:3000")
-
+	authHandler := handler.NewAuthHandler(authUC, config.FrontendURL())
 	wsHandler := handler.NewWebSocketHandler(hub)
 
 	v3 := e.Group("/api/v3")
