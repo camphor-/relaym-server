@@ -125,11 +125,11 @@ func (s *SessionUseCase) play(ctx context.Context, sessionID string) error {
 			return fmt.Errorf("call play api: %w", err)
 		}
 	} else {
-		if err := s.playerCli.PlayWithTracks(ctx, "", sess.TrackURIs()[:1]); err != nil {
-			return fmt.Errorf("call play api with tracks %v: %w", sess.TrackURIs(), err)
+		if err := s.playerCli.PlayWithTracks(ctx, "", sess.TrackURIsOnAndAfterQueueHead()[:1]); err != nil {
+			return fmt.Errorf("call play api with tracks %v: %w", sess.TrackURIsOnAndAfterQueueHead(), err)
 		}
-		for i := 1; i < len(sess.TrackURIs()); i++ {
-			trackURI := sess.TrackURIs()[i]
+		for i := 1; i < len(sess.TrackURIsOnAndAfterQueueHead()); i++ {
+			trackURI := sess.TrackURIsOnAndAfterQueueHead()[i]
 			if err := s.playerCli.AddToQueue(ctx, trackURI, ""); err != nil {
 				return fmt.Errorf("call add queue api trackURI=%s: %w", trackURI, err)
 			}

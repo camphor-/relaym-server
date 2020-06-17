@@ -28,6 +28,9 @@ func (c *Client) Search(ctx context.Context, q string) ([]*entity.Track, error) 
 
 // GetTrackFromURI はSpotify APIを通して、与えられたTrack URIを用い音楽を取得します。
 func (c *Client) GetTracksFromURI(ctx context.Context, trackURIs []string) ([]*entity.Track, error) {
+	if len(trackURIs) == 0 {
+		return nil, nil
+	}
 	token, ok := service.GetTokenFromContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("token not found")
@@ -64,6 +67,9 @@ func (c *Client) toTracks(resultTracks []spotify.FullTrack) []*entity.Track {
 }
 
 func (c *Client) toTrack(fullTrack *spotify.FullTrack) *entity.Track {
+	if fullTrack == nil {
+		return nil
+	}
 	return &entity.Track{
 		URI:      string(fullTrack.URI),
 		ID:       fullTrack.ID.String(),

@@ -65,7 +65,7 @@ console.assert(addQueueRes.ok,"キューへの追加に失敗しました",addQu
 
 console.log("----------STEP5 : セッションに曲を追加(2曲目)----------")
 
-const secondTrackURI = 'spotify:track:49BRCNV7E94s7Q2FUhhT3w'
+const secondTrackURI = 'spotify:track:4BrmwVpDUCTNR0HzaO9Jpr'
 const secondAddQueueRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session.id}/queue`, {
     "headers": {
         "X-CSRF-TOKEN": "a",

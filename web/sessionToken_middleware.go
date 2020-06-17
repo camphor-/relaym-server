@@ -31,8 +31,8 @@ func (m *CreatorTokenMiddleware) SetCreatorTokenToContext(next echo.HandlerFunc)
 
 		token, creatorID, err := m.uc.GetTokenAndCreatorIDBySessionID(sessionID)
 		if err != nil {
-			if errors.Is(err, entity.ErrTokenNotFound) {
-				return echo.NewHTTPError(http.StatusUnauthorized)
+			if errors.Is(err, entity.ErrSessionNotFound) {
+				return echo.NewHTTPError(http.StatusNotFound)
 			}
 			c.Logger().Errorf("failed to get token sessionID=%s err=%v", sessionID, err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
