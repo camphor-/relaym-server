@@ -104,7 +104,7 @@ func (s *Session) IsResume(nextState StateType) bool {
 	return s.StateType == Pause && nextState == Play
 }
 
-// TrackURIs は track URIのスライスを返します。
+// TrackURIs はqueueHead以降の曲のURIのスライスを返します
 func (s *Session) TrackURIs() []string {
 	uris := make([]string, len(s.QueueTracks)-s.QueueHead)
 	for i := 0; i < len(s.QueueTracks)-s.QueueHead; i++ {
