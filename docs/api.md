@@ -243,6 +243,7 @@ X-CSRF-Token: relaym
 | code | message | 補足 |
 | ---- | -------- | -------- |
 | 400 | invalid state     | 不正なstate |
+| 400 | queue track not found | キューが存在しないので操作を開始できない | 
 | 403 | active device not found | アクティブなデバイスが存在しないので操作ができない |
 | 404 | session not found | 指定されたidのセッションが存在しない |
 

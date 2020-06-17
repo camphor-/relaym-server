@@ -107,7 +107,9 @@ func (s *SessionUseCase) play(ctx context.Context, sessionID string) error {
 		return fmt.Errorf("find session id=%s: %w", sessionID, err)
 	}
 
-	// TODO: キューに曲がなかったら再生できないようにする
+	if len(sess.QueueTracks) == 0 {
+		return fmt.Errorf("play: %w", entity.ErrQueueTrackNotFound)
+	}
 
 	if err := s.playerCli.SetRepeatMode(ctx, false, ""); err != nil {
 		return fmt.Errorf("call set repeat off api: %w", err)
