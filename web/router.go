@@ -57,7 +57,7 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, session
 	authedSession.POST("/:id/queue", sessionHandler.AddQueue)
 
 	SessionWithCreatorToken := v3.Group("/sessions/:id", NewCreatorTokenMiddleware(authUC).SetCreatorTokenToContext)
-	SessionWithCreatorToken.GET("/", sessionHandler.GetSession)
+	SessionWithCreatorToken.GET("", sessionHandler.GetSession)
 	SessionWithCreatorToken.GET("/search", trackHandler.SearchTracks)
 	SessionWithCreatorToken.PUT("/playback", sessionHandler.Playback)
 	return e
