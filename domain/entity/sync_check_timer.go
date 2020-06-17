@@ -73,8 +73,10 @@ func (m *SyncCheckTimerManager) StopTimer(sessionID string) {
 	}
 }
 
-// DeleteTimer は与えられたセッションのタイマーを削除します。
-// StopTimerと異なり、すでにタイマーがExpireしてるときしか使えません。
+// DeleteTimer は与えられたセッションのタイマーをマップから削除します。
+// StopTimerと異なり、タイマーのストップ処理は行いません。
+// 既にタイマーがExpireして、そのチャネルの値を取り出してしまった後にマップから削除したいときに使います。
+// <-timer.timer.Cを呼ぶと無限に待ちが発生してしまいます。(値を取り出すことは一生出来ないので)
 func (m *SyncCheckTimerManager) DeleteTimer(sessionID string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
