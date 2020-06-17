@@ -57,6 +57,7 @@ func (h *SessionHandler) GetSession(c echo.Context) error {
 		if errors.Is(err, entity.ErrSessionNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound)
 		}
+		c.Logger().Debugf("GetSession: %v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return c.JSON(http.StatusOK, h.toSessionRes(session, playingInfo.Device, tracks))
