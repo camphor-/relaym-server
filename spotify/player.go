@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/camphor-/relaym-server/log"
+
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/service"
 
@@ -188,11 +190,15 @@ func (c *Client) SetShuffleMode(ctx context.Context, on bool, deviceID string) e
 }
 
 func (c *Client) convertPlayerError(err error) error {
+	logger := log.New()
 	if e, ok := err.(spotify.Error); ok {
 		switch {
 		case e.Status == http.StatusForbidden && strings.Contains(e.Message, "Restriction violated"):
 			// https://github.com/spotify/web-api/issues/1205
-			fmt.Printf("already in the ideal state: %s\n", e.Message)
+			logger.Infoj(map[string]interface{}{
+				"message":     "already in the ideal state",
+				"apiResponse": e.Message,
+			})
 			return nil
 		case e.Status == http.StatusForbidden:
 			return fmt.Errorf("%s: %w", e.Message, entity.ErrNonPremium)

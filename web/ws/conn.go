@@ -1,8 +1,9 @@
 package ws
 
 import (
-	"fmt"
 	"time"
+
+	"github.com/camphor-/relaym-server/log"
 
 	"github.com/camphor-/relaym-server/domain/entity"
 
@@ -40,6 +41,8 @@ func NewClient(sessionID string, ws *websocket.Conn, notifyClosedCh chan<- *Clie
 // 一つのWebSocketコネクションに対して一つのgoroutineでPushLoop()が実行されます。
 // 接続が切れた場合はnotifyClosedChを通じてHubに登録されているwsConnを削除してメモリリークを防ぎます。
 func (c *Client) PushLoop() {
+	logger := log.New()
+
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
@@ -52,19 +55,31 @@ func (c *Client) PushLoop() {
 			if !ok {
 				_ = c.ws.SetWriteDeadline(time.Now().Add(writeWait))
 				if err := c.ws.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
-					fmt.Printf("failed to write close message: sessionID=%s: %v\n", c.sessionID, err)
+					logger.Infoj(map[string]interface{}{
+						"message":   "failed to write close message",
+						"sessionID": c.sessionID,
+						"error":     err,
+					})
 					return
 				}
 			}
 
 			if err := c.ws.WriteJSON(msg); err != nil {
-				fmt.Printf("failed to WriteJSON: %v\n", err)
+				logger.Warnj(map[string]interface{}{
+					"message":   "failed to WriteJSON",
+					"sessionID": c.sessionID,
+					"error":     err,
+				})
 				return
 			}
 		case <-ticker.C:
 			_ = c.ws.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.ws.WriteMessage(websocket.PingMessage, nil); err != nil {
-				fmt.Printf("failed to ping: sessionID=%s: %v\n", c.sessionID, err)
+				logger.Warnj(map[string]interface{}{
+					"message":   "failed to ping",
+					"sessionID": c.sessionID,
+					"error":     err,
+				})
 				return
 			}
 		}

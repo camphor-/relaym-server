@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/camphor-/relaym-server/domain/entity"
+	"github.com/camphor-/relaym-server/log"
 	"github.com/camphor-/relaym-server/usecase"
 
 	"github.com/labstack/echo/v4"
@@ -21,11 +22,13 @@ func NewUserHandler(userUC *usecase.UserUseCase) *UserHandler {
 
 // GetMe は GET /users/me に対応するハンドラーです。
 func (h *UserHandler) GetMe(c echo.Context) error {
+	logger := log.New()
+
 	ctx := c.Request().Context()
 
 	user, su, err := h.userUC.GetMe(ctx)
 	if err != nil {
-		c.Logger().Error(err)
+		logger.Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return c.JSON(http.StatusOK, &userRes{
@@ -45,10 +48,13 @@ type userRes struct {
 
 // GetActiveDevices は GET /users/me/devices に対応するハンドラーです。
 func (h *UserHandler) GetActiveDevices(c echo.Context) error {
+	logger := log.New()
+
 	ctx := c.Request().Context()
 
 	devices, err := h.userUC.GetActiveDevices(ctx)
 	if err != nil {
+		logger.Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return c.JSON(http.StatusOK, &devicesRes{
