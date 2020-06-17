@@ -106,9 +106,10 @@ func (s *Session) IsResume(nextState StateType) bool {
 
 // TrackURIs は track URIのスライスを返します。
 func (s *Session) TrackURIs() []string {
-	uris := make([]string, len(s.QueueTracks))
-	for i := 0; i < len(s.QueueTracks); i++ {
-		uris[i] = s.QueueTracks[i].URI
+	uris := make([]string, len(s.QueueTracks)-s.QueueHead)
+	for i := 0; i < len(s.QueueTracks)-s.QueueHead; i++ {
+		trackIndex := i + s.QueueHead
+		uris[i] = s.QueueTracks[trackIndex].URI
 	}
 	return uris
 }
