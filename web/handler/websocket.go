@@ -5,6 +5,7 @@ import (
 
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/event"
+	"github.com/camphor-/relaym-server/log"
 	"github.com/camphor-/relaym-server/web/ws"
 
 	"github.com/gorilla/websocket"
@@ -33,11 +34,13 @@ func NewWebSocketHandler(hub *ws.Hub) *WebSocketHandler {
 
 // WebSocket は GET /ws/:id に対応するハンドラーです。
 func (h *WebSocketHandler) WebSocket(c echo.Context) error {
+	logger := log.New()
+
 	sessionID := c.Param("id")
 
 	wsConn, err := h.upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
-		c.Logger().Errorf("upgrader.Upgrade: %v", err)
+		logger.Errorj(map[string]interface{}{"message": "upgrader.Upgrade", "error": err.Error()})
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 

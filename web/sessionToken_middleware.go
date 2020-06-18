@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/camphor-/relaym-server/domain/entity"
+	"github.com/camphor-/relaym-server/log"
 	"github.com/camphor-/relaym-server/usecase"
 
 	"github.com/labstack/echo/v4"
@@ -22,25 +23,27 @@ func NewCreatorTokenMiddleware(uc *usecase.AuthUseCase) *CreatorTokenMiddleware 
 
 // SetCreatorTokenToContext はSessionIDからSessionのCreatorがもつAccessTokenをContextにセットします
 func (m *CreatorTokenMiddleware) SetCreatorTokenToContext(next echo.HandlerFunc) echo.HandlerFunc {
+	logger := log.New()
 	return func(c echo.Context) error {
 		sessionID := c.Param("id")
 		if sessionID == "" {
-			c.Logger().Errorf("sessionID not found")
+			logger.Error("sessionID not found")
 			return echo.NewHTTPError(http.StatusNotFound)
 		}
 
 		token, creatorID, err := m.uc.GetTokenAndCreatorIDBySessionID(sessionID)
 		if err != nil {
-			if errors.Is(err, entity.ErrTokenNotFound) {
-				return echo.NewHTTPError(http.StatusUnauthorized)
+			if errors.Is(err, entity.ErrSessionNotFound) {
+				logger.Warn(err)
+				return echo.NewHTTPError(http.StatusNotFound)
 			}
-			c.Logger().Errorf("failed to get token sessionID=%s err=%v", sessionID, err)
+			logger.Errorj(map[string]interface{}{"message": "failed to get token", "sessionID": sessionID, "error": err.Error()})
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 
 		newToken, err := m.uc.RefreshAccessToken(creatorID, token)
 		if err != nil {
-			c.Logger().Errorf("failed to refresh access token: %v", err)
+			logger.Errorj(map[string]interface{}{"message": "failed to refresh access token", "sessionID": sessionID, "error": err.Error()})
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 		token = newToken

@@ -3,6 +3,8 @@ package entity
 import (
 	"fmt"
 
+	"github.com/camphor-/relaym-server/log"
+
 	"github.com/google/uuid"
 )
 
@@ -85,8 +87,13 @@ func (s *Session) GoNextTrack() error {
 
 // IsPlayingCorrectTrack は現在の再生状況がセッションの状況と一致しているかチェックします。
 func (s *Session) IsPlayingCorrectTrack(playingInfo *CurrentPlayingInfo) error {
+	logger := log.New()
 	if playingInfo.Track == nil || s.QueueTracks[s.QueueHead].URI != playingInfo.Track.URI {
-		fmt.Printf("session playing different track: queue track %s, but playing track %v\n", s.QueueTracks[s.QueueHead].URI, playingInfo.Track)
+		logger.Infoj(map[string]interface{}{
+			"message":      "session playing different track",
+			"queueTrack":   s.QueueTracks[s.QueueHead].URI,
+			"playingTrack": playingInfo.Track,
+		})
 		return ErrSessionPlayingDifferentTrack
 	}
 	return nil
@@ -104,11 +111,12 @@ func (s *Session) IsResume(nextState StateType) bool {
 	return s.StateType == Pause && nextState == Play
 }
 
-// TrackURIs は track URIのスライスを返します。
-func (s *Session) TrackURIs() []string {
-	uris := make([]string, len(s.QueueTracks))
-	for i := 0; i < len(s.QueueTracks); i++ {
-		uris[i] = s.QueueTracks[i].URI
+// TrackURIsOnAndAfterQueueHead はqueueHead以降の曲のURIのスライスを返します
+func (s *Session) TrackURIsOnAndAfterQueueHead() []string {
+	uris := make([]string, len(s.QueueTracks)-s.QueueHead)
+	for i := 0; i < len(s.QueueTracks)-s.QueueHead; i++ {
+		trackIndex := i + s.QueueHead
+		uris[i] = s.QueueTracks[trackIndex].URI
 	}
 	return uris
 }

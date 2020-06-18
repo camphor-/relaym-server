@@ -154,6 +154,8 @@ func TestHub_Unregister(t *testing.T) {
 			go h.Run()
 			h.Unregister(tt.client)
 
+			time.Sleep(100 * time.Millisecond)
+
 			if !cmp.Equal(tt.want, h.clientsPerSession) {
 				t.Errorf("Unregister() diff=%v", cmp.Diff(tt.want, h.clientsPerSession))
 			}
