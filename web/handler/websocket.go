@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/camphor-/relaym-server/domain/entity"
+	"github.com/camphor-/relaym-server/log"
 	"github.com/camphor-/relaym-server/usecase"
 	"github.com/camphor-/relaym-server/web/ws"
 
@@ -37,6 +38,8 @@ func NewWebSocketHandler(hub *ws.Hub, uc *usecase.SessionUseCase) *WebSocketHand
 
 // WebSocket は GET /ws/:id に対応するハンドラーです。
 func (h *WebSocketHandler) WebSocket(c echo.Context) error {
+	logger := log.New()
+
 	sessionID := c.Param("id")
 
 	ctx := c.Request().Context()
@@ -45,13 +48,13 @@ func (h *WebSocketHandler) WebSocket(c echo.Context) error {
 		if errors.Is(err, entity.ErrSessionNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, entity.ErrSessionNotFound.Error())
 		}
-		c.Logger().Errorf("CanConnectToPusher: %v", err)
+		logger.Errorj(map[string]interface{}{"message:": "can not connect to pusher", "error": err})
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	wsConn, err := h.upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
-		c.Logger().Errorf("upgrader.Upgrade: %v", err)
+		logger.Errorj(map[string]interface{}{"message": "upgrader.Upgrade", "error": err.Error()})
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 

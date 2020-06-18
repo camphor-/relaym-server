@@ -8,16 +8,11 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/labstack/gommon/log"
 )
 
 // NewServer はミドルウェアやハンドラーが登録されたechoの構造体を返します。
 func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, sessionUC *usecase.SessionUseCase, trackUC *usecase.TrackUseCase, hub *ws.Hub) *echo.Echo {
 	e := echo.New()
-	e.Logger.SetLevel(log.INFO)
-	if config.IsLocal() {
-		e.Logger.SetLevel(log.DEBUG)
-	}
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
@@ -28,17 +23,14 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, session
 		},
 	}))
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"relaym.local:3000"}, // TODO : 環境変数から読み込むようにする
+		AllowOrigins: []string{config.CORSAllowOrigin()},
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
 	}))
 
 	userHandler := handler.NewUserHandler(userUC)
 	trackHandler := handler.NewTrackHandler(trackUC)
 	sessionHandler := handler.NewSessionHandler(sessionUC)
-
-	// TODO フロントエンドのURLを環境変数で指定する
-	authHandler := handler.NewAuthHandler(authUC, "http://relaym.local:3000")
-
+	authHandler := handler.NewAuthHandler(authUC, config.FrontendURL())
 	wsHandler := handler.NewWebSocketHandler(hub, sessionUC)
 
 	v3 := e.Group("/api/v3")
@@ -57,7 +49,7 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, session
 	authedSession.POST("/:id/queue", sessionHandler.AddQueue)
 
 	SessionWithCreatorToken := v3.Group("/sessions/:id", NewCreatorTokenMiddleware(authUC).SetCreatorTokenToContext)
-	SessionWithCreatorToken.GET("/", sessionHandler.GetSession)
+	SessionWithCreatorToken.GET("", sessionHandler.GetSession)
 	SessionWithCreatorToken.GET("/search", trackHandler.SearchTracks)
 	SessionWithCreatorToken.PUT("/playback", sessionHandler.Playback)
 	SessionWithCreatorToken.GET("/ws", wsHandler.WebSocket)

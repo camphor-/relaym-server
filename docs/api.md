@@ -454,14 +454,6 @@ Spotifyで曲の検索を行います。
 }
 ```
 
-#### RESUME
-sessionの再生が再開された際に発されるイベントです。
-```json
-{
-  "type": "RESUME"
-}
-```
-
 #### INTERRUPT
 Spotifyの本体アプリ側で操作されて、Relaym側との同期が取れなくなったタイミングで発されるイベントです。
 

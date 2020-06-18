@@ -3,6 +3,8 @@ package entity
 import (
 	"fmt"
 
+	"github.com/camphor-/relaym-server/log"
+
 	"github.com/google/uuid"
 )
 
@@ -67,6 +69,15 @@ func (s *Session) MoveToPause() error {
 	return fmt.Errorf("state type from %s to Pause: %w", s.StateType, ErrChangeSessionStateNotPermit)
 }
 
+// MoveToStop はセッションのStateTypeをStopに状態遷移します。
+func (s *Session) MoveToStop() error {
+	if s.StateType == Pause {
+		return fmt.Errorf("state type from Pause to Stop: %w", ErrChangeSessionStateNotPermit)
+	}
+	s.StateType = Stop
+	return nil
+}
+
 // IsCreator は指定されたユーザがセッションの作成者かどうか返します。
 func (s *Session) IsCreator(userID string) bool {
 	return s.CreatorID == userID
@@ -85,9 +96,14 @@ func (s *Session) GoNextTrack() error {
 
 // IsPlayingCorrectTrack は現在の再生状況がセッションの状況と一致しているかチェックします。
 func (s *Session) IsPlayingCorrectTrack(playingInfo *CurrentPlayingInfo) error {
+	logger := log.New()
 	if playingInfo.Track == nil || s.QueueTracks[s.QueueHead].URI != playingInfo.Track.URI {
-		fmt.Printf("session playing different track: queue track %s, but playing track %v\n", s.QueueTracks[s.QueueHead].URI, playingInfo.Track)
-		return ErrSessionPlayingDifferentTrack
+		logger.Infoj(map[string]interface{}{
+			"message":      "session playing different track",
+			"queueTrack":   s.QueueTracks[s.QueueHead].URI,
+			"playingTrack": playingInfo.Track,
+		})
+		return fmt.Errorf("session playing different track: queue track %s, but playing track %v: %w", s.QueueTracks[s.QueueHead].URI, playingInfo.Track, ErrSessionPlayingDifferentTrack)
 	}
 	return nil
 }
@@ -102,6 +118,16 @@ func (s *Session) ShouldCallAddQueueAPINow() bool {
 // IsResume は次のStateTypeへの移行がポーズからの再開かどうかを返します。
 func (s *Session) IsResume(nextState StateType) bool {
 	return s.StateType == Pause && nextState == Play
+}
+
+// TrackURIsOnAndAfterQueueHead はqueueHead以降の曲のURIのスライスを返します
+func (s *Session) TrackURIsOnAndAfterQueueHead() []string {
+	uris := make([]string, len(s.QueueTracks)-s.QueueHead)
+	for i := 0; i < len(s.QueueTracks)-s.QueueHead; i++ {
+		trackIndex := i + s.QueueHead
+		uris[i] = s.QueueTracks[trackIndex].URI
+	}
+	return uris
 }
 
 // IsPlaying は現在のStateTypeがPlayかどうか返します。

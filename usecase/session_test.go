@@ -208,7 +208,7 @@ func TestSessionUseCase_handleTrackEnd(t *testing.T) {
 					Name:      "name",
 					CreatorID: "creatorID",
 					DeviceID:  "deviceID",
-					StateType: entity.Pause,
+					StateType: entity.Stop,
 					QueueHead: 1,
 					QueueTracks: []*entity.QueueTrack{
 						{
@@ -226,7 +226,7 @@ func TestSessionUseCase_handleTrackEnd(t *testing.T) {
 			},
 			wantTriggerAfterTrackEnd: false,
 			wantNextTrack:            false,
-			wantErr:                  false,
+			wantErr:                  true,
 		},
 		{
 			name:      "次の曲が存在するが、デバイスがオフラインになっていた場合はINTERRUPTイベントが送られる",
@@ -267,7 +267,7 @@ func TestSessionUseCase_handleTrackEnd(t *testing.T) {
 					Name:      "name",
 					CreatorID: "creatorID",
 					DeviceID:  "deviceID",
-					StateType: entity.Pause,
+					StateType: entity.Stop,
 					QueueHead: 1,
 					QueueTracks: []*entity.QueueTrack{
 						{
@@ -285,7 +285,7 @@ func TestSessionUseCase_handleTrackEnd(t *testing.T) {
 			},
 			wantTriggerAfterTrackEnd: false,
 			wantNextTrack:            false,
-			wantErr:                  false,
+			wantErr:                  true,
 		},
 	}
 	for _, tt := range tests {

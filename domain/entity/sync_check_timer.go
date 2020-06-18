@@ -3,6 +3,8 @@ package entity
 import (
 	"sync"
 	"time"
+
+	"github.com/camphor-/relaym-server/log"
 )
 
 // SyncCheckTimer はSpotifyとの同期チェック用のタイマーです。タイマーが止まったことを確認するためのstopチャネルがあります。
@@ -25,7 +27,7 @@ func (s *SyncCheckTimer) StopCh() <-chan struct{} {
 func newSyncCheckTimer(d time.Duration) *SyncCheckTimer {
 	return &SyncCheckTimer{
 		timer:  time.NewTimer(d),
-		stopCh: make(chan struct{}, 1),
+		stopCh: make(chan struct{}, 2),
 	}
 }
 
@@ -45,12 +47,16 @@ func NewSyncCheckTimerManager() *SyncCheckTimerManager {
 // CreateTimer は与えられたセッションの同期チェック用のタイマーを作成します。
 // 既存のタイマーが存在する場合はstopしてから新しいタイマーを作成します。
 func (m *SyncCheckTimerManager) CreateTimer(sessionID string, d time.Duration) *SyncCheckTimer {
+	logger := log.New()
 	m.mu.Lock()
 	defer m.mu.Unlock()
+
+	logger.Debugj(map[string]interface{}{"message": "create timer", "sessionID": sessionID})
 
 	if existing, ok := m.timers[sessionID]; ok {
 		// 本来ならStopのGoDocコメントにある通り、<-t.Cとして、チャネルが空になっていることを確認すべきだが、
 		// ExpireCh()の呼び出し側で受け取っているので問題ない。
+		logger.Debugj(map[string]interface{}{"message": "timer has already exists", "sessionID": sessionID})
 		existing.timer.Stop()
 		close(existing.stopCh)
 	}
@@ -61,13 +67,32 @@ func (m *SyncCheckTimerManager) CreateTimer(sessionID string, d time.Duration) *
 
 // StopTimer は与えられたセッションのタイマーを終了します。
 func (m *SyncCheckTimerManager) StopTimer(sessionID string) {
+	logger := log.New()
 	m.mu.Lock()
 	defer m.mu.Unlock()
+
+	logger.Debugj(map[string]interface{}{"message": "stop timer", "sessionID": sessionID})
 
 	if timer, ok := m.timers[sessionID]; ok {
 		if !timer.timer.Stop() {
 			<-timer.timer.C
 		}
+		close(timer.stopCh)
+		delete(m.timers, sessionID)
+	}
+
+	logger.Debugj(map[string]interface{}{"message": "timer not existed", "sessionID": sessionID})
+}
+
+// DeleteTimer は与えられたセッションのタイマーをマップから削除します。
+// StopTimerと異なり、タイマーのストップ処理は行いません。
+// 既にタイマーがExpireして、そのチャネルの値を取り出してしまった後にマップから削除したいときに使います。
+// <-timer.timer.Cを呼ぶと無限に待ちが発生してしまいます。(値を取り出すことは一生出来ないので)
+func (m *SyncCheckTimerManager) DeleteTimer(sessionID string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if timer, ok := m.timers[sessionID]; ok {
 		close(timer.stopCh)
 		delete(m.timers, sessionID)
 	}
