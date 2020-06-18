@@ -1,7 +1,6 @@
 package ws
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/camphor-/relaym-server/domain/entity"
@@ -45,6 +44,7 @@ func NewClient(sessionID string, ws *websocket.Conn, notifyClosedCh chan<- *Clie
 // ReadLoop はクライアントからのメッセージを受け取るループです。
 // 今回はサーバからイベントを送信するのみですが、Pingのやりとりに必要なのでループを回してます。
 func (c *Client) ReadLoop() {
+	logger := log.New()
 	defer func() {
 		c.notifyClosedCh <- c
 		c.ws.Close()
@@ -59,7 +59,7 @@ func (c *Client) ReadLoop() {
 		_, _, err := c.ws.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				fmt.Printf("readMessage: unexpected error: %v", err)
+				logger.Errorj(map[string]interface{}{"message": "readMessage: unexpected error", "error": err.Error()})
 			}
 			break
 		}
