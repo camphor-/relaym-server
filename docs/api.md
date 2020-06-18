@@ -390,7 +390,7 @@ Spotifyで曲の検索を行います。
 
 
 
-## GET /ws/:id
+## GET /sessions/:id/ws
 
 ### 概要
 指定したセッションに関連するイベントを配信するWebSocketエンドポイントです。

@@ -178,19 +178,20 @@ func (s *SessionUseCase) pause(ctx context.Context, sessionID string) error {
 }
 
 // CanConnectToPusher はイベントをクライアントにプッシュするためのコネクションを貼れるかどうかチェックします。
-func (s *SessionUseCase) CanConnectToPusher(sessionID string) (bool, error) {
-	// TODO : セッションを取得
-	// sess ,err := repo.GetByID(sessionID)
+func (s *SessionUseCase) CanConnectToPusher(ctx context.Context, sessionID string) error {
+	sess, err := s.sessionRepo.FindByID(sessionID)
+	if err != nil {
+		return fmt.Errorf("find session id=%s: %w", sessionID, err)
+	}
 
-	// TODO 諸々のチェックをする
-
-	// TODO : セッションが再生中なのに同期チェックがされていなかったら始める
+	// セッションが再生中なのに同期チェックがされていなかったら始める
 	// サーバ再起動でタイマーがなくなると、イベントが正しくクライアントに送られなくなるのでこのタイミングで復旧させる。
-	// if _, ok := s.tm.GetTimer(sessionID); !ok && sess.IsPlaying() {
-	// 	go s.startTrackEndTrigger(sessionID)
-	// }
+	if _, ok := s.tm.GetTimer(sessionID); !ok && sess.IsPlaying() {
+		fmt.Printf("session timer not found: create timer: sessionID=%s\n", sessionID)
+		go s.startTrackEndTrigger(ctx, sessionID)
+	}
 
-	return true, nil
+	return nil
 }
 
 // startTrackEndTrigger は曲の終了やストップを検知してそれぞれの処理を実行します。 goroutineで実行されることを想定しています。

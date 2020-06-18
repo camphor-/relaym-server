@@ -1,11 +1,12 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/camphor-/relaym-server/domain/entity"
-	"github.com/camphor-/relaym-server/domain/event"
 	"github.com/camphor-/relaym-server/log"
+	"github.com/camphor-/relaym-server/usecase"
 	"github.com/camphor-/relaym-server/web/ws"
 
 	"github.com/gorilla/websocket"
@@ -16,10 +17,11 @@ import (
 type WebSocketHandler struct {
 	hub      *ws.Hub
 	upgrader websocket.Upgrader
+	uc       *usecase.SessionUseCase
 }
 
 // NewWebSocketHandler はWebSocketHandlerのポインタを生成する関数です。
-func NewWebSocketHandler(hub *ws.Hub) *WebSocketHandler {
+func NewWebSocketHandler(hub *ws.Hub, uc *usecase.SessionUseCase) *WebSocketHandler {
 	return &WebSocketHandler{
 		hub: hub,
 		upgrader: websocket.Upgrader{
@@ -29,7 +31,9 @@ func NewWebSocketHandler(hub *ws.Hub) *WebSocketHandler {
 			CheckOrigin: func(r *http.Request) bool {
 				return true
 			},
-		}}
+		},
+		uc: uc,
+	}
 }
 
 // WebSocket は GET /ws/:id に対応するハンドラーです。
@@ -37,6 +41,16 @@ func (h *WebSocketHandler) WebSocket(c echo.Context) error {
 	logger := log.New()
 
 	sessionID := c.Param("id")
+
+	ctx := c.Request().Context()
+
+	if err := h.uc.CanConnectToPusher(ctx, sessionID); err != nil {
+		if errors.Is(err, entity.ErrSessionNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, entity.ErrSessionNotFound.Error())
+		}
+		logger.Errorj(map[string]interface{}{"message:": "can not connect to pusher", "error": err})
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
 
 	wsConn, err := h.upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
@@ -49,14 +63,6 @@ func (h *WebSocketHandler) WebSocket(c echo.Context) error {
 
 	go wsCli.PushLoop()
 	go wsCli.ReadLoop()
-
-	// TODO テスト用に置いとくだけで後で消す
-	h.hub.Push(&event.PushMessage{
-		SessionID: "sessionID",
-		Msg: &entity.Event{
-			Type: "CONNECTED",
-		},
-	})
 
 	return nil
 }

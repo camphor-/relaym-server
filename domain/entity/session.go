@@ -130,6 +130,20 @@ func (s *Session) TrackURIsOnAndAfterQueueHead() []string {
 	return uris
 }
 
+// IsPlaying は現在のStateTypeがPlayかどうか返します。
+func (s *Session) IsPlaying() bool {
+	return s.StateType == Play
+}
+
+// TrackURIs は track URIのスライスを返します。
+func (s *Session) TrackURIs() []string {
+	uris := make([]string, len(s.QueueTracks))
+	for i := 0; i < len(s.QueueTracks); i++ {
+		uris[i] = s.QueueTracks[i].URI
+	}
+	return uris
+}
+
 type StateType string
 
 const (
