@@ -1,20 +1,25 @@
 package ws
 
 import (
+	"fmt"
 	"time"
 
-	"github.com/camphor-/relaym-server/log"
-
 	"github.com/camphor-/relaym-server/domain/entity"
+	"github.com/camphor-/relaym-server/log"
 
 	"github.com/gorilla/websocket"
 )
 
-var (
+const (
 	// Time allowed to write a message to the peer.
 	writeWait = 10 * time.Second
 	// Time allowed to read the next pong message from the peer.
 	pongWait = 60 * time.Second
+	// Maximum message size allowed from peer.
+	maxMessageSize = 512
+)
+
+var (
 	// Send pings to peer with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
 )
@@ -37,6 +42,30 @@ func NewClient(sessionID string, ws *websocket.Conn, notifyClosedCh chan<- *Clie
 	}
 }
 
+// ReadLoop はクライアントからのメッセージを受け取るループです。
+// 今回はサーバからイベントを送信するのみですが、Pingのやりとりに必要なのでループを回してます。
+func (c *Client) ReadLoop() {
+	defer func() {
+		c.notifyClosedCh <- c
+		c.ws.Close()
+	}()
+	c.ws.SetReadLimit(maxMessageSize)
+	c.ws.SetReadDeadline(time.Now().Add(pongWait))
+	c.ws.SetPongHandler(func(string) error {
+		c.ws.SetReadDeadline(time.Now().Add(pongWait))
+		return nil
+	})
+	for {
+		_, _, err := c.ws.ReadMessage()
+		if err != nil {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				fmt.Printf("readMessage: unexpected error: %v", err)
+			}
+			break
+		}
+	}
+}
+
 // PushLoop は一つのWebSocketコネクションに対してメッセージを送信するループです。
 // 一つのWebSocketコネクションに対して一つのgoroutineでPushLoop()が実行されます。
 // 接続が切れた場合はnotifyClosedChを通じてHubに登録されているwsConnを削除してメモリリークを防ぎます。
@@ -52,8 +81,8 @@ func (c *Client) PushLoop() {
 	for {
 		select {
 		case msg, ok := <-c.pushCh:
+			_ = c.ws.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
-				_ = c.ws.SetWriteDeadline(time.Now().Add(writeWait))
 				if err := c.ws.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
 					logger.Infoj(map[string]interface{}{
 						"message":   "failed to write close message",

@@ -23,6 +23,8 @@ func NewWebSocketHandler(hub *ws.Hub) *WebSocketHandler {
 	return &WebSocketHandler{
 		hub: hub,
 		upgrader: websocket.Upgrader{
+			ReadBufferSize:  1024,
+			WriteBufferSize: 1024,
 			// TODO クライアントが準備できたタイミングで適切にセットする
 			CheckOrigin: func(r *http.Request) bool {
 				return true
@@ -46,6 +48,7 @@ func (h *WebSocketHandler) WebSocket(c echo.Context) error {
 	h.hub.Register(wsCli)
 
 	go wsCli.PushLoop()
+	go wsCli.ReadLoop()
 
 	// TODO テスト用に置いとくだけで後で消す
 	h.hub.Push(&event.PushMessage{
