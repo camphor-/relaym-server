@@ -137,7 +137,7 @@ func (s *Session) TrackURIsShouldBeAddedWhenStopToPlay() ([]string, error) {
 	return uris, nil
 }
 
-// canMoveFromStopToPlay はセッションのStateTypeをPlayに状態遷移しても良いかどうか返します。
+// canMoveFromStopToPlay はセッションのStateTypeをStopからPlayに状態遷移しても良いかどうか返します。
 func (s *Session) canMoveFromStopToPlay() error {
 	if s.StateType != Stop {
 		return fmt.Errorf("state type from %s to Pause: %w", s.StateType, ErrChangeSessionStateNotPermit)
