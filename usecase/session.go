@@ -11,6 +11,7 @@ import (
 	"github.com/camphor-/relaym-server/domain/repository"
 	"github.com/camphor-/relaym-server/domain/service"
 	"github.com/camphor-/relaym-server/domain/spotify"
+	"github.com/camphor-/relaym-server/log"
 )
 
 var syncCheckOffset = 5 * time.Second
@@ -194,30 +195,45 @@ func (s *SessionUseCase) CanConnectToPusher(sessionID string) (bool, error) {
 
 // startTrackEndTrigger は曲の終了やストップを検知してそれぞれの処理を実行します。 goroutineで実行されることを想定しています。
 func (s *SessionUseCase) startTrackEndTrigger(ctx context.Context, sessionID string) {
+	logger := log.New()
+	logger.Debugj(map[string]interface{}{"message": "start track end trigger", "sessionID": sessionID})
+
 	time.Sleep(5 * time.Second) // 曲の再生が始まるのを待つ
 	playingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
 	if err != nil {
-		fmt.Printf("startTrackEndTrigger: failed to get currently playing info id=%s: %v", sessionID, err)
+		logger.Errorj(map[string]interface{}{
+			"message":   "startTrackEndTrigger: failed to get currently playing info",
+			"sessionID": sessionID,
+			"error":     err,
+		})
 		return
 	}
 	remainDuration := playingInfo.Remain()
-	fmt.Println(remainDuration)
+
+	logger.Infoj(map[string]interface{}{
+		"message": "start timer", "sessionID": sessionID, "remainDuration": remainDuration.String(),
+	})
 
 	triggerAfterTrackEnd := s.tm.CreateTimer(sessionID, remainDuration+syncCheckOffset)
 
 	for {
 		select {
 		case <-triggerAfterTrackEnd.StopCh():
-			fmt.Printf("timer stopped sessionID=%s\n", sessionID)
+			logger.Infoj(map[string]interface{}{"message": "stop timer", "sessionID": sessionID})
 			return
 		case <-triggerAfterTrackEnd.ExpireCh():
+			logger.Debugj(map[string]interface{}{"message": "trigger expired", "sessionID": sessionID})
 			timer, nextTrack, err := s.handleTrackEnd(ctx, sessionID)
 			if err != nil {
-				fmt.Printf("session id=%s: handleTrackEnd: %v\n", sessionID, err)
+				if errors.Is(err, entity.ErrSessionPlayingDifferentTrack) {
+					logger.Infoj(map[string]interface{}{"message": "handleTrackEnd detects interrupt", "sessionID": sessionID, "error": err.Error()})
+					return
+				}
+				logger.Errorj(map[string]interface{}{"message": "handleTrackEnd with error", "sessionID": sessionID, "error": err.Error()})
 				return
 			}
 			if !nextTrack {
-				fmt.Printf("session id=%s: no next track\n", sessionID)
+				logger.Infoj(map[string]interface{}{"message": "no next track", "sessionID": sessionID})
 				return
 			}
 			triggerAfterTrackEnd = timer
@@ -227,6 +243,8 @@ func (s *SessionUseCase) startTrackEndTrigger(ctx context.Context, sessionID str
 
 // handleTrackEnd はある一曲の再生が終わったときの処理を行います。
 func (s *SessionUseCase) handleTrackEnd(ctx context.Context, sessionID string) (triggerAfterTrackEnd *entity.SyncCheckTimer, nextTrack bool, returnErr error) {
+	logger := log.New()
+
 	sess, err := s.sessionRepo.FindByID(sessionID)
 	if err != nil {
 		return nil, false, fmt.Errorf("find session id=%s: %v", sessionID, err)
@@ -247,6 +265,8 @@ func (s *SessionUseCase) handleTrackEnd(ctx context.Context, sessionID string) (
 		return nil, false, nil
 	}
 
+	logger.Debugj(map[string]interface{}{"message": "next track", "sessionID": sessionID, "queueHead": sess.QueueHead})
+
 	playingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
 	if err != nil {
 		if errors.Is(err, entity.ErrActiveDeviceNotFound) {
@@ -260,7 +280,6 @@ func (s *SessionUseCase) handleTrackEnd(ctx context.Context, sessionID string) (
 		returnErr = fmt.Errorf("get currently playing info id=%s: %v", sessionID, err)
 		return nil, false, returnErr
 	}
-	fmt.Println(sess)
 
 	if err := sess.IsPlayingCorrectTrack(playingInfo); err != nil {
 		if interErr := s.handleInterrupt(sess); interErr != nil {
@@ -276,7 +295,10 @@ func (s *SessionUseCase) handleTrackEnd(ctx context.Context, sessionID string) (
 		Msg:       entity.NewEventNextTrack(sess.QueueHead),
 	})
 	triggerAfterTrackEnd = s.tm.CreateTimer(sessionID, playingInfo.Remain()+syncCheckOffset)
-	fmt.Println(playingInfo.Remain())
+
+	logger.Infoj(map[string]interface{}{
+		"message": "restart timer", "sessionID": sessionID, "remainDuration": playingInfo.Remain().String(),
+	})
 
 	return triggerAfterTrackEnd, true, nil
 
@@ -284,6 +306,8 @@ func (s *SessionUseCase) handleTrackEnd(ctx context.Context, sessionID string) (
 
 // handleAllTrackFinish はキューの全ての曲の再生が終わったときの処理を行います。
 func (s *SessionUseCase) handleAllTrackFinish(sess *entity.Session) {
+	logger := log.New()
+	logger.Debugj(map[string]interface{}{"message": "all track finished", "sessionID": sess.ID})
 	s.pusher.Push(&event.PushMessage{
 		SessionID: sess.ID,
 		Msg:       entity.EventStop,
@@ -292,8 +316,13 @@ func (s *SessionUseCase) handleAllTrackFinish(sess *entity.Session) {
 
 // handleInterrupt はSpotifyとの同期が取れていないときの処理を行います。
 func (s *SessionUseCase) handleInterrupt(sess *entity.Session) error {
+	logger := log.New()
+	logger.Debugj(map[string]interface{}{"message": "interrupt detected", "sessionID": sess.ID})
+
 	if err := sess.MoveToStop(); err != nil {
-		return fmt.Errorf("move to pause: id=%s: %v", sess.ID, err)
+		// 必ずPlayされているのでこのエラーになることはないはず
+		logger.Errorj(map[string]interface{}{"message": "failed to move to stop", "sessionID": sess.ID, "error": err.Error()})
+		return fmt.Errorf("move to stop: id=%s: %v", sess.ID, err)
 	}
 
 	s.pusher.Push(&event.PushMessage{

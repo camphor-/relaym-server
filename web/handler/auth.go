@@ -3,6 +3,8 @@ package handler
 import (
 	"net/http"
 
+	"github.com/camphor-/relaym-server/log"
+
 	"github.com/camphor-/relaym-server/config"
 
 	"github.com/camphor-/relaym-server/usecase"
@@ -24,13 +26,15 @@ func NewAuthHandler(authUC *usecase.AuthUseCase, frontendURL string) *AuthHandle
 
 // Login は GET /login に対応するハンドラーです。
 func (h *AuthHandler) Login(c echo.Context) error {
+	logger := log.New()
+
 	redirectURL := c.QueryParam("redirect_url")
 	if redirectURL == "" {
 		redirectURL = h.frontendURL
 	}
 	url, err := h.authUC.GetAuthURL(redirectURL)
 	if err != nil {
-		c.Logger().Errorf("failed to get auth url: %v", err)
+		logger.Errorj(map[string]interface{}{"message": "failed to get auth url", "error": err.Error()})
 		return c.Redirect(http.StatusFound, h.frontendURL+"?err=spotifyAuthFailed")
 	}
 
@@ -39,26 +43,27 @@ func (h *AuthHandler) Login(c echo.Context) error {
 
 // Callback はGet /callbackに対応するハンドラーです。
 func (h *AuthHandler) Callback(c echo.Context) error {
+	logger := log.New()
 	if err := c.QueryParam("err"); err != "" {
-		c.Logger().Errorf("spotify auth failed: %s", err)
+		logger.Errorj(map[string]interface{}{"message": "spotify auth failed", "error": err})
 		return c.Redirect(http.StatusFound, h.frontendURL+"?err=spotifyAuthFailed")
 	}
 
 	state := c.QueryParam("state")
 	if state == "" {
-		c.Logger().Errorf("spotify auth failed: state is empty")
+		logger.Error("spotify auth failed: state is empty")
 		return c.Redirect(http.StatusFound, h.frontendURL+"?err=spotifyAuthFailed")
 	}
 
 	code := c.QueryParam("code")
 	if code == "" {
-		c.Logger().Errorf("spotify auth failed: code is empty")
+		logger.Error("spotify auth failed: code is empty")
 		return c.Redirect(http.StatusFound, h.frontendURL+"?err=spotifyAuthFailed")
 	}
 
 	redirectURL, sessionID, err := h.authUC.Authorization(state, code)
 	if err != nil {
-		c.Logger().Errorf("spotify auth failed: %v", err)
+		logger.Errorj(map[string]interface{}{"message": "spotify auth failed", "error": err.Error()})
 		return c.Redirect(http.StatusFound, h.frontendURL+"?err=spotifyAuthFailed")
 	}
 

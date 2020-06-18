@@ -3,6 +3,8 @@ package entity
 import (
 	"fmt"
 
+	"github.com/camphor-/relaym-server/log"
+
 	"github.com/google/uuid"
 )
 
@@ -94,7 +96,13 @@ func (s *Session) GoNextTrack() error {
 
 // IsPlayingCorrectTrack は現在の再生状況がセッションの状況と一致しているかチェックします。
 func (s *Session) IsPlayingCorrectTrack(playingInfo *CurrentPlayingInfo) error {
+	logger := log.New()
 	if playingInfo.Track == nil || s.QueueTracks[s.QueueHead].URI != playingInfo.Track.URI {
+		logger.Infoj(map[string]interface{}{
+			"message":      "session playing different track",
+			"queueTrack":   s.QueueTracks[s.QueueHead].URI,
+			"playingTrack": playingInfo.Track,
+		})
 		return fmt.Errorf("session playing different track: queue track %s, but playing track %v: %w", s.QueueTracks[s.QueueHead].URI, playingInfo.Track, ErrSessionPlayingDifferentTrack)
 	}
 	return nil
