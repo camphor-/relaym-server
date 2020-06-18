@@ -36,4 +36,9 @@ var (
 
 	// ErrChangeSessionStateNotPermit はセッションのステートの状態遷移が許可されていない場合のエラーを表します。
 	ErrChangeSessionStateNotPermit = errors.New("change session state is not permits")
+
+	// ErrLoginSessionNotFound はセッション(login)が存在しないエラーを表します。
+	ErrLoginSessionNotFound = errors.New("loginSession not found")
+	// ErrLoginSessionAlreadyExisted はセッション(login)が既に存在しているときのエラーを表します。
+	ErrLoginSessionAlreadyExisted = errors.New("loginSession has already existed")
 )
