@@ -48,7 +48,7 @@ func (h *WebSocketHandler) WebSocket(c echo.Context) error {
 		if errors.Is(err, entity.ErrSessionNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, entity.ErrSessionNotFound.Error())
 		}
-		logger.Errorj(map[string]interface{}{"message:": "can not connect to pusher", "error": err})
+		logger.Errorj(map[string]interface{}{"message:": "can not connect to pusher", "error": err.Error()})
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
