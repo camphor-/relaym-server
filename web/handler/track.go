@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/camphor-/relaym-server/domain/entity"
+	"github.com/camphor-/relaym-server/log"
 	"github.com/camphor-/relaym-server/usecase"
 
 	"github.com/labstack/echo/v4"
@@ -21,6 +22,7 @@ func NewTrackHandler(trackUC *usecase.TrackUseCase) *TrackHandler {
 
 // SearchTracks は GET /search に対応するハンドラーです。
 func (h *TrackHandler) SearchTracks(c echo.Context) error {
+	logger := log.New()
 	q := c.QueryParam("q")
 	if q == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "query is empty")
@@ -29,6 +31,7 @@ func (h *TrackHandler) SearchTracks(c echo.Context) error {
 	ctx := c.Request().Context()
 	tracks, err := h.trackUC.SearckTracks(ctx, q)
 	if err != nil {
+		logger.Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return c.JSON(http.StatusOK, &tracksRes{

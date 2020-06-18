@@ -4,6 +4,8 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/camphor-/relaym-server/log"
+
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/service"
 	"github.com/camphor-/relaym-server/usecase"
@@ -23,12 +25,13 @@ func NewSessionHandler(uc *usecase.SessionUseCase) *SessionHandler {
 
 // PostSession は POST /sessions に対応するハンドラーです。
 func (h *SessionHandler) PostSession(c echo.Context) error {
+	logger := log.New()
 	type reqJSON struct {
 		Name string `json:"name"`
 	}
 	req := new(reqJSON)
 	if err := c.Bind(req); err != nil {
-		c.Logger().Debugf("bind: %v", err)
+		logger.Errorj(map[string]interface{}{"message": "failed to bind", "error": err.Error()})
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -41,6 +44,7 @@ func (h *SessionHandler) PostSession(c echo.Context) error {
 	userID, _ := service.GetUserIDFromContext(ctx)
 	session, err := h.uc.CreateSession(sessionName, userID)
 	if err != nil {
+		logger.Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -49,15 +53,17 @@ func (h *SessionHandler) PostSession(c echo.Context) error {
 
 // GetSession は GET /sessions/:id に対応するハンドラーです。
 func (h *SessionHandler) GetSession(c echo.Context) error {
+	logger := log.New()
 	ctx := c.Request().Context()
 	id := c.Param("id")
 
 	session, tracks, playingInfo, err := h.uc.GetSession(ctx, id)
 	if err != nil {
 		if errors.Is(err, entity.ErrSessionNotFound) {
+			logger.Debug(err)
 			return echo.NewHTTPError(http.StatusNotFound)
 		}
-		c.Logger().Debugf("GetSession: %v", err)
+		logger.Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return c.JSON(http.StatusOK, h.toSessionRes(session, playingInfo.Device, tracks))
@@ -65,12 +71,13 @@ func (h *SessionHandler) GetSession(c echo.Context) error {
 
 // AddQueue は POST /sessions/:id/queue に対応するハンドラーです。
 func (h *SessionHandler) AddQueue(c echo.Context) error {
+	logger := log.New()
 	type reqJSON struct {
 		URI string `json:"uri"`
 	}
 	req := new(reqJSON)
 	if err := c.Bind(req); err != nil {
-		c.Logger().Debugf("bind: %v", err)
+		logger.Debug(err)
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid track id")
 	}
 
@@ -83,9 +90,10 @@ func (h *SessionHandler) AddQueue(c echo.Context) error {
 
 	if err := h.uc.AddQueueTrack(ctx, sessionID, req.URI); err != nil {
 		if errors.Is(err, entity.ErrSessionNotFound) {
+			logger.Debug(err)
 			return echo.NewHTTPError(http.StatusNotFound, entity.ErrSessionNotFound.Error())
 		}
-		c.Logger().Errorf("add queue track: %v", err)
+		logger.Errorj(map[string]interface{}{"message": "add queue track", "error": err.Error()})
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -94,18 +102,19 @@ func (h *SessionHandler) AddQueue(c echo.Context) error {
 
 // Playback は PUT /sessions/:id/playback に対応するハンドラーです。
 func (h *SessionHandler) Playback(c echo.Context) error {
+	logger := log.New()
 	type reqJSON struct {
 		State string `json:"state"`
 	}
 	req := new(reqJSON)
 	if err := c.Bind(req); err != nil {
-		c.Logger().Debugf("bind: %v", err)
+		logger.Debugj(map[string]interface{}{"message": "failed to bind", "error": err.Error()})
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid state")
 	}
 
 	st, err := entity.NewStateType(req.State)
 	if err != nil {
-		c.Logger().Debugf("NewStateType: %v", err)
+		logger.Debugj(map[string]interface{}{"message": "failed to convert state type", "error": err.Error()})
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid state")
 	}
 
@@ -114,11 +123,13 @@ func (h *SessionHandler) Playback(c echo.Context) error {
 	if err := h.uc.ChangePlaybackState(ctx, sessionID, st); err != nil {
 		switch {
 		case errors.Is(err, entity.ErrSessionNotFound):
+			logger.Debug(err)
 			return echo.NewHTTPError(http.StatusNotFound, entity.ErrSessionNotFound.Error())
 		case errors.Is(err, entity.ErrActiveDeviceNotFound):
+			logger.Debug(err)
 			return echo.NewHTTPError(http.StatusForbidden, entity.ErrActiveDeviceNotFound.Error())
 		}
-		c.Logger().Errorf("change playback: %v", err)
+		logger.Errorj(map[string]interface{}{"message": "failed to change playback", "error": err.Error()})
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return c.NoContent(http.StatusAccepted)
@@ -126,12 +137,13 @@ func (h *SessionHandler) Playback(c echo.Context) error {
 
 // SetDevice PUT /sessions/:id/devicesに対応するハンドラーです。
 func (h *SessionHandler) SetDevice(c echo.Context) error {
+	logger := log.New()
 	type reqJSON struct {
 		DeviceID string `json:"device_id"`
 	}
 	req := new(reqJSON)
 	if err := c.Bind(req); err != nil {
-		c.Logger().Debugf("bind: %v", err)
+		logger.Debugj(map[string]interface{}{"message": "failed to bind", "error": err.Error()})
 		return echo.NewHTTPError(http.StatusBadRequest, "empty device id")
 	}
 
@@ -145,12 +157,14 @@ func (h *SessionHandler) SetDevice(c echo.Context) error {
 	if err := h.uc.SetDevice(ctx, sessionID, req.DeviceID); err != nil {
 		switch {
 		case errors.Is(err, entity.ErrSessionNotFound):
+			logger.Debug(err)
 			return echo.NewHTTPError(http.StatusNotFound, entity.ErrSessionNotFound.Error())
 		case errors.Is(err, entity.ErrUserIsNotSessionCreator):
+			logger.Debug(err)
 			return echo.NewHTTPError(http.StatusForbidden, entity.ErrUserIsNotSessionCreator.Error())
 
 		}
-		c.Logger().Errorf("set device id=%s: %v", req.DeviceID, err)
+		logger.Errorj(map[string]interface{}{"message": "failed to set device", "error": err.Error(), "deviceID": req.DeviceID})
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
