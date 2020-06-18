@@ -2,6 +2,7 @@ package ws
 
 import (
 	"github.com/camphor-/relaym-server/domain/event"
+	"github.com/camphor-/relaym-server/log"
 )
 
 // Hub は すべてのWebSocketクライアント一元管理する構造体です。
@@ -47,6 +48,12 @@ func (h *Hub) Unregister(client *Client) {
 // Push はpushMsgをチャネルに流して、接続されているクライアントに送信します。
 // event.Pusher インターフェースを満たしています。
 func (h *Hub) Push(pushMsg *event.PushMessage) {
+	logger := log.New()
+	logger.Debugj(map[string]interface{}{
+		"message":   "push message",
+		"sessionID": pushMsg.SessionID,
+		"event":     pushMsg.Msg,
+	})
 	h.pushMsgCh <- pushMsg
 }
 
@@ -65,7 +72,10 @@ func (h *Hub) Run() {
 }
 
 func (h *Hub) register(cli *Client) {
+	logger := log.New()
 	sessionID := cli.sessionID
+	logger.Debugj(map[string]interface{}{"message": "register websocket", "sessionID": sessionID})
+
 	if _, ok := h.clientsPerSession[sessionID]; ok {
 		h.clientsPerSession[sessionID][cli] = struct{}{}
 		return
@@ -74,7 +84,10 @@ func (h *Hub) register(cli *Client) {
 }
 
 func (h *Hub) unregister(cli *Client) {
+	logger := log.New()
 	sessionID := cli.sessionID
+	logger.Debugj(map[string]interface{}{"message": "unregister websocket", "sessionID": sessionID})
+
 	if _, ok := h.clientsPerSession[sessionID][cli]; ok {
 		delete(h.clientsPerSession[sessionID], cli)
 		return

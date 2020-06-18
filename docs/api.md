@@ -391,7 +391,7 @@ Spotifyで曲の検索を行います。
 
 
 
-## GET /ws/:id
+## GET /sessions/:id/ws
 
 ### 概要
 指定したセッションに関連するイベントを配信するWebSocketエンドポイントです。
@@ -452,14 +452,6 @@ Spotifyで曲の検索を行います。
 ```json
 {
   "type": "STOP"
-}
-```
-
-#### RESUME
-sessionの再生が再開された際に発されるイベントです。
-```json
-{
-  "type": "RESUME"
 }
 ```
 

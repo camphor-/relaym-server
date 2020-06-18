@@ -8,16 +8,11 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/labstack/gommon/log"
 )
 
 // NewServer はミドルウェアやハンドラーが登録されたechoの構造体を返します。
 func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, sessionUC *usecase.SessionUseCase, trackUC *usecase.TrackUseCase, hub *ws.Hub) *echo.Echo {
 	e := echo.New()
-	e.Logger.SetLevel(log.INFO)
-	if config.IsLocal() {
-		e.Logger.SetLevel(log.DEBUG)
-	}
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
@@ -36,14 +31,11 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, session
 	trackHandler := handler.NewTrackHandler(trackUC)
 	sessionHandler := handler.NewSessionHandler(sessionUC)
 	authHandler := handler.NewAuthHandler(authUC, config.FrontendURL())
-	wsHandler := handler.NewWebSocketHandler(hub)
+	wsHandler := handler.NewWebSocketHandler(hub, sessionUC)
 
 	v3 := e.Group("/api/v3")
 	v3.GET("/login", authHandler.Login)
 	v3.GET("/callback", authHandler.Callback)
-
-	// TODO 本来は認証が必要だがテストのために認証を外しておく
-	v3.GET("/ws/:id", wsHandler.WebSocket)
 
 	authed := v3.Group("", NewAuthMiddleware(authUC).Authenticate)
 
@@ -60,5 +52,6 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, session
 	SessionWithCreatorToken.GET("", sessionHandler.GetSession)
 	SessionWithCreatorToken.GET("/search", trackHandler.SearchTracks)
 	SessionWithCreatorToken.PUT("/playback", sessionHandler.Playback)
+	SessionWithCreatorToken.GET("/ws", wsHandler.WebSocket)
 	return e
 }

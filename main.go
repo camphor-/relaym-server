@@ -2,13 +2,14 @@ package main
 
 import (
 	"context"
-	"log"
+
 	"os"
 	"os/signal"
 	"time"
 
 	"github.com/camphor-/relaym-server/config"
 	"github.com/camphor-/relaym-server/database"
+	"github.com/camphor-/relaym-server/log"
 	"github.com/camphor-/relaym-server/spotify"
 	"github.com/camphor-/relaym-server/usecase"
 	"github.com/camphor-/relaym-server/web"
@@ -18,14 +19,16 @@ import (
 )
 
 func main() {
+	logger := log.New()
+
 	dbMap, err := database.NewDB()
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 	defer func() {
 		err := dbMap.Db.Close()
 		if err != nil {
-			log.Fatal(err)
+			logger.Fatal(err)
 		}
 	}()
 
@@ -49,7 +52,7 @@ func main() {
 	// シグナルを受け取れるようにgoroutine内でサーバを起動する
 	go func() {
 		if err := s.Start(":" + config.Port()); err != nil {
-			s.Logger.Infof("shutting down the server with error: %v", err)
+			logger.Infof("shutting down the server with error: %v", err)
 			os.Exit(1)
 		}
 	}()
@@ -57,11 +60,11 @@ func main() {
 	// Graceful Shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
-	s.Logger.Infof("SIGNAL %d received, then shutting down...\n", <-quit)
+	logger.Infof("SIGNAL %d received, then shutting down...", <-quit)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := s.Shutdown(ctx); err != nil {
-		s.Logger.Fatal(err)
+		logger.Fatal(err)
 	}
 }
