@@ -242,16 +242,21 @@ func (s *SessionUseCase) startTrackEndTrigger(ctx context.Context, sessionID str
 }
 
 // handleTrackEnd はある一曲の再生が終わったときの処理を行います。
-func (s *SessionUseCase) handleTrackEnd(ctx context.Context, sessionID string) (triggerAfterTrackEnd *entity.SyncCheckTimer, nextTrack bool, err error) {
+func (s *SessionUseCase) handleTrackEnd(ctx context.Context, sessionID string) (triggerAfterTrackEnd *entity.SyncCheckTimer, nextTrack bool, returnErr error) {
 	logger := log.New()
 
 	sess, err := s.sessionRepo.FindByID(sessionID)
 	if err != nil {
 		return nil, false, fmt.Errorf("find session id=%s: %v", sessionID, err)
 	}
+
 	defer func() {
-		if deferErr := s.sessionRepo.Update(sess); err != nil {
-			err = fmt.Errorf("update session id=%s: %v: %w", sess.ID, deferErr, err)
+		if err := s.sessionRepo.Update(sess); err != nil {
+			if returnErr != nil {
+				returnErr = fmt.Errorf("update session id=%s: %v: %w", sess.ID, err, returnErr)
+			} else {
+				returnErr = fmt.Errorf("update session id=%s: %w", sess.ID, err)
+			}
 		}
 	}()
 
@@ -265,17 +270,26 @@ func (s *SessionUseCase) handleTrackEnd(ctx context.Context, sessionID string) (
 	playingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
 	if err != nil {
 		if errors.Is(err, entity.ErrActiveDeviceNotFound) {
-			s.handleInterrupt(sess)
-			return nil, false, nil
+			if interErr := s.handleInterrupt(sess); interErr != nil {
+				returnErr = fmt.Errorf("handle interrupt: %w", interErr)
+				return nil, false, returnErr
+			}
+			returnErr = err
+			return nil, false, returnErr
 		}
-		return nil, false, fmt.Errorf("get currently playing info id=%s: %v", sessionID, err)
+		returnErr = fmt.Errorf("get currently playing info id=%s: %v", sessionID, err)
+		return nil, false, returnErr
 	}
 
 	if err := sess.IsPlayingCorrectTrack(playingInfo); err != nil {
-		s.handleInterrupt(sess)
-		return nil, false, nil
-
+		if interErr := s.handleInterrupt(sess); interErr != nil {
+			returnErr = fmt.Errorf("check whether playing correct track: handle interrupt: %v: %w", interErr, err)
+			return nil, false, returnErr
+		}
+		returnErr = fmt.Errorf("check whether playing correct track: %w", err)
+		return nil, false, returnErr
 	}
+
 	s.pusher.Push(&event.PushMessage{
 		SessionID: sessionID,
 		Msg:       entity.NewEventNextTrack(sess.QueueHead),
@@ -301,19 +315,22 @@ func (s *SessionUseCase) handleAllTrackFinish(sess *entity.Session) {
 }
 
 // handleInterrupt はSpotifyとの同期が取れていないときの処理を行います。
-func (s *SessionUseCase) handleInterrupt(sess *entity.Session) {
+func (s *SessionUseCase) handleInterrupt(sess *entity.Session) error {
 	logger := log.New()
 	logger.Debugj(map[string]interface{}{"message": "interrupt detected", "sessionID": sess.ID})
 
-	if err := sess.MoveToPause(); err != nil {
+	if err := sess.MoveToStop(); err != nil {
 		// 必ずPlayされているのでこのエラーになることはないはず
-		logger.Errorj(map[string]interface{}{"message": "failed to move to pause", "sessionID": sess.ID, "error": err.Error()})
+		logger.Errorj(map[string]interface{}{"message": "failed to move to stop", "sessionID": sess.ID, "error": err.Error()})
+		return fmt.Errorf("move to stop: id=%s: %v", sess.ID, err)
 	}
+
 	s.pusher.Push(&event.PushMessage{
 		SessionID: sess.ID,
 		Msg:       entity.EventInterrupt,
 	})
-	s.tm.StopTimer(sess.ID)
+	s.tm.DeleteTimer(sess.ID)
+	return nil
 }
 
 // SetDevice は指定されたidのセッションの作成者と再生する端末を紐付けて再生するデバイスを指定します。

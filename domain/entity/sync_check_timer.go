@@ -27,7 +27,7 @@ func (s *SyncCheckTimer) StopCh() <-chan struct{} {
 func newSyncCheckTimer(d time.Duration) *SyncCheckTimer {
 	return &SyncCheckTimer{
 		timer:  time.NewTimer(d),
-		stopCh: make(chan struct{}, 1),
+		stopCh: make(chan struct{}, 2),
 	}
 }
 
@@ -82,6 +82,20 @@ func (m *SyncCheckTimerManager) StopTimer(sessionID string) {
 	}
 
 	logger.Debugj(map[string]interface{}{"message": "timer not existed", "sessionID": sessionID})
+}
+
+// DeleteTimer は与えられたセッションのタイマーをマップから削除します。
+// StopTimerと異なり、タイマーのストップ処理は行いません。
+// 既にタイマーがExpireして、そのチャネルの値を取り出してしまった後にマップから削除したいときに使います。
+// <-timer.timer.Cを呼ぶと無限に待ちが発生してしまいます。(値を取り出すことは一生出来ないので)
+func (m *SyncCheckTimerManager) DeleteTimer(sessionID string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if timer, ok := m.timers[sessionID]; ok {
+		close(timer.stopCh)
+		delete(m.timers, sessionID)
+	}
 }
 
 // GetTimer は与えられたセッションのタイマーを取得します。存在しない場合はfalseが返ります。

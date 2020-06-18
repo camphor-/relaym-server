@@ -93,6 +93,8 @@ func TestHub_Register(t *testing.T) {
 			go h.Run()
 			h.Register(tt.client)
 
+			time.Sleep(100 * time.Millisecond)
+
 			if !cmp.Equal(tt.want, h.clientsPerSession) {
 				t.Errorf("Register() diff=%v", cmp.Diff(tt.want, h.clientsPerSession))
 			}
