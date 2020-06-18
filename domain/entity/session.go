@@ -55,9 +55,12 @@ func NewSessionWithUser(session *Session, creator *User) *SessionWithUser {
 
 // MoveToPlay はセッションのStateTypeをPlayに状態遷移します。
 func (s *Session) MoveToPlay() error {
+	if err := s.canMoveFromStopToPlay(); s.StateType == Stop && err != nil {
+		return fmt.Errorf("can not to move to play: %w", err)
+	}
+
 	s.StateType = Play
 	return nil
-
 }
 
 // MoveToPause はセッションのStateTypeをPauseに状態遷移します。
@@ -120,14 +123,34 @@ func (s *Session) IsResume(nextState StateType) bool {
 	return s.StateType == Pause && nextState == Play
 }
 
-// TrackURIsOnAndAfterQueueHead はqueueHead以降の曲のURIのスライスを返します
-func (s *Session) TrackURIsOnAndAfterQueueHead() []string {
+// TrackURIsShouldBeAddedWhenStartPlay は再生を開始するときにSpotifyのキューに追加するTrackURIを抽出します。
+func (s *Session) TrackURIsShouldBeAddedWhenStopToPlay() ([]string, error) {
+	if err := s.canMoveFromStopToPlay(); err != nil {
+		return []string{}, fmt.Errorf("can not to move to play: %w", err)
+	}
+
 	uris := make([]string, len(s.QueueTracks)-s.QueueHead)
 	for i := 0; i < len(s.QueueTracks)-s.QueueHead; i++ {
 		trackIndex := i + s.QueueHead
 		uris[i] = s.QueueTracks[trackIndex].URI
 	}
-	return uris
+	return uris, nil
+}
+
+// canMoveFromStopToPlay はセッションのStateTypeをPlayに状態遷移しても良いかどうか返します。
+func (s *Session) canMoveFromStopToPlay() error {
+	if s.StateType != Stop {
+		return fmt.Errorf("state type from %s to Pause: %w", s.StateType, ErrChangeSessionStateNotPermit)
+	}
+	if s.isEmptyQueue() {
+		return ErrQueueTrackNotFound
+	}
+
+	if len(s.QueueTracks) == s.QueueHead {
+		return ErrNextQueueTrackNotFound
+	}
+
+	return nil
 }
 
 // IsPlaying は現在のStateTypeがPlayかどうか返します。
@@ -135,13 +158,9 @@ func (s *Session) IsPlaying() bool {
 	return s.StateType == Play
 }
 
-// TrackURIs は track URIのスライスを返します。
-func (s *Session) TrackURIs() []string {
-	uris := make([]string, len(s.QueueTracks))
-	for i := 0; i < len(s.QueueTracks); i++ {
-		uris[i] = s.QueueTracks[i].URI
-	}
-	return uris
+// isEmptyQueue はキューが空かどうか返します。
+func (s *Session) isEmptyQueue() bool {
+	return len(s.QueueTracks) == 0
 }
 
 type StateType string

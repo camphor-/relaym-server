@@ -84,10 +84,13 @@ func TestSessionHandler_Playback(t *testing.T) {
 			wantCode: http.StatusForbidden,
 		},
 		{
-			name:                  "PLAYでキューに一曲も曲が詰まれていないときは400",
-			sessionID:             "sessionID",
-			body:                  `{"state": "PLAY"}`,
-			prepareMockPlayerFn:   func(m *mock_spotify.MockPlayer) {},
+			name:      "PLAYでキューに一曲も曲が詰まれていないときは400",
+			sessionID: "sessionID",
+			body:      `{"state": "PLAY"}`,
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().SetRepeatMode(gomock.Any(), false, "").Return(nil)
+				m.EXPECT().SetShuffleMode(gomock.Any(), false, "").Return(nil)
+			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {

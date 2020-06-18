@@ -23,6 +23,9 @@ var (
 	// ErrQueueTrackNotFound はセッションに紐付くQueueTrackが存在しないエラーを表します。
 	ErrQueueTrackNotFound = errors.New("queue track not found")
 
+	// ErrNextQueueTrackNotFound は次に再生すべきQueueTrackが存在しないエラーを表します。
+	ErrNextQueueTrackNotFound = errors.New("next queue track not found")
+
 	// ErrTokenNotFound はSpotifyのアクセストークンが存在しないエラーを表します。
 	ErrTokenNotFound = errors.New("token not found")
 

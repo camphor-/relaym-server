@@ -210,11 +210,22 @@ func TestSession_MoveToPlay(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Stop",
+			name: "Stopかつ次に再生するトラックが存在する",
 			session: &Session{
-				StateType: Stop,
+				StateType:   Stop,
+				QueueHead:   0,
+				QueueTracks: []*QueueTrack{{}},
 			},
 			wantErr: false,
+		},
+		{
+			name: "Stopかつ次に再生するトラックが存在しない",
+			session: &Session{
+				StateType:   Stop,
+				QueueHead:   0,
+				QueueTracks: nil,
+			},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -311,6 +322,71 @@ func TestSession_GoNextTrack(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := tt.s.GoNextTrack(); (err != nil) != tt.wantErr {
 				t.Errorf("GoNextTrack() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestSession_TrackURIsShouldBeAddedWhenStopToPlay(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		s       *Session
+		want    []string
+		wantErr bool
+	}{
+		{
+			name: "まだキューに何も追加していないときエラー",
+			s: &Session{
+				QueueTracks: []*QueueTrack{},
+				QueueHead:   0,
+				StateType:   Stop,
+			},
+			want:    []string{},
+			wantErr: true,
+		},
+		{
+			name: "キューに1曲追加して、まだ再生を始めていないときは長さ1のスライス",
+			s: &Session{
+				QueueTracks: []*QueueTrack{{URI: "0"}},
+				QueueHead:   0,
+				StateType:   Stop,
+			},
+			want:    []string{"0"},
+			wantErr: false,
+		},
+		{
+			name: "キューが1曲で1曲目を再生終了してSTOPになったときは、再生する曲がないのでエラー",
+			s: &Session{
+				QueueTracks: []*QueueTrack{{URI: "0"}},
+				QueueHead:   1,
+				StateType:   Stop,
+			},
+			want:    []string{},
+			wantErr: true,
+		},
+		{
+			name: "キューに2曲追加して、まだ再生を始めていないときは長さ2のスライス",
+			s: &Session{
+				QueueTracks: []*QueueTrack{{URI: "0"}, {URI: "1"}},
+				QueueHead:   0,
+				StateType:   Stop,
+			},
+			want:    []string{"0", "1"},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			got, err := tt.s.TrackURIsShouldBeAddedWhenStopToPlay()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TrackURIsShouldBeAddedWhenStartPlay() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			if !cmp.Equal(got, tt.want) {
+				t.Errorf("TrackURIsShouldBeAddedWhenStartPlay() = %v, want %v", got, tt.want)
 			}
 		})
 	}
