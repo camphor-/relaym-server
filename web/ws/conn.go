@@ -1,11 +1,11 @@
 package ws
 
 import (
+	"fmt"
 	"time"
 
-	"github.com/camphor-/relaym-server/log"
-
 	"github.com/camphor-/relaym-server/domain/entity"
+	"github.com/camphor-/relaym-server/log"
 
 	"github.com/gorilla/websocket"
 )
