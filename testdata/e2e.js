@@ -126,7 +126,7 @@ console.assert(rePlayRes.ok,"曲の再度再生に失敗しました",rePlayRes.
 
 console.log("----------STEP9 : セッションに曲を追加(三曲目)----------")
 
-const thirdTrackURI = 'spotify:track:49BRCNV7E94s7Q2FUhhT3w'
+const thirdTrackURI = 'spotify:track:36MwbWxhiFdyD29fhWJUoQ'
 const thirdAddQueueRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session.id}/queue`, {
     "headers": {
         "X-CSRF-TOKEN": "a",

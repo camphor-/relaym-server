@@ -14,7 +14,7 @@ type Player interface {
 	Play(ctx context.Context, deviceID string) error
 	PlayWithTracks(ctx context.Context, deviceID string, trackURIs []string) error
 	Pause(ctx context.Context, deviceID string) error
-	AddToQueue(ctx context.Context, trackID string, deviceID string) error
+	AddToQueue(ctx context.Context, trackURI string, deviceID string) error
 	SetRepeatMode(ctx context.Context, on bool, deviceID string) error
 	SetShuffleMode(ctx context.Context, on bool, deviceID string) error
 }
