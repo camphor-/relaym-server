@@ -90,8 +90,8 @@ func (s *SessionUseCase) CreateSession(sessionName string, creatorID string) (*e
 func (s *SessionUseCase) ChangePlaybackState(ctx context.Context, sessionID string, st entity.StateType) error {
 	switch st {
 	case entity.Play:
-		if err := s.play(ctx, sessionID); err != nil {
-			return fmt.Errorf("play sessionID=%s: %w", sessionID, err)
+		if err := s.playORResume(ctx, sessionID); err != nil {
+			return fmt.Errorf("playORResume sessionID=%s: %w", sessionID, err)
 		}
 	case entity.Pause:
 		if err := s.pause(ctx, sessionID); err != nil {
@@ -101,14 +101,12 @@ func (s *SessionUseCase) ChangePlaybackState(ctx context.Context, sessionID stri
 	return nil
 }
 
-// Play はセッションのstateを STOP → PLAY に変更して曲の再生を始めます。
-func (s *SessionUseCase) play(ctx context.Context, sessionID string) error {
+// Play はセッションのstateを STOP, PAUSE → PLAY に変更して曲の再生を始めます。
+func (s *SessionUseCase) playORResume(ctx context.Context, sessionID string) error {
 	sess, err := s.sessionRepo.FindByID(sessionID)
 	if err != nil {
 		return fmt.Errorf("find session id=%s: %w", sessionID, err)
 	}
-
-	// TODO: キューに曲がなかったら再生できないようにする
 
 	if err := s.playerCli.SetRepeatMode(ctx, false, ""); err != nil {
 		return fmt.Errorf("call set repeat off api: %w", err)
@@ -124,8 +122,8 @@ func (s *SessionUseCase) play(ctx context.Context, sessionID string) error {
 			return fmt.Errorf("call play api: %w", err)
 		}
 	} else {
-		if err := s.playerCli.PlayWithTracks(ctx, "", sess.TrackURIsOnAndAfterQueueHead()); err != nil {
-			return fmt.Errorf("call play api with tracks %v: %w", sess.TrackURIsOnAndAfterQueueHead(), err)
+		if err := s.stopToPlay(ctx, sess); err != nil {
+			return fmt.Errorf("start to play: %w", err)
 		}
 	}
 
@@ -144,6 +142,25 @@ func (s *SessionUseCase) play(ctx context.Context, sessionID string) error {
 		Msg:       entity.EventPlay,
 	})
 
+	return nil
+}
+
+func (s *SessionUseCase) stopToPlay(ctx context.Context, sess *entity.Session) error {
+	trackURIs, err := sess.TrackURIsShouldBeAddedWhenStopToPlay()
+	if err != nil {
+		return fmt.Errorf(": %w", err)
+	}
+	for i := 0; i < len(trackURIs); i++ {
+		if i == 0 {
+			if err := s.playerCli.PlayWithTracks(ctx, "", trackURIs[:1]); err != nil {
+				return fmt.Errorf("call play api with tracks %v: %w", trackURIs[:1], err)
+			}
+			continue
+		}
+		if err := s.playerCli.AddToQueue(ctx, trackURIs[i], ""); err != nil {
+			return fmt.Errorf("call add queue api trackURI=%s: %w", trackURIs[i], err)
+		}
+	}
 	return nil
 }
 

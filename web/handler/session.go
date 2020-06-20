@@ -122,6 +122,10 @@ func (h *SessionHandler) Playback(c echo.Context) error {
 	sessionID := c.Param("id")
 	if err := h.uc.ChangePlaybackState(ctx, sessionID, st); err != nil {
 		switch {
+		case errors.Is(err, entity.ErrQueueTrackNotFound):
+			return echo.NewHTTPError(http.StatusBadRequest, entity.ErrQueueTrackNotFound.Error())
+		case errors.Is(err, entity.ErrNextQueueTrackNotFound):
+			return echo.NewHTTPError(http.StatusBadRequest, entity.ErrNextQueueTrackNotFound.Error())
 		case errors.Is(err, entity.ErrSessionNotFound):
 			logger.Debug(err)
 			return echo.NewHTTPError(http.StatusNotFound, entity.ErrSessionNotFound.Error())

@@ -69,16 +69,43 @@ func TestSessionHandler_Playback(t *testing.T) {
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
 				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
-					ID:          "sessionID",
-					Name:        "session_name",
-					CreatorID:   "creator_id",
-					QueueHead:   0,
-					StateType:   entity.Pause,
-					QueueTracks: nil,
+					ID:        "sessionID",
+					Name:      "session_name",
+					CreatorID: "creator_id",
+					QueueHead: 0,
+					StateType: entity.Pause,
+					QueueTracks: []*entity.QueueTrack{
+						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
+					},
 				}, nil)
 			},
 			wantErr:  true,
 			wantCode: http.StatusForbidden,
+		},
+		{
+			name:      "PLAYでキューに一曲も曲が詰まれていないときは400",
+			sessionID: "sessionID",
+			body:      `{"state": "PLAY"}`,
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().SetRepeatMode(gomock.Any(), false, "").Return(nil)
+				m.EXPECT().SetShuffleMode(gomock.Any(), false, "").Return(nil)
+			},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+					ID:          "sessionID",
+					Name:        "session_name",
+					CreatorID:   "creator_id",
+					QueueHead:   0,
+					StateType:   entity.Stop,
+					QueueTracks: nil,
+				}, nil)
+
+			},
+			wantErr:  true,
+			wantCode: http.StatusBadRequest,
 		},
 		{
 			name:      "PLAYでStateTypeがSTOPのときは全てのキューと一緒に再生をし始めて202",
@@ -88,7 +115,8 @@ func TestSessionHandler_Playback(t *testing.T) {
 				m.EXPECT().SetRepeatMode(gomock.Any(), false, "").Return(nil)
 				m.EXPECT().SetShuffleMode(gomock.Any(), false, "").Return(nil)
 				m.EXPECT().PlayWithTracks(gomock.Any(), "",
-					[]string{"spotify:track:5uQ0vKy2973Y9IUCd1wMEF", "spotify:track:49BRCNV7E94s7Q2FUhhT3w"}).Return(nil)
+					[]string{"spotify:track:5uQ0vKy2973Y9IUCd1wMEF"}).Return(nil)
+				m.EXPECT().AddToQueue(gomock.Any(), "spotify:track:49BRCNV7E94s7Q2FUhhT3w", "").Return(nil)
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockPusherFn: func(m *mock_event.MockPusher) {
