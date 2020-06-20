@@ -123,7 +123,7 @@ func (s *Session) IsResume(nextState StateType) bool {
 	return s.StateType == Pause && nextState == Play
 }
 
-// TrackURIsShouldBeAddedWhenStartPlay は再生を開始するときにSpotifyのキューに追加するTrackURIを抽出します。
+// TrackURIsShouldBeAddedWhenStopToPlay は再生を開始するときにSpotifyのキューに追加するTrackURIを抽出します。
 func (s *Session) TrackURIsShouldBeAddedWhenStopToPlay() ([]string, error) {
 	if err := s.canMoveFromStopToPlay(); err != nil {
 		return []string{}, fmt.Errorf("can not to move to play: %w", err)
