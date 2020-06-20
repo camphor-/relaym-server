@@ -153,7 +153,7 @@ func TestAuthRepository_GetTokenByUserID(t *testing.T) {
 	}
 }
 
-func TestAuthRepository_Store(t *testing.T) {
+func TestAuthRepository_StoreState(t *testing.T) {
 	tests := []struct {
 		name    string
 		state   *entity.AuthState
@@ -284,6 +284,99 @@ func TestAuthRepository_Delete(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := r.DeleteState(tt.state); (err != nil) != tt.wantErr {
 				t.Errorf("DeleteState() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestAuthRepository_StoreSession(t *testing.T) {
+	// Prepare
+	dbMap, err := NewDB()
+	if err != nil {
+		t.Fatal(err)
+	}
+	dbMap.AddTableWithName(loginSessionDTO{}, "login_sessions")
+	truncateTable(t, dbMap)
+	if err := dbMap.Insert(&loginSessionDTO{ID: "session_id_1", UserID: "user_id_1"}); err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name      string
+		sessionID string
+		userID    string
+		want      error
+	}{
+		{
+			name:      "正常に動作する",
+			sessionID: "session_id_2",
+			userID:    "user_id_2",
+			want:      nil,
+		},
+		{
+			name:      "既に存在するsessionIDで保存しようとするとErrLoginSessionAlreadyExisted",
+			sessionID: "session_id_1",
+			userID:    "user_id_1",
+			want:      entity.ErrLoginSessionAlreadyExisted,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := AuthRepository{dbMap: dbMap}
+			err := r.StoreSession(tt.sessionID, tt.userID)
+			if !errors.Is(err, tt.want) {
+				t.Errorf("StoreSession() error = %v, wantErr %v", err, tt.want)
+				return
+			}
+		})
+	}
+}
+
+func TestAuthRepository_GetUserIDFromSession(t *testing.T) {
+	// Prepare
+	dbMap, err := NewDB()
+	if err != nil {
+		t.Fatal(err)
+	}
+	dbMap.AddTableWithName(loginSessionDTO{}, "login_sessions")
+	truncateTable(t, dbMap)
+	if err := dbMap.Insert(&loginSessionDTO{ID: "session_id_1", UserID: "user_id_1"}); err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name      string
+		sessionID string
+		want      string
+		wantErr   error
+	}{
+		{
+			name:      "正常に動作",
+			sessionID: "session_id_1",
+			want:      "user_id_1",
+			wantErr:   nil,
+		},
+		{
+			name:      "存在しないsessionIDを指定するとErrLoginSessionNotFound",
+			sessionID: "session_id_2",
+			want:      "",
+			wantErr:   entity.ErrLoginSessionNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := AuthRepository{dbMap: dbMap}
+			got, err := r.GetUserIDFromSession(tt.sessionID)
+			if !errors.Is(err, tt.wantErr) {
+				t.Errorf("GetUserIDFromSession() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if got != tt.want {
+				t.Errorf("GetUserIDFromSession() error = %v, wantErr %v", err, tt.want)
+				return
 			}
 		})
 	}

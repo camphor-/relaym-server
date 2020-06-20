@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-sql-driver/mysql"
+
 	"golang.org/x/oauth2"
 
 	"github.com/camphor-/relaym-server/domain/entity"
@@ -14,8 +16,6 @@ import (
 )
 
 var _ repository.Auth = &AuthRepository{}
-
-var sessionStore = map[string]string{}
 
 // AuthRepository は repository.AuthRepository を満たす構造体です
 type AuthRepository struct {
@@ -26,6 +26,7 @@ type AuthRepository struct {
 func NewAuthRepository(dbMap *gorp.DbMap) *AuthRepository {
 	dbMap.AddTableWithName(stateDTO{}, "auth_states")
 	dbMap.AddTableWithName(spotifyAuthDTO{}, "spotify_auth")
+	dbMap.AddTableWithName(loginSessionDTO{}, "login_sessions")
 	return &AuthRepository{dbMap: dbMap}
 }
 
@@ -59,18 +60,32 @@ func (r AuthRepository) GetTokenByUserID(userID string) (*oauth2.Token, error) {
 }
 
 // StoreSession はセッション情報を保存します。
-// TODO セッションの保存をMySQLにするかRedisにするか決めてないので一旦インメモリで持つ。
 func (r AuthRepository) StoreSession(sessionID, userID string) error {
-	sessionStore[sessionID] = userID
+	dto := &loginSessionDTO{
+		ID:     sessionID,
+		UserID: userID,
+	}
+
+	if err := r.dbMap.Insert(dto); err != nil {
+		if mysqlErr, ok := err.(*mysql.MySQLError); ok && mysqlErr.Number == errorNumDuplicateEntry {
+			return fmt.Errorf("insert login_session: %w", entity.ErrLoginSessionAlreadyExisted)
+		}
+		return fmt.Errorf("insert login_session: %w", err)
+	}
 	return nil
 }
 
 // GetUserIDFromSession はセッションIDからユーザIDを取得します。
 func (r AuthRepository) GetUserIDFromSession(sessionID string) (string, error) {
-	if userID, ok := sessionStore[sessionID]; ok {
-		return userID, nil
+	var dto loginSessionDTO
+	if err := r.dbMap.SelectOne(&dto, "SELECT id, user_id FROM login_sessions WHERE id = ?", sessionID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", fmt.Errorf("select login_session: %w", entity.ErrLoginSessionNotFound)
+		}
+		return "", fmt.Errorf("select login_session: %w", err)
 	}
-	return "", errors.New("session not found")
+
+	return dto.UserID, nil
 }
 
 // StoreState はauthStateを保存します。
@@ -115,4 +130,9 @@ type spotifyAuthDTO struct {
 	AccessToken  string    `db:"access_token"`
 	RefreshToken string    `db:"refresh_token"`
 	Expiry       time.Time `db:"expiry"`
+}
+
+type loginSessionDTO struct {
+	ID     string `db:"id"`
+	UserID string `db:"user_id"`
 }

@@ -26,7 +26,7 @@ APIリクエストはHTTPで受け付けています。曲の操作に[Spotify W
 
 ### STEP3 データベースの設計を理解する
 
-RelaymではMySQLとRedisをデータベースとして採用しています。
+RelaymではMySQLをデータベースとして採用しています。
 
 詳しくは [docs/database.md](docs/database.md)をご覧ください。
 

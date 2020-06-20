@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS `login_sessions` (
+  `id` VARCHAR(255) NOT NULL,
+  `user_id` VARCHAR(255) NOT NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB;
