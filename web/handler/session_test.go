@@ -848,6 +848,155 @@ func TestSessionHandler_GetSession(t *testing.T) {
 			wantErr:  true,
 			wantCode: http.StatusNotFound,
 		},
+		{
+			name:      "セッションがStop以外のときはStateに再生状況が含まれる",
+			sessionID: "play_sessionID",
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().CurrentlyPlaying(gomock.Any()).Return(cpi, nil)
+			},
+			prepareMockPusherFn: func(m *mock_event.MockPusher) {},
+			prepareMockTrackCliFn: func(m *mock_spotify.MockTrackClient) {
+				m.EXPECT().GetTracksFromURI(gomock.Any(), []string{"spotify:track:06QTSGUEgcmKwiEJ0IMPig"}).Return(tracks, nil)
+			},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {
+				m.EXPECT().FindByID("creatorID").Return(user, nil)
+			},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("play_sessionID").Return(&entity.Session{
+					ID:        "play_sessionID",
+					Name:      "sessionName",
+					CreatorID: "creatorID",
+					DeviceID:  "sessionDeviceID",
+					StateType: "PLAY",
+					QueueHead: 0,
+					QueueTracks: []*entity.QueueTrack{
+						{
+							Index:     0,
+							URI:       "spotify:track:06QTSGUEgcmKwiEJ0IMPig",
+							SessionID: "sessionID",
+						},
+					},
+				}, nil)
+			},
+			want: &sessionRes{
+				ID:   "play_sessionID",
+				Name: "sessionName",
+				Creator: creatorJSON{
+					ID:          "creatorID",
+					DisplayName: "creatorDisplayName",
+				},
+				Playback: playbackJSON{
+					State: stateJSON{
+						Type:      "PLAY",
+						Length:    convToPointer(tracks[0].Duration.Milliseconds()),
+						Progress:  convToPointer(0),
+						Remaining: convToPointer(tracks[0].Duration.Milliseconds()),
+					},
+					Device: &deviceJSON{
+						ID:           device.ID,
+						IsRestricted: device.IsRestricted,
+						Name:         device.Name,
+					},
+				},
+				Queue: queueJSON{
+					Head:   0,
+					Tracks: trackJSONs,
+				},
+			},
+			wantErr:  false,
+			wantCode: http.StatusOK,
+		},
+		{
+			name:      "セッションがStop以外のときは同期チェックに失敗するとStopになる",
+			sessionID: "play_sessionID",
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().CurrentlyPlaying(gomock.Any()).Return(&entity.CurrentPlayingInfo{
+					Playing:  false,
+					Progress: 0,
+					Track: &entity.Track{
+						URI:      "spotify:track:another_track",
+						ID:       "another_track",
+						Name:     "勝手にSpotifyで再生された曲",
+						Duration: 213066000000,
+						Artists:  artists,
+						URL:      "https://open.spotify.com/track/06QTSGUEgcmKwiEJ0IMPig",
+						Album: &entity.Album{
+							Name:   "Interstate 46 E.P.",
+							Images: albumImages,
+						},
+					},
+					Device: device,
+				}, nil)
+			},
+			prepareMockPusherFn: func(m *mock_event.MockPusher) {
+				m.EXPECT().Push(&event.PushMessage{
+					SessionID: "play_sessionID",
+					Msg:       entity.EventInterrupt,
+				})
+			},
+			prepareMockTrackCliFn: func(m *mock_spotify.MockTrackClient) {
+				m.EXPECT().GetTracksFromURI(gomock.Any(), []string{"spotify:track:06QTSGUEgcmKwiEJ0IMPig"}).Return(tracks, nil)
+			},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {
+				m.EXPECT().FindByID("creatorID").Return(user, nil)
+			},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("play_sessionID").Return(&entity.Session{
+					ID:        "play_sessionID",
+					Name:      "sessionName",
+					CreatorID: "creatorID",
+					DeviceID:  "sessionDeviceID",
+					StateType: "PLAY",
+					QueueHead: 0,
+					QueueTracks: []*entity.QueueTrack{
+						{
+							Index:     0,
+							URI:       "spotify:track:06QTSGUEgcmKwiEJ0IMPig",
+							SessionID: "sessionID",
+						},
+					},
+				}, nil)
+				m.EXPECT().Update(&entity.Session{
+					ID:        "play_sessionID",
+					Name:      "sessionName",
+					CreatorID: "creatorID",
+					DeviceID:  "sessionDeviceID",
+					StateType: "STOP",
+					QueueHead: 0,
+					QueueTracks: []*entity.QueueTrack{
+						{
+							Index:     0,
+							URI:       "spotify:track:06QTSGUEgcmKwiEJ0IMPig",
+							SessionID: "sessionID",
+						},
+					},
+				}).Return(nil)
+			},
+			want: &sessionRes{
+				ID:   "play_sessionID",
+				Name: "sessionName",
+				Creator: creatorJSON{
+					ID:          "creatorID",
+					DisplayName: "creatorDisplayName",
+				},
+				Playback: playbackJSON{
+					State: stateJSON{
+						Type: "STOP",
+					},
+					Device: &deviceJSON{
+						ID:           device.ID,
+						IsRestricted: device.IsRestricted,
+						Name:         device.Name,
+					},
+				},
+				Queue: queueJSON{
+					Head:   0,
+					Tracks: trackJSONs,
+				},
+			},
+			wantErr:  false,
+			wantCode: http.StatusOK,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -904,4 +1053,8 @@ func TestSessionHandler_GetSession(t *testing.T) {
 			}
 		})
 	}
+}
+
+func convToPointer(given int64) *int64 {
+	return &given
 }

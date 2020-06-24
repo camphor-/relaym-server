@@ -66,7 +66,7 @@ func (h *SessionHandler) GetSession(c echo.Context) error {
 		logger.Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
-	return c.JSON(http.StatusOK, h.toSessionRes(session, playingInfo.Device, tracks))
+	return c.JSON(http.StatusOK, h.toSessionRes(session, playingInfo, tracks))
 }
 
 // AddQueue は POST /sessions/:id/queue に対応するハンドラーです。
@@ -177,15 +177,30 @@ func (h *SessionHandler) SetDevice(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-func (h *SessionHandler) toSessionRes(session *entity.SessionWithUser, device *entity.Device, tracks []*entity.Track) *sessionRes {
+func (h *SessionHandler) toSessionRes(session *entity.SessionWithUser, info *entity.CurrentPlayingInfo, tracks []*entity.Track) *sessionRes {
 	var dJ *deviceJSON = nil
-	if device != nil {
+	if info != nil && info.Device != nil {
 		dJ = &deviceJSON{
-			ID:           device.ID,
-			IsRestricted: device.IsRestricted,
-			Name:         device.Name,
+			ID:           info.Device.ID,
+			IsRestricted: info.Device.IsRestricted,
+			Name:         info.Device.Name,
 		}
 	}
+
+	state := stateJSON{
+		Type: session.StateType.String(),
+	}
+	if session.StateType != entity.Stop && info != nil {
+		progress := info.Progress.Milliseconds()
+		state.Progress = &progress
+		if info.Track != nil {
+			length := info.Track.Duration.Milliseconds()
+			remaining := info.Remain().Milliseconds()
+			state.Length = &length
+			state.Remaining = &remaining
+		}
+	}
+
 	return &sessionRes{
 		ID:   session.ID,
 		Name: session.Name,
@@ -194,9 +209,7 @@ func (h *SessionHandler) toSessionRes(session *entity.SessionWithUser, device *e
 			DisplayName: session.Creator.DisplayName,
 		},
 		Playback: playbackJSON{
-			State: stateJSON{
-				Type: session.StateType.String(),
-			},
+			State:  state,
 			Device: dJ,
 		},
 		Queue: queueJSON{
@@ -224,7 +237,10 @@ type playbackJSON struct {
 	Device *deviceJSON `json:"device"`
 }
 type stateJSON struct {
-	Type string `json:"type"`
+	Type      string `json:"type"`
+	Length    *int64 `json:"length,omitempty"`
+	Progress  *int64 `json:"progress,omitempty"`
+	Remaining *int64 `json:"remaining,omitempty"`
 }
 
 type queueJSON struct {

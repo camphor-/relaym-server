@@ -257,7 +257,7 @@ func TestSession_MoveToStop(t *testing.T) {
 			session: &Session{
 				StateType: Pause,
 			},
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name: "Stop",

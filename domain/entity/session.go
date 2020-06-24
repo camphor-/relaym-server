@@ -74,9 +74,6 @@ func (s *Session) MoveToPause() error {
 
 // MoveToStop はセッションのStateTypeをStopに状態遷移します。
 func (s *Session) MoveToStop() error {
-	if s.StateType == Pause {
-		return fmt.Errorf("state type from Pause to Stop: %w", ErrChangeSessionStateNotPermit)
-	}
 	s.StateType = Stop
 	return nil
 }

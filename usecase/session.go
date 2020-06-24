@@ -286,6 +286,7 @@ func (s *SessionUseCase) handleTrackEnd(ctx context.Context, sessionID string) (
 	playingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
 	if err != nil {
 		if errors.Is(err, entity.ErrActiveDeviceNotFound) {
+			s.tm.DeleteTimer(sess.ID)
 			if interErr := s.handleInterrupt(sess); interErr != nil {
 				returnErr = fmt.Errorf("handle interrupt: %w", interErr)
 				return nil, false, returnErr
@@ -298,6 +299,7 @@ func (s *SessionUseCase) handleTrackEnd(ctx context.Context, sessionID string) (
 	}
 
 	if err := sess.IsPlayingCorrectTrack(playingInfo); err != nil {
+		s.tm.DeleteTimer(sess.ID)
 		if interErr := s.handleInterrupt(sess); interErr != nil {
 			returnErr = fmt.Errorf("check whether playing correct track: handle interrupt: %v: %w", interErr, err)
 			return nil, false, returnErr
@@ -345,7 +347,6 @@ func (s *SessionUseCase) handleInterrupt(sess *entity.Session) error {
 		SessionID: sess.ID,
 		Msg:       entity.EventInterrupt,
 	})
-	s.tm.DeleteTimer(sess.ID)
 	return nil
 }
 
@@ -400,5 +401,17 @@ func (s *SessionUseCase) GetSession(ctx context.Context, sessionID string) (*ent
 		return nil, nil, nil, fmt.Errorf("CurrentlyPlaying: %w", err)
 	}
 
+	if err := session.IsPlayingCorrectTrack(cpi); session.StateType != entity.Stop && err != nil {
+		s.tm.StopTimer(sessionID)
+		if interErr := s.handleInterrupt(session); interErr != nil {
+			return nil, nil, nil, fmt.Errorf("check whether playing correct track: handle interrupt: %v: %w", interErr, err)
+		}
+
+		if updateErr := s.sessionRepo.Update(session); updateErr != nil {
+			return nil, nil, nil, fmt.Errorf("update session id=%s: %v: %w", session.ID, err, updateErr)
+		}
+
+		return entity.NewSessionWithUser(session, creator), tracks, cpi, nil
+	}
 	return entity.NewSessionWithUser(session, creator), tracks, cpi, nil
 }
