@@ -13,7 +13,7 @@ jobs:
       - name: Publish Docker
         uses: elgohr/Publish-Docker-Github-Action@2.12
         with:
-          name: relaym-server
+          name: relaym-server-dev
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
           registry: registry.camph.net
