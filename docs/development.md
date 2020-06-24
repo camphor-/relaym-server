@@ -122,5 +122,5 @@ Spotifyのクライアントを起動しているかどうかや再生してい�
 ローカルで起動したAPIサーバに対して、簡単なシナリオを元にしたAPIリクエストを送信することができます。
 
 1. `make serve`
-1. Chromeで `http://relaym.local:8080/api/v3/login` にアクセスしてログイン処理を実行
+1. Chromeで http://relaym.local:8080/api/v3/login にアクセスしてログイン処理を実行
 1. http://relaym.local:8080/* を開いた状態でChrome Dev Consoleに [e2e.js](../testdata/e2e.js)を貼り付ける。
