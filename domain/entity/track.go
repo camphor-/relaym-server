@@ -36,8 +36,10 @@ type CurrentPlayingInfo struct {
 	Device   *Device
 }
 
-// TODO nilポインターで落ちたので後で直す
 // Remain は残りの再生時間を計算します。
 func (cpi *CurrentPlayingInfo) Remain() time.Duration {
+	if cpi.Track == nil {
+		return 0
+	}
 	return cpi.Track.Duration - cpi.Progress
 }
