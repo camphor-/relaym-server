@@ -1,0 +1,6 @@
+version: "3.7"
+services:
+  relaym-mysql:
+    container_name: relaym-mysql-prod
+    environment:
+      -  MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
