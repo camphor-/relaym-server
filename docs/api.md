@@ -117,9 +117,9 @@ X-CSRF-Token: relaym
   "playback": {
     "state": {
       "type": "PLAY",
-      "length": "12345", // trackの全長 (ms)
-      "progress": "10000", // 再生位置 (ms)
-      "remaining": "2345", // 再生残り時間 (ms)
+      "length": 12345, // trackの全長 (ms)
+      "progress": 10000, // 再生位置 (ms)
+      "remaining": 2345, // 再生残り時間 (ms)
     },
     "device": {
       "id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
