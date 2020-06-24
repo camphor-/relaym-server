@@ -61,23 +61,21 @@ X-CSRF-Token: relaym
   
 ```json
 {
-  "session": {
-    "id": "xxxxxxxxxxxxxxxxxxxxxxx",
-    "name": "CAMPHOR- HOUSE",
-    "creator": {
-      "id": "p1ass",
-      "display_name": "p1ass"
+  "id": "xxxxxxxxxxxxxxxxxxxxxxx",
+  "name": "CAMPHOR- HOUSE",
+  "creator": {
+    "id": "p1ass",
+    "display_name": "p1ass"
+  },
+  "playback": {
+    "state": {
+      "type": "STOP",
     },
-    "playback": {
-      "state": {
-        "type": "STOP",
-      },
-      "device": null
-    },
-    "queue": {
-      "head": 0,
-      "tracks": []
-    }
+    "device": null
+  },
+  "queue": {
+    "head": 0,
+    "tracks": []
   }
 }
 ```
