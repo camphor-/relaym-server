@@ -28,6 +28,10 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, session
 		AllowCredentials: true,
 	}))
 
+	if config.IsDev() {
+		e.Use(newDeployPreviewCorsMiddleware().addAllowOrigin)
+	}
+
 	userHandler := handler.NewUserHandler(userUC)
 	trackHandler := handler.NewTrackHandler(trackUC)
 	sessionHandler := handler.NewSessionHandler(sessionUC)
