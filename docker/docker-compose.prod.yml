@@ -1,0 +1,13 @@
+version: "3.7"
+services:
+  relaym-server:
+    image: registry.camph.net/relaym-server-prod:latest
+    container_name: relaym-server-prod
+    networks:
+      - microservices
+    ports:
+      - 127.0.0.1:8092:${PORT}
+
+networks:
+  microservices:
+    external: true

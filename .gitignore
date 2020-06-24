@@ -14,5 +14,6 @@
 
 env.secret
 env.dev
+env.prod
 
 .tags
