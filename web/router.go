@@ -23,8 +23,9 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, session
 		},
 	}))
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{config.CORSAllowOrigin()},
-		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+		AllowOrigins:     []string{config.CORSAllowOrigin()},
+		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+		AllowCredentials: true,
 	}))
 
 	userHandler := handler.NewUserHandler(userUC)
