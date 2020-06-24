@@ -62,7 +62,7 @@ func TestSessionHandler_Playback(t *testing.T) {
 			sessionID: "sessionID",
 			body:      `{"state": "PLAY"}`,
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
-				m.EXPECT().SetRepeatMode(gomock.Any(), false, "").Return(entity.ErrActiveDeviceNotFound)
+				m.EXPECT().SetRepeatMode(gomock.Any(), false, "device_id").Return(entity.ErrActiveDeviceNotFound)
 
 			},
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
@@ -73,6 +73,7 @@ func TestSessionHandler_Playback(t *testing.T) {
 					Name:      "session_name",
 					CreatorID: "creator_id",
 					QueueHead: 0,
+					DeviceID:  "device_id",
 					StateType: entity.Pause,
 					QueueTracks: []*entity.QueueTrack{
 						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
@@ -88,8 +89,8 @@ func TestSessionHandler_Playback(t *testing.T) {
 			sessionID: "sessionID",
 			body:      `{"state": "PLAY"}`,
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
-				m.EXPECT().SetRepeatMode(gomock.Any(), false, "").Return(nil)
-				m.EXPECT().SetShuffleMode(gomock.Any(), false, "").Return(nil)
+				m.EXPECT().SetRepeatMode(gomock.Any(), false, "device_id").Return(nil)
+				m.EXPECT().SetShuffleMode(gomock.Any(), false, "device_id").Return(nil)
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
@@ -99,6 +100,7 @@ func TestSessionHandler_Playback(t *testing.T) {
 					Name:        "session_name",
 					CreatorID:   "creator_id",
 					QueueHead:   0,
+					DeviceID:    "device_id",
 					StateType:   entity.Stop,
 					QueueTracks: nil,
 				}, nil)
@@ -112,11 +114,11 @@ func TestSessionHandler_Playback(t *testing.T) {
 			sessionID: "sessionID",
 			body:      `{"state": "PLAY"}`,
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
-				m.EXPECT().SetRepeatMode(gomock.Any(), false, "").Return(nil)
-				m.EXPECT().SetShuffleMode(gomock.Any(), false, "").Return(nil)
-				m.EXPECT().PlayWithTracks(gomock.Any(), "",
+				m.EXPECT().SetRepeatMode(gomock.Any(), false, "device_id").Return(nil)
+				m.EXPECT().SetShuffleMode(gomock.Any(), false, "device_id").Return(nil)
+				m.EXPECT().PlayWithTracks(gomock.Any(), "device_id",
 					[]string{"spotify:track:5uQ0vKy2973Y9IUCd1wMEF"}).Return(nil)
-				m.EXPECT().AddToQueue(gomock.Any(), "spotify:track:49BRCNV7E94s7Q2FUhhT3w", "").Return(nil)
+				m.EXPECT().AddToQueue(gomock.Any(), "spotify:track:49BRCNV7E94s7Q2FUhhT3w", "device_id").Return(nil)
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockPusherFn: func(m *mock_event.MockPusher) {
@@ -131,6 +133,7 @@ func TestSessionHandler_Playback(t *testing.T) {
 					Name:      "session_name",
 					CreatorID: "creator_id",
 					QueueHead: 0,
+					DeviceID:  "device_id",
 					StateType: entity.Stop,
 					QueueTracks: []*entity.QueueTrack{
 						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
@@ -142,6 +145,7 @@ func TestSessionHandler_Playback(t *testing.T) {
 					Name:      "session_name",
 					CreatorID: "creator_id",
 					QueueHead: 0,
+					DeviceID:  "device_id",
 					StateType: "PLAY",
 					QueueTracks: []*entity.QueueTrack{
 						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
@@ -157,10 +161,10 @@ func TestSessionHandler_Playback(t *testing.T) {
 			sessionID: "sessionID",
 			body:      `{"state": "PLAY"}`,
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
-				m.EXPECT().SetRepeatMode(gomock.Any(), false, "").Return(nil)
+				m.EXPECT().SetRepeatMode(gomock.Any(), false, "device_id").Return(nil)
 
-				m.EXPECT().SetShuffleMode(gomock.Any(), false, "").Return(nil)
-				m.EXPECT().Play(gomock.Any(), "").Return(nil)
+				m.EXPECT().SetShuffleMode(gomock.Any(), false, "device_id").Return(nil)
+				m.EXPECT().Play(gomock.Any(), "device_id").Return(nil)
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockPusherFn: func(m *mock_event.MockPusher) {
@@ -175,6 +179,7 @@ func TestSessionHandler_Playback(t *testing.T) {
 					Name:      "session_name",
 					CreatorID: "creator_id",
 					QueueHead: 0,
+					DeviceID:  "device_id",
 					StateType: entity.Pause,
 					QueueTracks: []*entity.QueueTrack{
 						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
@@ -186,6 +191,7 @@ func TestSessionHandler_Playback(t *testing.T) {
 					Name:      "session_name",
 					CreatorID: "creator_id",
 					QueueHead: 0,
+					DeviceID:  "device_id",
 					StateType: "PLAY",
 					QueueTracks: []*entity.QueueTrack{
 						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
@@ -214,7 +220,7 @@ func TestSessionHandler_Playback(t *testing.T) {
 			sessionID: "sessionID",
 			body:      `{"state": "PAUSE"}`,
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
-				m.EXPECT().Pause(gomock.Any(), "").Return(entity.ErrActiveDeviceNotFound)
+				m.EXPECT().Pause(gomock.Any(), "device_id").Return(entity.ErrActiveDeviceNotFound)
 			},
 			prepareMockPusherFn: func(m *mock_event.MockPusher) {
 				m.EXPECT().Push(&event.PushMessage{
@@ -228,6 +234,7 @@ func TestSessionHandler_Playback(t *testing.T) {
 					ID:          "sessionID",
 					Name:        "session_name",
 					CreatorID:   "creator_id",
+					DeviceID:    "device_id",
 					QueueHead:   0,
 					StateType:   "PAUSE",
 					QueueTracks: nil,
@@ -236,6 +243,7 @@ func TestSessionHandler_Playback(t *testing.T) {
 					ID:          "sessionID",
 					Name:        "session_name",
 					CreatorID:   "creator_id",
+					DeviceID:    "device_id",
 					QueueHead:   0,
 					StateType:   "PAUSE",
 					QueueTracks: nil,
@@ -249,7 +257,7 @@ func TestSessionHandler_Playback(t *testing.T) {
 			sessionID: "sessionID",
 			body:      `{"state": "PAUSE"}`,
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
-				m.EXPECT().Pause(gomock.Any(), "").Return(nil)
+				m.EXPECT().Pause(gomock.Any(), "device_id").Return(nil)
 			},
 			prepareMockPusherFn: func(m *mock_event.MockPusher) {
 				m.EXPECT().Push(&event.PushMessage{
@@ -264,6 +272,7 @@ func TestSessionHandler_Playback(t *testing.T) {
 					Name:        "session_name",
 					CreatorID:   "creator_id",
 					QueueHead:   0,
+					DeviceID:    "device_id",
 					StateType:   "PAUSE",
 					QueueTracks: nil,
 				}, nil)
@@ -272,6 +281,7 @@ func TestSessionHandler_Playback(t *testing.T) {
 					Name:        "session_name",
 					CreatorID:   "creator_id",
 					QueueHead:   0,
+					DeviceID:    "device_id",
 					StateType:   "PAUSE",
 					QueueTracks: nil,
 				}).Return(nil)
@@ -366,6 +376,7 @@ func TestSessionHandler_SetDevice(t *testing.T) {
 					Name:        "name",
 					CreatorID:   "creator_id",
 					QueueHead:   0,
+					DeviceID:    "device_id",
 					StateType:   "PAUSE",
 					QueueTracks: nil,
 				}, nil)

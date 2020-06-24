@@ -78,7 +78,22 @@ const secondAddQueueRes = await fetch(`http://relaym.local:8080/api/v3/sessions/
 });
 console.assert(secondAddQueueRes.ok,"2曲目キューへの追加に失敗しました",secondAddQueueRes.status)
 
-console.log("----------STEP6 : 再生----------")
+console.log("----------STEP6 : デバイスをセット----------")
+
+const setDeviceRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session.id}/devices`, {
+    "headers": {
+        "X-CSRF-TOKEN": "a",
+        "content-type":"application/json"
+    },
+    "body": `{"device_id":"${devices.devices[0].id}"}`,
+    "method": "PUT",
+    "mode": "cors",
+    "credentials": "include"
+});
+console.assert(setDeviceRes.ok,"デバイスのセットに失敗しました",setDeviceRes.status)
+
+
+console.log("----------STEP7 : 再生----------")
 
 const playRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session.id}/playback`, {
     "headers": {
@@ -95,7 +110,7 @@ console.assert(playRes.ok,"曲の再生に失敗しました",playRes.status)
 const sleep = msec => new Promise(resolve => setTimeout(resolve, msec))
 await sleep(5000)
 
-console.log("----------STEP7 : 一時停止----------")
+console.log("----------STEP8 : 一時停止----------")
 
 const pauseRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session.id}/playback`, {
     "headers": {
@@ -110,7 +125,7 @@ const pauseRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session
 console.assert(pauseRes.ok,"曲の一時停止に失敗しました",pauseRes.status)
 await sleep(5000)
 
-console.log("----------STEP8 : 再度再生----------")
+console.log("----------STEP9 : 再度再生----------")
 
 const rePlayRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session.id}/playback`, {
     "headers": {
@@ -124,7 +139,7 @@ const rePlayRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${sessio
 });
 console.assert(rePlayRes.ok,"曲の再度再生に失敗しました",rePlayRes.status)
 
-console.log("----------STEP9 : セッションに曲を追加(三曲目)----------")
+console.log("----------STEP10 : セッションに曲を追加(三曲目)----------")
 
 const thirdTrackURI = 'spotify:track:36MwbWxhiFdyD29fhWJUoQ'
 const thirdAddQueueRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session.id}/queue`, {

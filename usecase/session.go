@@ -108,17 +108,16 @@ func (s *SessionUseCase) playORResume(ctx context.Context, sessionID string) err
 		return fmt.Errorf("find session id=%s: %w", sessionID, err)
 	}
 
-	if err := s.playerCli.SetRepeatMode(ctx, false, ""); err != nil {
+	if err := s.playerCli.SetRepeatMode(ctx, false, sess.DeviceID); err != nil {
 		return fmt.Errorf("call set repeat off api: %w", err)
 	}
 
-	if err := s.playerCli.SetShuffleMode(ctx, false, ""); err != nil {
+	if err := s.playerCli.SetShuffleMode(ctx, false, sess.DeviceID); err != nil {
 		return fmt.Errorf("call set repeat off api: %w", err)
 	}
 
-	// TODO : デバイスIDをどっかから読み込む
 	if sess.IsResume(entity.Play) {
-		if err := s.playerCli.Play(ctx, ""); err != nil {
+		if err := s.playerCli.Play(ctx, sess.DeviceID); err != nil {
 			return fmt.Errorf("call play api: %w", err)
 		}
 	} else {
@@ -152,12 +151,12 @@ func (s *SessionUseCase) stopToPlay(ctx context.Context, sess *entity.Session) e
 	}
 	for i := 0; i < len(trackURIs); i++ {
 		if i == 0 {
-			if err := s.playerCli.PlayWithTracks(ctx, "", trackURIs[:1]); err != nil {
+			if err := s.playerCli.PlayWithTracks(ctx, sess.DeviceID, trackURIs[:1]); err != nil {
 				return fmt.Errorf("call play api with tracks %v: %w", trackURIs[:1], err)
 			}
 			continue
 		}
-		if err := s.playerCli.AddToQueue(ctx, trackURIs[i], ""); err != nil {
+		if err := s.playerCli.AddToQueue(ctx, trackURIs[i], sess.DeviceID); err != nil {
 			return fmt.Errorf("call add queue api trackURI=%s: %w", trackURIs[i], err)
 		}
 	}
@@ -171,8 +170,7 @@ func (s *SessionUseCase) pause(ctx context.Context, sessionID string) error {
 		return fmt.Errorf("find session id=%s: %w", sessionID, err)
 	}
 
-	// TODO : デバイスIDをどっかから読み込む
-	if err := s.playerCli.Pause(ctx, ""); err != nil && !errors.Is(err, entity.ErrActiveDeviceNotFound) {
+	if err := s.playerCli.Pause(ctx, sess.DeviceID); err != nil && !errors.Is(err, entity.ErrActiveDeviceNotFound) {
 		return fmt.Errorf("call pause api: %w", err)
 	}
 

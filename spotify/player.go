@@ -81,7 +81,7 @@ func (c *Client) PlayWithTracks(ctx context.Context, deviceID string, trackURIs 
 	opt := &spotify.PlayOptions{DeviceID: nil, URIs: c.toURIs(trackURIs)}
 	if deviceID != "" {
 		spotifyID := spotify.ID(deviceID)
-		opt = &spotify.PlayOptions{DeviceID: &spotifyID}
+		opt = &spotify.PlayOptions{DeviceID: &spotifyID, URIs: c.toURIs(trackURIs)}
 	}
 
 	err := cli.PlayOpt(opt)
