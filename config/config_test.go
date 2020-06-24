@@ -28,7 +28,7 @@ func TestCORSAllowOrigin(t *testing.T) {
 	}{
 		{
 			name: "正しく取得できる",
-			want: "relaym.local:3000",
+			want: "http://relaym.local:3000",
 		},
 	}
 	for _, tt := range tests {
