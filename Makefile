@@ -34,12 +34,14 @@ generate:
 
 .PHONY: deploy-dev
 deploy-dev:
+	docker pull registry.camph.net/relaym-server-dev:latest
 	$(ENV_DEV) docker-compose -f docker/docker-compose.deps.base.yml -f docker/docker-compose.deps.dev.yml -p dev up -d
 	$(ENV_DEV) ENV_FILE=$(ENV_DEV_FILE) docker-compose -f docker/docker-compose.base.yml -f docker/docker-compose.dev.yml -p dev stop
 	$(ENV_DEV) ENV_FILE=$(ENV_DEV_FILE) docker-compose -f docker/docker-compose.base.yml -f docker/docker-compose.dev.yml -p dev up -d
 
 .PHONY: deploy-prod
 deploy-prod:
+	docker pull registry.camph.net/relaym-server-prod:latest
 	$(ENV_PROD) docker-compose -f docker/docker-compose.deps.base.yml -f docker/docker-compose.deps.prod.yml -p prod up -d
 	$(ENV_PROD) ENV_FILE=$(ENV_PROD_FILE) docker-compose -f docker/docker-compose.base.yml -f docker/docker-compose.prod.yml -p prod stop
 	$(ENV_PROD) ENV_FILE=$(ENV_PROD_FILE) docker-compose -f docker/docker-compose.base.yml -f docker/docker-compose.prod.yml -p prod up -d
