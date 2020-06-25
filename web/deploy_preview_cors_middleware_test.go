@@ -5,6 +5,7 @@ import (
 )
 
 func Test_deployPreviewCorsMiddleware_IsDeployPreviewOrigin(t *testing.T) {
+	t.Parallel()
 
 	tests := []struct {
 		name   string
@@ -17,7 +18,7 @@ func Test_deployPreviewCorsMiddleware_IsDeployPreviewOrigin(t *testing.T) {
 			want:   true,
 		},
 		{
-			name:   "別ののURLならtrue",
+			name:   "別ののURLならfalse",
 			origin: "https://deploy-preview-191--relaym2.netlify.app",
 			want:   false,
 		},
