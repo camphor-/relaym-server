@@ -2,9 +2,7 @@ package handler
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
-	"net/http/httputil"
 
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/log"
@@ -53,9 +51,6 @@ func (h *WebSocketHandler) WebSocket(c echo.Context) error {
 		logger.Errorj(map[string]interface{}{"message:": "can not connect to pusher", "error": err.Error()})
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
-
-	req, _ := httputil.DumpRequest(c.Request(), true)
-	fmt.Println(string(req))
 
 	wsConn, err := h.upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
