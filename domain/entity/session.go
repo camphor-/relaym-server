@@ -97,6 +97,18 @@ func (s *Session) GoNextTrack() error {
 // IsPlayingCorrectTrack は現在の再生状況がセッションの状況と一致しているかチェックします。
 func (s *Session) IsPlayingCorrectTrack(playingInfo *CurrentPlayingInfo) error {
 	logger := log.New()
+	if s.StateType == Stop {
+		return nil
+	}
+
+	if playingInfo == nil {
+		logger.Infoj(map[string]interface{}{
+			"message":    "session should be playing but not playing",
+			"queueTrack": s.QueueTracks[s.QueueHead].URI,
+		})
+		return fmt.Errorf("session should be playing: queue track %s, but not playing: %w", s.QueueTracks[s.QueueHead].URI, ErrSessionPlayingDifferentTrack)
+	}
+
 	if playingInfo.Track == nil || s.QueueTracks[s.QueueHead].URI != playingInfo.Track.URI {
 		logger.Infoj(map[string]interface{}{
 			"message":      "session playing different track",
