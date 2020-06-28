@@ -401,7 +401,7 @@ func (s *SessionUseCase) GetSession(ctx context.Context, sessionID string) (*ent
 		return nil, nil, nil, fmt.Errorf("CurrentlyPlaying: %w", err)
 	}
 
-	if err := session.IsPlayingCorrectTrack(cpi); session.StateType != entity.Stop && err != nil {
+	if err := session.IsPlayingCorrectTrack(cpi); err != nil {
 		s.tm.StopTimer(sessionID)
 		if interErr := s.handleInterrupt(session); interErr != nil {
 			return nil, nil, nil, fmt.Errorf("check whether playing correct track: handle interrupt: %v: %w", interErr, err)

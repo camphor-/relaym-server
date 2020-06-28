@@ -391,3 +391,91 @@ func TestSession_TrackURIsShouldBeAddedWhenStopToPlay(t *testing.T) {
 		})
 	}
 }
+
+func TestSession_IsPlayingCorrectTrack(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		session     *Session
+		playingInfo *CurrentPlayingInfo
+		wantErr     bool
+	}{
+		{
+			name: "キューが空で何も再生していないときはエラーにならない",
+			session: &Session{
+				StateType:   Stop,
+				QueueHead:   0,
+				QueueTracks: nil,
+			},
+			playingInfo: nil,
+			wantErr:     false,
+		},
+		{
+			name: "キューが空でなにか再生していてもはエラーにならない",
+			session: &Session{
+				StateType:   Stop,
+				QueueHead:   0,
+				QueueTracks: nil,
+			},
+			playingInfo: &CurrentPlayingInfo{
+				Playing:  true,
+				Progress: 0,
+				Track: &Track{
+					URI: "spotify:track:hoge",
+				},
+				Device: nil,
+			},
+			wantErr: false,
+		},
+		{
+			name: "再生されている曲が実際に再生されていればエラーにならない",
+			session: &Session{
+				StateType: Play,
+				QueueHead: 0,
+				QueueTracks: []*QueueTrack{
+					{URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+				},
+			},
+			playingInfo: &CurrentPlayingInfo{
+				Playing:  true,
+				Progress: 0,
+				Track:    &Track{URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+				Device:   nil,
+			},
+			wantErr: false,
+		},
+		{
+			name: "再生されているはずなのに再生されていなければエラー",
+			session: &Session{
+				StateType: Play,
+				QueueHead: 0,
+				QueueTracks: []*QueueTrack{
+					{URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+				},
+			},
+			playingInfo: nil,
+			wantErr:     true,
+		},
+		{
+			name: "再生が終了してStopになっていたらエラーにならない",
+			session: &Session{
+				StateType: Stop,
+				QueueHead: 1,
+				QueueTracks: []*QueueTrack{
+					{URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+				},
+			},
+			playingInfo: nil,
+			wantErr:     false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			if err := tt.session.IsPlayingCorrectTrack(tt.playingInfo); (err != nil) != tt.wantErr {
+				t.Errorf("IsPlayingCorrectTrack() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
