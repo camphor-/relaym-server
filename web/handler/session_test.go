@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -313,7 +314,7 @@ func TestSessionHandler_Playback(t *testing.T) {
 			tt.prepareMockUserRepoFn(mockUserRepo)
 			mockSessionRepo := mock_repository.NewMockSession(ctrl)
 			tt.prepareMockSessionRepoFn(mockSessionRepo)
-			uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, nil, mockPusher)
+			uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, nil, nil, mockPusher)
 			h := &SessionHandler{
 				uc: uc,
 			}
@@ -436,7 +437,7 @@ func TestSessionHandler_SetDevice(t *testing.T) {
 			mockUserRepo := mock_repository.NewMockUser(ctrl)
 			tt.prepareMockUserRepoFn(mockUserRepo)
 
-			uc := usecase.NewSessionUseCase(mockRepo, mockUserRepo, nil, nil, nil)
+			uc := usecase.NewSessionUseCase(mockRepo, mockUserRepo, nil, nil, nil, nil)
 			h := &SessionHandler{uc: uc}
 
 			err := h.SetDevice(c)
@@ -540,7 +541,7 @@ func TestSessionHandler_PostSession(t *testing.T) {
 			tt.prepareMockSessionRepoFn(mockSessionRepo)
 			mockUserRepo := mock_repository.NewMockUser(ctrl)
 			tt.prepareMockUserRepoFn(mockUserRepo)
-			uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, nil, mockPusher)
+			uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, nil, nil, mockPusher)
 			h := &SessionHandler{
 				uc: uc,
 			}
@@ -668,7 +669,7 @@ func TestSessionHandler_AddQueue(t *testing.T) {
 			tt.prepareMockUserRepoFn(mockUserRepo)
 			mockSessionRepo := mock_repository.NewMockSession(ctrl)
 			tt.prepareMockSessionRepoFn(mockSessionRepo)
-			uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, nil, mockPusher)
+			uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, nil, nil, mockPusher)
 			h := &SessionHandler{
 				uc: uc,
 			}
@@ -1023,7 +1024,7 @@ func TestSessionHandler_GetSession(t *testing.T) {
 			tt.prepareMockUserRepoFn(mockUserRepo)
 			mockTrackCli := mock_spotify.NewMockTrackClient(ctrl)
 			tt.prepareMockTrackCliFn(mockTrackCli)
-			uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, mockTrackCli, mockPusher)
+			uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, mockTrackCli, nil, mockPusher)
 			h := &SessionHandler{
 				uc: uc,
 			}
@@ -1049,6 +1050,90 @@ func TestSessionHandler_GetSession(t *testing.T) {
 				opts := []cmp.Option{cmpopts.IgnoreFields(sessionRes{}, "ID")}
 				if !cmp.Equal(got, tt.want, opts...) {
 					t.Errorf("GetSession() diff = %v", cmp.Diff(got, tt.want, opts...))
+				}
+			}
+		})
+	}
+}
+
+func TestUserHandler_GetActiveDevices(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name               string
+		prepareMockUserSpo func(mock *mock_spotify.MockUser)
+		want               *devicesRes
+		wantErr            bool
+		wantCode           int
+	}{
+		{
+			name: "正しくデバイスを取得できる",
+			prepareMockUserSpo: func(mock *mock_spotify.MockUser) {
+				devices := []*entity.Device{
+					{
+						ID:           "hoge_id",
+						IsRestricted: false,
+						Name:         "hogeさんのiPhone11",
+					},
+				}
+				mock.EXPECT().GetActiveDevices(gomock.Any()).Return(devices, nil)
+			},
+			want: &devicesRes{
+				Devices: []*deviceJSON{
+					{
+						ID:           "hoge_id",
+						IsRestricted: false,
+						Name:         "hogeさんのiPhone11",
+					},
+				},
+			},
+			wantErr:  false,
+			wantCode: http.StatusOK,
+		},
+		{
+			name: "spotify.GetActiveDevicesが失敗した時にInternalServerErrorが返る",
+			prepareMockUserSpo: func(mock *mock_spotify.MockUser) {
+				mock.EXPECT().GetActiveDevices(gomock.Any()).Return(nil, errors.New("unknown error"))
+			},
+			want:     nil,
+			wantErr:  true,
+			wantCode: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			// モックの準備
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			mock := mock_spotify.NewMockUser(ctrl)
+			tt.prepareMockUserSpo(mock)
+			uc := usecase.NewSessionUseCase(nil, nil, nil, nil, mock, nil)
+			h := &SessionHandler{uc: uc}
+
+			err := h.GetActiveDevices(c)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetActiveDevices() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			// ステータスコードのチェック
+			if er, ok := err.(*echo.HTTPError); (ok && er.Code != tt.wantCode) || (!ok && rec.Code != tt.wantCode) {
+				t.Errorf("GetActiveDevices() code = %d, want = %d", rec.Code, tt.wantCode)
+			}
+
+			if !tt.wantErr {
+				got := &devicesRes{}
+				err := json.Unmarshal(rec.Body.Bytes(), got)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if !cmp.Equal(got, tt.want) {
+					t.Errorf("GetActiveDevices() diff = %v", cmp.Diff(got, tt.want))
 				}
 			}
 		})

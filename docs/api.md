@@ -312,16 +312,14 @@ X-CSRF-Token: relaym
 
 
 
-## GET /users/me/devices
+## GET /sessions/:id/devices
 
 ### 概要
 
-ログイン中のユーザのデバイス一覧を取得します。
+セッションの作成者のデバイス一覧を取得します。
 
 Spotifyのアプリが起動していないと一覧に現れません。
 
-### 認証
-事前に`GET /login`で認証を済ませ、Cookieをつけた状態でリクエストを送る必要があります。
 
 ### リクエスト
 空

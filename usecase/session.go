@@ -23,17 +23,19 @@ type SessionUseCase struct {
 	userRepo    repository.User
 	playerCli   spotify.Player
 	trackCli    spotify.TrackClient
+	userCli     spotify.User
 	pusher      event.Pusher
 }
 
 // NewSessionUseCase はSessionUseCaseのポインタを生成します。
-func NewSessionUseCase(sessionRepo repository.Session, userRepo repository.User, playerCli spotify.Player, trackCli spotify.TrackClient, pusher event.Pusher) *SessionUseCase {
+func NewSessionUseCase(sessionRepo repository.Session, userRepo repository.User, playerCli spotify.Player, trackCli spotify.TrackClient, userCli spotify.User, pusher event.Pusher) *SessionUseCase {
 	return &SessionUseCase{
 		tm:          entity.NewSyncCheckTimerManager(),
 		sessionRepo: sessionRepo,
 		userRepo:    userRepo,
 		playerCli:   playerCli,
 		trackCli:    trackCli,
+		userCli:     userCli,
 		pusher:      pusher,
 	}
 }
@@ -414,4 +416,9 @@ func (s *SessionUseCase) GetSession(ctx context.Context, sessionID string) (*ent
 		return entity.NewSessionWithUser(session, creator), tracks, cpi, nil
 	}
 	return entity.NewSessionWithUser(session, creator), tracks, cpi, nil
+}
+
+// GetActiveDevices はログインしているユーザがSpotifyを起動している端末を取得します。
+func (s *SessionUseCase) GetActiveDevices(ctx context.Context) ([]*entity.Device, error) {
+	return s.userCli.GetActiveDevices(ctx)
 }
