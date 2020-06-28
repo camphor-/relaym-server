@@ -25,7 +25,7 @@ func Test_deployPreviewCorsMiddleware_IsDeployPreviewOrigin(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := newDeployPreviewCorsMiddleware()
+			m := newDeployPreviewCorsMiddleware(nil, true)
 			if got := m.IsDeployPreviewOrigin(tt.origin); got != tt.want {
 				t.Errorf("IsDeployPreviewOrigin() = %v, want %v", got, tt.want)
 			}
