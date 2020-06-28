@@ -22,14 +22,24 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, session
 			return token == "relaym"
 		},
 	}))
+
+	allowHeaders := []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, "X-CSRF-Token"}
+	previewCorsMiddleware := newDeployPreviewCorsMiddleware(allowHeaders, true)
+
+	// `middleware.CORSWithConfig`はOPTIONのときにすぐreturnしてしまい、previewCorsMiddleware.addAllowOriginまで到達しないので
+	// ここのミドルウェアでoriginを付与して204を返してしまうようにする
+	if config.IsDev() {
+		e.Use(previewCorsMiddleware.addAllowOriginForOption)
+	}
+
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{config.CORSAllowOrigin()},
-		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, "X-CSRF-Token"},
+		AllowHeaders:     allowHeaders,
 		AllowCredentials: true,
 	}))
 
 	if config.IsDev() {
-		e.Use(newDeployPreviewCorsMiddleware().addAllowOrigin)
+		e.Use(previewCorsMiddleware.addAllowOrigin)
 	}
 
 	userHandler := handler.NewUserHandler(userUC)
