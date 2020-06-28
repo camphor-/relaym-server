@@ -182,7 +182,4 @@ https://support.spotify.com/jp/using_spotify/playlists/create-playlists-with-you
 > 
 
 - 公式で似たような機能を出している()
-- これに勝てる優位性として、Spotifyのアカウントがなくても曲の追加をできるようにしたい (@p1ass の個人的な感想)
-    - 現状の仕様ではできない
-
 
