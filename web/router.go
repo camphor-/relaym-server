@@ -26,6 +26,8 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, session
 	allowHeaders := []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, "X-CSRF-Token"}
 	previewCorsMiddleware := newDeployPreviewCorsMiddleware(allowHeaders, true)
 
+	// `middleware.CORSWithConfig`はOPTIONのときにすぐreturnしてしまい、previewCorsMiddleware.addAllowOriginまで到達しないので
+	// ここのミドルウェアでoriginを付与して204を返してしまうようにする
 	if config.IsDev() {
 		e.Use(previewCorsMiddleware.addAllowOriginForOption)
 	}
