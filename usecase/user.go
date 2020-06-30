@@ -40,8 +40,3 @@ func (u *UserUseCase) GetMe(ctx context.Context) (*entity.User, *entity.SpotifyU
 
 	return user, su, nil
 }
-
-// GetActiveDevices はログインしているユーザがSpotifyを起動している端末を取得します。
-func (u *UserUseCase) GetActiveDevices(ctx context.Context) ([]*entity.Device, error) {
-	return u.userCli.GetActiveDevices(ctx)
-}

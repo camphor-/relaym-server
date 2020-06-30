@@ -141,6 +141,23 @@ func (h *SessionHandler) Playback(c echo.Context) error {
 	return c.NoContent(http.StatusAccepted)
 }
 
+// GetActiveDevices は GET /sessions/:id/devices に対応するハンドラーです。
+func (h *SessionHandler) GetActiveDevices(c echo.Context) error {
+	logger := log.New()
+
+	ctx := c.Request().Context()
+
+	devices, err := h.uc.GetActiveDevices(ctx)
+	if err != nil {
+		logger.Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return c.JSON(http.StatusOK, &devicesRes{
+		Devices: toDeviceJSON(devices),
+	},
+	)
+}
+
 // SetDevice PUT /sessions/:id/devicesに対応するハンドラーです。
 func (h *SessionHandler) SetDevice(c echo.Context) error {
 	logger := log.New()

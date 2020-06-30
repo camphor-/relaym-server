@@ -300,7 +300,7 @@ func TestSessionUseCase_handleTrackEnd(t *testing.T) {
 			tt.prepareMockUserRepoFn(mockUserRepo)
 			mockSessionRepo := mock_repository.NewMockSession(ctrl)
 			tt.prepareMockSessionRepoFn(mockSessionRepo)
-			s := NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, nil, mockPusher)
+			s := NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, nil, nil, mockPusher)
 
 			gotTriggerAfterTrackEnd, gotNextTrack, err := s.handleTrackEnd(context.Background(), tt.sessionID)
 			if (err != nil) != tt.wantErr {
@@ -375,7 +375,7 @@ func TestSessionUseCase_CanConnectToPusher(t *testing.T) {
 			defer ctrl.Finish()
 			mockSessionRepo := mock_repository.NewMockSession(ctrl)
 			tt.prepareMockSessionRepoFn(mockSessionRepo)
-			s := NewSessionUseCase(mockSessionRepo, nil, nil, nil, nil)
+			s := NewSessionUseCase(mockSessionRepo, nil, nil, nil, nil, nil)
 
 			if err := s.CanConnectToPusher(context.Background(), tt.sessionID); (err != nil) != tt.wantErr {
 				t.Errorf("CanConnectToPusher() error = %v, wantErr %v", err, tt.wantErr)

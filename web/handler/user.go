@@ -46,23 +46,6 @@ type userRes struct {
 	IsPremium   bool   `json:"is_premium"`
 }
 
-// GetActiveDevices は GET /users/me/devices に対応するハンドラーです。
-func (h *UserHandler) GetActiveDevices(c echo.Context) error {
-	logger := log.New()
-
-	ctx := c.Request().Context()
-
-	devices, err := h.userUC.GetActiveDevices(ctx)
-	if err != nil {
-		logger.Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	return c.JSON(http.StatusOK, &devicesRes{
-		Devices: toDeviceJSON(devices),
-	},
-	)
-}
-
 func toDeviceJSON(devices []*entity.Device) []*deviceJSON {
 	deviceJSONs := make([]*deviceJSON, len(devices))
 
