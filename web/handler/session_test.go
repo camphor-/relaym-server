@@ -120,7 +120,7 @@ func TestSessionHandler_Playback(t *testing.T) {
 				m.EXPECT().SkipAllTracks(gomock.Any(), "device_id", "spotify:track:5uQ0vKy2973Y9IUCd1wMEF").Return(nil)
 				m.EXPECT().PlayWithTracks(gomock.Any(), "device_id", []string{"spotify:track:5uQ0vKy2973Y9IUCd1wMEF"}).Return(nil)
 				m.EXPECT().AddToQueue(gomock.Any(), "spotify:track:49BRCNV7E94s7Q2FUhhT3w", "device_id").Return(nil)
-				m.EXPECT().AddToQueue(gomock.Any(), "spotify:track:shouldUnuseInThisTestURI", "device_id").Return(nil)
+				m.EXPECT().AddToQueue(gomock.Any(), "spotify:track:3", "device_id").Return(nil)
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockPusherFn: func(m *mock_event.MockPusher) {
@@ -140,7 +140,7 @@ func TestSessionHandler_Playback(t *testing.T) {
 					QueueTracks: []*entity.QueueTrack{
 						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
 						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
-						{Index: 2, URI: "spotify:track:shouldUnuseInThisTestURI"},
+						{Index: 2, URI: "spotify:track:3"},
 					},
 				}, nil)
 				m.EXPECT().Update(&entity.Session{
@@ -153,7 +153,7 @@ func TestSessionHandler_Playback(t *testing.T) {
 					QueueTracks: []*entity.QueueTrack{
 						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
 						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
-						{Index: 2, URI: "spotify:track:shouldUnuseInThisTestURI"},
+						{Index: 2, URI: "spotify:track:3"},
 					},
 				}).Return(nil)
 			},
