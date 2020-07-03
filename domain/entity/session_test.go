@@ -377,23 +377,13 @@ func TestSession_TrackURIsShouldBeAddedWhenStopToPlay(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "キューに4曲追加して、まだ再生を始めていない時は長さ2のスライス",
+			name: "キューに4曲追加して、まだ再生を始めていない時は長さ3のスライス",
 			s: &Session{
 				QueueTracks: []*QueueTrack{{URI: "0"}, {URI: "1"}, {URI: "2"}, {URI: "3"}},
 				QueueHead:   0,
 				StateType:   Stop,
 			},
-			want:    []string{"0", "1"},
-			wantErr: false,
-		},
-		{
-			name: "キューに4曲追加して、まだ再生を始めていない時は長さ2のスライス",
-			s: &Session{
-				QueueTracks: []*QueueTrack{{URI: "0"}, {URI: "1"}, {URI: "2"}, {URI: "3"}},
-				QueueHead:   0,
-				StateType:   Stop,
-			},
-			want:    []string{"0", "1"},
+			want:    []string{"0", "1", "2"},
 			wantErr: false,
 		},
 	}

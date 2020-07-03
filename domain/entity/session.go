@@ -138,10 +138,10 @@ func (s *Session) TrackURIsShouldBeAddedWhenStopToPlay() ([]string, error) {
 	}
 
 	var uris []string
-	for i := 0; i < 2; i++ {
+	for i := 0; i < 3; i++ {
 		trackIndex := i + s.QueueHead
 		uris = append(uris, s.QueueTracks[trackIndex].URI)
-		if (len(s.QueueTracks) - s.QueueHead) == 1 {
+		if (len(s.QueueTracks) - s.QueueHead) == i+1 {
 			break
 		}
 	}
