@@ -121,9 +121,9 @@ func (s *Session) IsPlayingCorrectTrack(playingInfo *CurrentPlayingInfo) error {
 }
 
 // ShouldCallAddQueueAPINow は今すぐキューに追加するAPIを叩くかどうか判定します。
-// 最後の曲の再生中に曲を新たに追加された場合はキューに新たに追加したいので、それをチェックするために使います。
+// 最後の曲もしくは最後から二番目の曲の再生中に曲を新たに追加された場合はSpotifyのキューに新たに追加したいので、それをチェックするために使います。
 func (s *Session) ShouldCallAddQueueAPINow() bool {
-	return (len(s.QueueTracks) - s.QueueHead) < 3
+	return ((len(s.QueueTracks) - s.QueueHead) < 3) && (s.StateType == Play || s.StateType == Pause)
 }
 
 // IsResume は次のStateTypeへの移行がポーズからの再開かどうかを返します。
