@@ -193,3 +193,36 @@ func TestClient_SetRepeatMode(t *testing.T) {
 		})
 	}
 }
+
+// テスト前にSpotify側で「次に再生される曲」を積んでください
+func TestClient_SkipAllTracks(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantErr string
+	}{
+		{
+			name:    "正常に動作する",
+			wantErr: "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := NewClient(config.NewSpotify())
+			token := &oauth2.Token{
+				AccessToken:  "",
+				TokenType:    "Bearer",
+				RefreshToken: os.Getenv("SPOTIFY_REFRESH_TOKEN_FOR_TEST"),
+				Expiry:       time.Now(),
+			}
+			token, err := c.Refresh(token)
+			if err != nil {
+				t.Fatal(err)
+			}
+			ctx := context.Background()
+			ctx = service.SetTokenToContext(ctx, token)
+			if err := c.SkipAllTracks(ctx); err.Error() != tt.wantErr {
+				t.Errorf("SkipAllTracks() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
