@@ -43,6 +43,57 @@ func (c *Client) toDevice(device spotify.PlayerDevice) *entity.Device {
 	}
 }
 
+// skipAllTracks はユーザーのSpotifyに積まれている「次に再生される曲」「再生待ち」を全てskipします。
+// プレミアム会員必須
+func (c *Client) SkipAllTracks(ctx context.Context, deviceID string, trackURI string) error {
+	logger := log.New()
+	token, ok := service.GetTokenFromContext(ctx)
+	if !ok {
+		return errors.New("token not found")
+	}
+	cli := c.auth.NewClient(token)
+
+	opt := &spotify.PlayOptions{DeviceID: nil}
+	if deviceID != "" {
+		spotifyID := spotify.ID(deviceID)
+		opt = &spotify.PlayOptions{DeviceID: &spotifyID}
+	}
+
+	// PlayWithTracksで「再生待ち」を0曲にする
+	if err := c.PlayWithTracks(ctx, deviceID, []string{trackURI}); err != nil {
+		return fmt.Errorf("call play api with tracks %v: %w", trackURI, err)
+	}
+
+	skipOnceTime := 3
+	var sleepTime time.Duration = 500
+	isTracksOnQueue := true
+	//TODO: あとで消す
+	logger.Infoj(map[string]interface{}{"message": "start loop on skipAllTracks"})
+	for i := 1; i <= skipOnceTime && isTracksOnQueue; i++ {
+		switch i {
+		case skipOnceTime:
+			cpi, err := c.CurrentlyPlaying(ctx)
+			if err != nil {
+				return fmt.Errorf("spotify api: CurrentlyPlaying: %w", err)
+			}
+			isTracksOnQueue = cpi.Playing
+			i = 1
+			fallthrough
+
+		default:
+			err := cli.NextOpt(opt)
+			// SpotifyAPIを叩いてからSpotifyが曲をskipするのに時間がかかるため余計にAPIを叩かないように調節
+			time.Sleep(time.Millisecond * sleepTime)
+			if convErr := c.convertPlayerError(err); convErr != nil {
+				return fmt.Errorf("spotify api: next: %w", convErr)
+			}
+		}
+	}
+	//TODO: あとで消す
+	logger.Infoj(map[string]interface{}{"message": "finish loop on skipAllTracks"})
+	return nil
+}
+
 // Play は曲を再生し始めるか現在再生途中の曲の再生を再開するAPIです。deviceIDが空の場合はデフォルトのデバイスで再生されます。
 // APIが非同期で処理がされるため、リクエストが返ってきても再生が開始しているとは限りません。
 // 設定が反映されたか確認するには CurrentlyPlaying() を叩く必要があります。
