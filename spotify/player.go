@@ -67,8 +67,6 @@ func (c *Client) SkipAllTracks(ctx context.Context, deviceID string, trackURI st
 	skipOnceTime := 3
 	var sleepTime time.Duration = 500
 	isTracksOnQueue := true
-	//TODO: あとで消す
-	logger.Infoj(map[string]interface{}{"message": "start loop on skipAllTracks"})
 	for i := 1; i <= skipOnceTime && isTracksOnQueue; i++ {
 		switch i {
 		case skipOnceTime:
@@ -89,8 +87,6 @@ func (c *Client) SkipAllTracks(ctx context.Context, deviceID string, trackURI st
 			}
 		}
 	}
-	//TODO: あとで消す
-	logger.Infoj(map[string]interface{}{"message": "finish loop on skipAllTracks"})
 	return nil
 }
 
