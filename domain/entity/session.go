@@ -150,7 +150,6 @@ func (s *Session) TrackURIsShouldBeAddedWhenStopToPlay() ([]string, error) {
 
 // TrackURIShouldBeAddedWhenHandleTrackEnd はある一曲の再生が終わったときにSpotifyのキューに追加するTrackURIを抽出します。
 func (s *Session) TrackURIShouldBeAddedWhenHandleTrackEnd() string {
-	// TODO: 最後の曲の再生中に曲を追加された時の対応
 	if (len(s.QueueTracks) - s.QueueHead) == 1 {
 		return ""
 	}
