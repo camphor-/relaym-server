@@ -46,7 +46,6 @@ func (c *Client) toDevice(device spotify.PlayerDevice) *entity.Device {
 // skipAllTracks はユーザーのSpotifyに積まれている「次に再生される曲」「再生待ち」を全てskipします。
 // プレミアム会員必須
 func (c *Client) SkipAllTracks(ctx context.Context, deviceID string, trackURI string) error {
-	logger := log.New()
 	token, ok := service.GetTokenFromContext(ctx)
 	if !ok {
 		return errors.New("token not found")
