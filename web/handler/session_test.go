@@ -117,6 +117,7 @@ func TestSessionHandler_Playback(t *testing.T) {
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
 				m.EXPECT().SetRepeatMode(gomock.Any(), false, "device_id").Return(nil)
 				m.EXPECT().SetShuffleMode(gomock.Any(), false, "device_id").Return(nil)
+				m.EXPECT().SkipAllTracks(gomock.Any(), "device_id", "spotify:track:5uQ0vKy2973Y9IUCd1wMEF").Return(nil)
 				m.EXPECT().PlayWithTracks(gomock.Any(), "device_id",
 					[]string{"spotify:track:5uQ0vKy2973Y9IUCd1wMEF"}).Return(nil)
 				m.EXPECT().AddToQueue(gomock.Any(), "spotify:track:49BRCNV7E94s7Q2FUhhT3w", "device_id").Return(nil)
@@ -585,7 +586,6 @@ func TestSessionHandler_AddQueue(t *testing.T) {
 		},
 		},
 	}
-
 	tests := []struct {
 		name                     string
 		sessionID                string

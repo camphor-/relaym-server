@@ -151,6 +151,10 @@ func (s *SessionUseCase) stopToPlay(ctx context.Context, sess *entity.Session) e
 	if err != nil {
 		return fmt.Errorf(": %w", err)
 	}
+
+	if err := s.playerCli.SkipAllTracks(ctx, sess.DeviceID, sess.QueueTracks[0].URI); err != nil {
+		return fmt.Errorf("call SkipAllTracks: %w", err)
+	}
 	for i := 0; i < len(trackURIs); i++ {
 		if i == 0 {
 			if err := s.playerCli.PlayWithTracks(ctx, sess.DeviceID, trackURIs[:1]); err != nil {
@@ -281,6 +285,13 @@ func (s *SessionUseCase) handleTrackEnd(ctx context.Context, sessionID string) (
 	if err := sess.GoNextTrack(); err != nil && errors.Is(err, entity.ErrSessionAllTracksFinished) {
 		s.handleAllTrackFinish(sess)
 		return nil, false, nil
+	}
+
+	track := sess.TrackURIShouldBeAddedWhenHandleTrackEnd()
+	if track != "" {
+		if err := s.playerCli.AddToQueue(ctx, track, sess.DeviceID); err != nil {
+			return nil, false, fmt.Errorf("call add queue api trackURI=%s: %w", track, err)
+		}
 	}
 
 	logger.Debugj(map[string]interface{}{"message": "next track", "sessionID": sessionID, "queueHead": sess.QueueHead})
