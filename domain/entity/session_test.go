@@ -376,6 +376,26 @@ func TestSession_TrackURIsShouldBeAddedWhenStopToPlay(t *testing.T) {
 			want:    []string{"0", "1"},
 			wantErr: false,
 		},
+		{
+			name: "キューに4曲追加して、まだ再生を始めていない時は長さ2のスライス",
+			s: &Session{
+				QueueTracks: []*QueueTrack{{URI: "0"}, {URI: "1"}, {URI: "2"}, {URI: "3"}},
+				QueueHead:   0,
+				StateType:   Stop,
+			},
+			want:    []string{"0", "1"},
+			wantErr: false,
+		},
+		{
+			name: "キューに4曲追加して、まだ再生を始めていない時は長さ2のスライス",
+			s: &Session{
+				QueueTracks: []*QueueTrack{{URI: "0"}, {URI: "1"}, {URI: "2"}, {URI: "3"}},
+				QueueHead:   0,
+				StateType:   Stop,
+			},
+			want:    []string{"0", "1"},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -387,6 +407,45 @@ func TestSession_TrackURIsShouldBeAddedWhenStopToPlay(t *testing.T) {
 
 			if !cmp.Equal(got, tt.want) {
 				t.Errorf("TrackURIsShouldBeAddedWhenStartPlay() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSession_TrackURIShouldBeAddedWhenHandleTrackEnd(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		s    *Session
+		want string
+	}{
+		{
+			name: "正常に二曲先のTrackのURIが返る",
+			s: &Session{
+				QueueTracks: []*QueueTrack{{URI: "0"}, {URI: "1"}, {URI: "2"}, {URI: "3"}},
+				QueueHead:   0,
+				StateType:   Play,
+			},
+			want: "2",
+		},
+		{
+			name: "二曲先の曲が存在しない時には空文字列が返る",
+			s: &Session{
+				QueueTracks: []*QueueTrack{{URI: "0"}, {URI: "1"}, {URI: "2"}, {URI: "3"}},
+				QueueHead:   2,
+				StateType:   Play,
+			},
+			want: "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			got := tt.s.TrackURIShouldBeAddedWhenHandleTrackEnd()
+
+			if !cmp.Equal(got, tt.want) {
+				t.Errorf("TrackURIShouldBeAddedWhenHandleTrackEnd() = %v, want %v", got, tt.want)
 			}
 		})
 	}
