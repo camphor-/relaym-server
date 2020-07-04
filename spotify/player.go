@@ -64,7 +64,7 @@ func (c *Client) SkipAllTracks(ctx context.Context, deviceID string, trackURI st
 	}
 
 	skipOnceTime := 3
-	sleepTime := 500 * time.Millisecond
+	sleepTime := 250 * time.Millisecond
 	for i := 1; ; i++ {
 		err := cli.NextOpt(opt)
 		// SpotifyAPIを叩いてからSpotifyが曲をskipするのに時間がかかるため余計にAPIを叩かないように調節
