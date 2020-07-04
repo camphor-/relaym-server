@@ -72,7 +72,7 @@ func (c *Client) SkipAllTracks(ctx context.Context, deviceID string, trackURI st
 				return fmt.Errorf("spotify api: CurrentlyPlaying: %w", err)
 			}
 
-			if cpi.Playing {
+			if !cpi.Playing {
 				break
 			} else {
 				i = 1
