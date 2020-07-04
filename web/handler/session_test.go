@@ -625,7 +625,7 @@ func TestSessionHandler_AddQueue(t *testing.T) {
 		wantCode                 int
 	}{
 		{
-			name:                "正しくuriが渡されると正常に動作し、sessionがqueueの最後から二番目以内の曲を再生している場合はAddToQueueを叩く",
+			name:                "正しいuriが渡されると正常に動作し、sessionがqueueの最後から二番目以内ではない曲を再生している場合はAddToQueueを叩かない",
 			sessionID:           "sessionHadManyTracksID",
 			body:                `{"uri": "spotify:track:valid_uri"}`,
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {},
@@ -647,7 +647,7 @@ func TestSessionHandler_AddQueue(t *testing.T) {
 			wantCode: http.StatusNoContent,
 		},
 		{
-			name:      "正しいuriが渡されると正常に動作し、sessionがqueueの最後から二番目以内ではない曲を再生している場合はAddToQueueを叩かない",
+			name:      "正しくuriが渡されると正常に動作し、sessionがqueueの最後から二番目以内の曲を再生している場合はAddToQueueを叩く",
 			sessionID: "sessionID",
 			body:      `{"uri": "spotify:track:valid_uri"}`,
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
