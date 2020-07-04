@@ -73,7 +73,7 @@ func (c *Client) SkipAllTracks(ctx context.Context, deviceID string, trackURI st
 			return fmt.Errorf("spotify api: next: %w", convErr)
 		}
 
-		if skipOnceTime == i {
+		if i%skipOnceTime == 0 {
 			cpi, err := c.CurrentlyPlaying(ctx)
 			if err != nil {
 				return fmt.Errorf("spotify api: CurrentlyPlaying: %w", err)
@@ -81,8 +81,6 @@ func (c *Client) SkipAllTracks(ctx context.Context, deviceID string, trackURI st
 
 			if !cpi.Playing {
 				break
-			} else {
-				i = 1
 			}
 		}
 	}
