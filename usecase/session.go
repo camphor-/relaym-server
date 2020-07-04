@@ -152,7 +152,7 @@ func (s *SessionUseCase) stopToPlay(ctx context.Context, sess *entity.Session) e
 		return fmt.Errorf(": %w", err)
 	}
 
-	if err := s.playerCli.SkipAllTracks(ctx, sess.DeviceID, sess.QueueTracks[0].URI); err != nil {
+	if err := s.playerCli.SkipAllTracks(ctx, sess.DeviceID, trackURIs[0]); err != nil {
 		return fmt.Errorf("call SkipAllTracks: %w", err)
 	}
 	for i := 0; i < len(trackURIs); i++ {
