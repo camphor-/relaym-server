@@ -65,15 +65,18 @@ func (c *Client) SkipAllTracks(ctx context.Context, deviceID string, trackURI st
 
 	skipOnceTime := 3
 	sleepTime := 500 * time.Millisecond
-	isTracksOnQueue := true
-	for i := 1; isTracksOnQueue; i++ {
+	for i := 1; ; i++ {
 		if skipOnceTime == i {
 			cpi, err := c.CurrentlyPlaying(ctx)
 			if err != nil {
 				return fmt.Errorf("spotify api: CurrentlyPlaying: %w", err)
 			}
-			isTracksOnQueue = cpi.Playing
-			i = 1
+
+			if cpi.Playing {
+				break
+			} else {
+				i = 1
+			}
 		}
 
 		err := cli.NextOpt(opt)
