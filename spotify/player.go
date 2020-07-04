@@ -66,24 +66,21 @@ func (c *Client) SkipAllTracks(ctx context.Context, deviceID string, trackURI st
 	skipOnceTime := 3
 	sleepTime := 500 * time.Millisecond
 	isTracksOnQueue := true
-	for i := 1; i <= skipOnceTime && isTracksOnQueue; i++ {
-		switch i {
-		case skipOnceTime:
+	for i := 1; isTracksOnQueue; i++ {
+		if skipOnceTime == i {
 			cpi, err := c.CurrentlyPlaying(ctx)
 			if err != nil {
 				return fmt.Errorf("spotify api: CurrentlyPlaying: %w", err)
 			}
 			isTracksOnQueue = cpi.Playing
 			i = 1
-			fallthrough
+		}
 
-		default:
-			err := cli.NextOpt(opt)
-			// SpotifyAPIを叩いてからSpotifyが曲をskipするのに時間がかかるため余計にAPIを叩かないように調節
-			time.Sleep(sleepTime)
-			if convErr := c.convertPlayerError(err); convErr != nil {
-				return fmt.Errorf("spotify api: next: %w", convErr)
-			}
+		err := cli.NextOpt(opt)
+		// SpotifyAPIを叩いてからSpotifyが曲をskipするのに時間がかかるため余計にAPIを叩かないように調節
+		time.Sleep(sleepTime)
+		if convErr := c.convertPlayerError(err); convErr != nil {
+			return fmt.Errorf("spotify api: next: %w", convErr)
 		}
 	}
 	return nil
