@@ -92,17 +92,17 @@ func (mr *MockPlayerMockRecorder) Pause(ctx, deviceID interface{}) *gomock.Call 
 }
 
 // AddToQueue mocks base method
-func (m *MockPlayer) AddToQueue(ctx context.Context, trackID, deviceID string) error {
+func (m *MockPlayer) AddToQueue(ctx context.Context, trackURI, deviceID string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddToQueue", ctx, trackID, deviceID)
+	ret := m.ctrl.Call(m, "AddToQueue", ctx, trackURI, deviceID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AddToQueue indicates an expected call of AddToQueue
-func (mr *MockPlayerMockRecorder) AddToQueue(ctx, trackID, deviceID interface{}) *gomock.Call {
+func (mr *MockPlayerMockRecorder) AddToQueue(ctx, trackURI, deviceID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddToQueue", reflect.TypeOf((*MockPlayer)(nil).AddToQueue), ctx, trackID, deviceID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddToQueue", reflect.TypeOf((*MockPlayer)(nil).AddToQueue), ctx, trackURI, deviceID)
 }
 
 // SetRepeatMode mocks base method
@@ -131,4 +131,18 @@ func (m *MockPlayer) SetShuffleMode(ctx context.Context, on bool, deviceID strin
 func (mr *MockPlayerMockRecorder) SetShuffleMode(ctx, on, deviceID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetShuffleMode", reflect.TypeOf((*MockPlayer)(nil).SetShuffleMode), ctx, on, deviceID)
+}
+
+// SkipAllTracks mocks base method
+func (m *MockPlayer) SkipAllTracks(ctx context.Context, deviceID, trackURI string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SkipAllTracks", ctx, deviceID, trackURI)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SkipAllTracks indicates an expected call of SkipAllTracks
+func (mr *MockPlayerMockRecorder) SkipAllTracks(ctx, deviceID, trackURI interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SkipAllTracks", reflect.TypeOf((*MockPlayer)(nil).SkipAllTracks), ctx, deviceID, trackURI)
 }
