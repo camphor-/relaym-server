@@ -50,9 +50,9 @@ func (c *Client) ReadLoop() {
 		c.ws.Close()
 	}()
 	c.ws.SetReadLimit(maxMessageSize)
-	c.ws.SetReadDeadline(time.Now().Add(pongWait))
+	_ = c.ws.SetReadDeadline(time.Now().Add(pongWait))
 	c.ws.SetPongHandler(func(string) error {
-		c.ws.SetReadDeadline(time.Now().Add(pongWait))
+		_ = c.ws.SetReadDeadline(time.Now().Add(pongWait))
 		return nil
 	})
 	for {

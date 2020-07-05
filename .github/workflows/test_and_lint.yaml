@@ -42,7 +42,6 @@ jobs:
     - name: Get tools
       run: |
         GO111MODULE=off go get -u github.com/skeema/skeema
-        curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.25.0
     - name: migrate
       run: |
         $(go env GOPATH)/bin/skeema push local
@@ -52,7 +51,13 @@ jobs:
 
     - name: Test
       run: make test
-
-    - name: lint
-      run: |
-        $(go env GOPATH)/bin/golangci-lint run --disable-all --enable=goimports --enable=golint --enable=govet
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v1
+        with:
+          version: v1.26
+          args: --enable=golint,gosec,prealloc,gocognit

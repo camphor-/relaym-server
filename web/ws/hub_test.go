@@ -246,7 +246,7 @@ func TestHub_Push(t *testing.T) {
 
 			if !tt.wantErr {
 				var gotEvent *entity.Event
-				s.ws.SetReadDeadline(time.Now().Add(1 * time.Second))
+				_ = s.ws.SetReadDeadline(time.Now().Add(1 * time.Second))
 				if err := s.ws.ReadJSON(&gotEvent); err != nil {
 					t.Fatal(err)
 				}
