@@ -60,6 +60,7 @@ func (c *Client) toTracks(resultTracks []spotify.FullTrack) []*entity.Track {
 	tracks := make([]*entity.Track, len(resultTracks))
 
 	for i, rt := range resultTracks {
+		rt := rt
 		tracks[i] = c.toTrack(&rt)
 	}
 
