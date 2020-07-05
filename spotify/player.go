@@ -65,9 +65,7 @@ func (c *Client) SkipAllTracks(ctx context.Context, deviceID string, trackURI st
 
 	skipOnceTime := 3
 	sleepTime := 250 * time.Millisecond
-	j := 0
 	for i := 1; ; i++ {
-		j = j + 1
 		err := cli.NextOpt(opt)
 		// SpotifyAPIを叩いてからSpotifyが曲をskipするのに時間がかかるため余計にAPIを叩かないように調節
 		if convErr := c.convertPlayerError(err); convErr != nil {
@@ -86,10 +84,6 @@ func (c *Client) SkipAllTracks(ctx context.Context, deviceID string, trackURI st
 			}
 		}
 	}
-	logger := log.New()
-	logger.Infoj(map[string]interface{}{
-		"message": j,
-	})
 	return nil
 }
 
