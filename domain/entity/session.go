@@ -121,10 +121,9 @@ func (s *Session) IsPlayingCorrectTrack(playingInfo *CurrentPlayingInfo) error {
 }
 
 // ShouldCallAddQueueAPINow は今すぐキューに追加するAPIを叩くかどうか判定します。
-// 最初の再生開始時(Stop→Play時)は一気にキューに追加するけど、それ以外のときは随時追加したいので、
-// それをチェックするために使います。
+// 最後の曲もしくは最後から二番目の曲の再生中に曲を新たに追加された場合はSpotifyのキューに新たに追加したいので、それをチェックするために使います。
 func (s *Session) ShouldCallAddQueueAPINow() bool {
-	return s.StateType == Play || s.StateType == Pause
+	return ((len(s.QueueTracks) - s.QueueHead) < 3) && (s.StateType == Play || s.StateType == Pause)
 }
 
 // IsResume は次のStateTypeへの移行がポーズからの再開かどうかを返します。
@@ -138,12 +137,24 @@ func (s *Session) TrackURIsShouldBeAddedWhenStopToPlay() ([]string, error) {
 		return []string{}, fmt.Errorf("can not to move to play: %w", err)
 	}
 
-	uris := make([]string, len(s.QueueTracks)-s.QueueHead)
-	for i := 0; i < len(s.QueueTracks)-s.QueueHead; i++ {
+	var uris []string
+	for i := 0; i < 3; i++ {
 		trackIndex := i + s.QueueHead
-		uris[i] = s.QueueTracks[trackIndex].URI
+		uris = append(uris, s.QueueTracks[trackIndex].URI)
+		if (len(s.QueueTracks) - s.QueueHead) == i+1 {
+			break
+		}
 	}
 	return uris, nil
+}
+
+// TrackURIShouldBeAddedWhenHandleTrackEnd はある一曲の再生が終わったときにSpotifyのキューに追加するTrackURIを抽出します。
+func (s *Session) TrackURIShouldBeAddedWhenHandleTrackEnd() string {
+	if (len(s.QueueTracks) - s.QueueHead) < 3 {
+		return ""
+	}
+	index := s.QueueHead + 2
+	return s.QueueTracks[index].URI
 }
 
 // canMoveFromStopToPlay はセッションのStateTypeをStopからPlayに状態遷移しても良いかどうか返します。
