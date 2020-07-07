@@ -22,7 +22,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func TestSessionHandler_Playback(t *testing.T) {
+func TestSessionHandler_State(t *testing.T) {
 	tests := []struct {
 		name                     string
 		sessionID                string
@@ -321,14 +321,14 @@ func TestSessionHandler_Playback(t *testing.T) {
 			h := &SessionHandler{
 				uc: uc,
 			}
-			err := h.Playback(c)
+			err := h.State(c)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Playback() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("State() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
 			// ステータスコードのチェック
 			if er, ok := err.(*echo.HTTPError); ok && er.Code != tt.wantCode {
-				t.Errorf("Playback() code = %d, want = %d", rec.Code, tt.wantCode)
+				t.Errorf("State() code = %d, want = %d", rec.Code, tt.wantCode)
 			}
 		})
 	}

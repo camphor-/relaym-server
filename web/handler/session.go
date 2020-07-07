@@ -100,8 +100,8 @@ func (h *SessionHandler) AddQueue(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-// Playback は PUT /sessions/:id/playback に対応するハンドラーです。
-func (h *SessionHandler) Playback(c echo.Context) error {
+// State は PUT /sessions/:id/state に対応するハンドラーです。
+func (h *SessionHandler) State(c echo.Context) error {
 	logger := log.New()
 	type reqJSON struct {
 		State string `json:"state"`
@@ -120,7 +120,7 @@ func (h *SessionHandler) Playback(c echo.Context) error {
 
 	ctx := c.Request().Context()
 	sessionID := c.Param("id")
-	if err := h.uc.ChangePlaybackState(ctx, sessionID, st); err != nil {
+	if err := h.uc.ChangeSessionState(ctx, sessionID, st); err != nil {
 		switch {
 		case errors.Is(err, entity.ErrQueueTrackNotFound):
 			return echo.NewHTTPError(http.StatusBadRequest, entity.ErrQueueTrackNotFound.Error())

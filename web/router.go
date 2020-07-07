@@ -66,7 +66,7 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, session
 	sessionWithCreatorToken.GET("/devices", sessionHandler.GetActiveDevices)
 	sessionWithCreatorToken.PUT("/devices", sessionHandler.SetDevice)
 	sessionWithCreatorToken.POST("/queue", sessionHandler.AddQueue)
-	sessionWithCreatorToken.PUT("/playback", sessionHandler.Playback)
+	sessionWithCreatorToken.PUT("/state", sessionHandler.State)
 	sessionWithCreatorToken.GET("/ws", wsHandler.WebSocket)
 	return e
 }
