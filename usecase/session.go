@@ -88,8 +88,8 @@ func (s *SessionUseCase) CreateSession(sessionName string, creatorID string) (*e
 	return entity.NewSessionWithUser(newSession, creator), nil
 }
 
-// ChangePlaybackState は与えられたセッションの再生状態を操作します。
-func (s *SessionUseCase) ChangePlaybackState(ctx context.Context, sessionID string, st entity.StateType) error {
+// ChangeSessionState は与えられたセッションのstateを操作します。
+func (s *SessionUseCase) ChangeSessionState(ctx context.Context, sessionID string, st entity.StateType) error {
 	switch st {
 	case entity.Play:
 		if err := s.playORResume(ctx, sessionID); err != nil {
@@ -99,11 +99,15 @@ func (s *SessionUseCase) ChangePlaybackState(ctx context.Context, sessionID stri
 		if err := s.pause(ctx, sessionID); err != nil {
 			return fmt.Errorf("pause sessionID=%s: %w", sessionID, err)
 		}
+	case entity.ARCHIVED:
+		if err := s.archive(ctx, sessionID); err != nil {
+			return fmt.Errorf("archive sessionID=%s: %w", sessionID, err)
+		}
 	}
 	return nil
 }
 
-// Play はセッションのstateを STOP, PAUSE → PLAY に変更して曲の再生を始めます。
+// PlayORResume はセッションのstateを STOP, PAUSE → PLAY に変更して曲の再生を始めます。
 func (s *SessionUseCase) playORResume(ctx context.Context, sessionID string) error {
 	sess, err := s.sessionRepo.FindByID(sessionID)
 	if err != nil {
@@ -193,6 +197,35 @@ func (s *SessionUseCase) pause(ctx context.Context, sessionID string) error {
 	s.pusher.Push(&event.PushMessage{
 		SessionID: sessionID,
 		Msg:       entity.EventPause,
+	})
+
+	return nil
+}
+
+// archive はセッションのstateをARCHIVEDに変更します。
+func (s *SessionUseCase) archive(ctx context.Context, sessionID string) error {
+	session, err := s.sessionRepo.FindByID(sessionID)
+	if err != nil {
+		return fmt.Errorf("FindByID sessionID=%s: %w", sessionID, err)
+	}
+
+	if err := s.playerCli.Pause(ctx, session.DeviceID); err != nil && !errors.Is(err, entity.ErrActiveDeviceNotFound) {
+		return fmt.Errorf("call pause api: %w", err)
+	}
+
+	s.tm.StopTimer(sessionID)
+
+	if err := session.MoveToArchived(); err != nil {
+		return fmt.Errorf("move to archived id=%s: %w", sessionID, err)
+	}
+
+	if err := s.sessionRepo.Update(session); err != nil {
+		return fmt.Errorf("update session id=%s: %w", sessionID, err)
+	}
+
+	s.pusher.Push(&event.PushMessage{
+		SessionID: sessionID,
+		Msg:       entity.EventArchived,
 	})
 
 	return nil

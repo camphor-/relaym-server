@@ -78,6 +78,12 @@ func (s *Session) MoveToStop() error {
 	return nil
 }
 
+// MoveToArchived はセッションのStateTypeをArchivedに状態遷移します。
+func (s *Session) MoveToArchived() error {
+	s.StateType = ARCHIVED
+	return nil
+}
+
 // IsCreator は指定されたユーザがセッションの作成者かどうか返します。
 func (s *Session) IsCreator(userID string) bool {
 	return s.CreatorID == userID
@@ -186,9 +192,10 @@ func (s *Session) isEmptyQueue() bool {
 type StateType string
 
 const (
-	Play  StateType = "PLAY"
-	Pause StateType = "PAUSE"
-	Stop  StateType = "STOP"
+	Play     StateType = "PLAY"
+	Pause    StateType = "PAUSE"
+	Stop     StateType = "STOP"
+	ARCHIVED StateType = "ARCHIVED"
 )
 
 var stateTypes = []StateType{Play, Pause, Stop}
