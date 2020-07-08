@@ -73,15 +73,13 @@ func (s *Session) MoveToPause() error {
 }
 
 // MoveToStop はセッションのStateTypeをStopに状態遷移します。
-func (s *Session) MoveToStop() error {
+func (s *Session) MoveToStop() {
 	s.StateType = Stop
-	return nil
 }
 
 // MoveToArchived はセッションのStateTypeをArchivedに状態遷移します。
-func (s *Session) MoveToArchived() error {
+func (s *Session) MoveToArchived() {
 	s.StateType = Archived
-	return nil
 }
 
 // IsCreator は指定されたユーザがセッションの作成者かどうか返します。

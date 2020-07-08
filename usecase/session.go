@@ -221,9 +221,7 @@ func (s *SessionUseCase) archive(ctx context.Context, sessionID string) error {
 
 	s.tm.DeleteTimer(sessionID)
 
-	if err := session.MoveToArchived(); err != nil {
-		return fmt.Errorf("move to archived id=%s: %w", sessionID, err)
-	}
+	session.MoveToArchived()
 
 	if err := s.sessionRepo.Update(session); err != nil {
 		return fmt.Errorf("update session id=%s: %w", sessionID, err)
@@ -245,9 +243,7 @@ func (s *SessionUseCase) stop(sessionID string) error {
 		return fmt.Errorf("FindByID sessionID=%s: %w", sessionID, err)
 	}
 
-	if err := session.MoveToStop(); err != nil {
-		return fmt.Errorf("move to archived id=%s: %w", sessionID, err)
-	}
+	session.MoveToStop()
 
 	if session.StateType == entity.Archived {
 		if err := session.UpdateTimestamp(); err != nil {
@@ -419,11 +415,7 @@ func (s *SessionUseCase) handleInterrupt(sess *entity.Session) error {
 	logger := log.New()
 	logger.Debugj(map[string]interface{}{"message": "interrupt detected", "sessionID": sess.ID})
 
-	if err := sess.MoveToStop(); err != nil {
-		// 必ずPlayされているのでこのエラーになることはないはず
-		logger.Errorj(map[string]interface{}{"message": "failed to move to stop", "sessionID": sess.ID, "error": err.Error()})
-		return fmt.Errorf("move to stop: id=%s: %v", sess.ID, err)
-	}
+	sess.MoveToStop()
 
 	s.pusher.Push(&event.PushMessage{
 		SessionID: sess.ID,
