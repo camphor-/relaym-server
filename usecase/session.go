@@ -89,22 +89,22 @@ func (s *SessionUseCase) CreateSession(sessionName string, creatorID string) (*e
 }
 
 // ChangeSessionState は与えられたセッションのstateを操作します。
-func (s *SessionUseCase) ChangeSessionState(ctx context.Context, sessionID string, st NextState) error {
+func (s *SessionUseCase) ChangeSessionState(ctx context.Context, sessionID string, st entity.StateType) error {
 	switch st {
-	case Play:
+	case entity.Play:
 		if err := s.playORResume(ctx, sessionID); err != nil {
 			return fmt.Errorf("playORResume sessionID=%s: %w", sessionID, err)
 		}
-	case Pause:
+	case entity.Pause:
 		if err := s.pause(ctx, sessionID); err != nil {
 			return fmt.Errorf("pause sessionID=%s: %w", sessionID, err)
 		}
-	case Archived:
+	case entity.Archived:
 		if err := s.archive(ctx, sessionID); err != nil {
 			return fmt.Errorf("archive sessionID=%s: %w", sessionID, err)
 		}
-	case Unarchive:
-		if err := s.unarchive(sessionID); err != nil {
+	case entity.Stop:
+		if err := s.stop(sessionID); err != nil {
 			return fmt.Errorf("unarchive sessionID=%s: %w", sessionID, err)
 		}
 	}
@@ -235,18 +235,21 @@ func (s *SessionUseCase) archive(ctx context.Context, sessionID string) error {
 	return nil
 }
 
-// unarchive はセッションのstateをARCHIVE→STOPに変更します。
-func (s *SessionUseCase) unarchive(sessionID string) error {
+// stop はセッションのstateをSTOPに変更します。
+func (s *SessionUseCase) stop(sessionID string) error {
 	session, err := s.sessionRepo.FindByID(sessionID)
 	if err != nil {
 		return fmt.Errorf("FindByID sessionID=%s: %w", sessionID, err)
 	}
 
-	if err := session.MoveArchivedToStop(); err != nil {
+	if err := session.MoveToStop(); err != nil {
 		return fmt.Errorf("move to archived id=%s: %w", sessionID, err)
 	}
 
-	// TODO: timestampも更新する
+	if session.StateType == entity.Archived {
+		// TODO: timestampを更新する
+	}
+
 	if err := s.sessionRepo.Update(session); err != nil {
 		return fmt.Errorf("update session id=%s: %w", sessionID, err)
 	}
@@ -494,12 +497,3 @@ func (s *SessionUseCase) GetSession(ctx context.Context, sessionID string) (*ent
 func (s *SessionUseCase) GetActiveDevices(ctx context.Context) ([]*entity.Device, error) {
 	return s.userCli.GetActiveDevices(ctx)
 }
-
-type NextState string
-
-const (
-	Play      NextState = "PLAY"
-	Pause     NextState = "PAUSE"
-	Archived  NextState = "ARCHIVED"
-	Unarchive NextState = "UNARCHIVED"
-)
