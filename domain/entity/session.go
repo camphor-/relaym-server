@@ -193,6 +193,26 @@ func (s *Session) isEmptyQueue() bool {
 	return len(s.QueueTracks) == 0
 }
 
+// IsValidNextState はstateの変更の正当性を評価します
+func (s *Session) IsValidNextState(nextState StateType) bool {
+	if s.StateType == nextState {
+		return true
+	}
+
+	switch s.StateType {
+	case Play:
+		return nextState == Stop || nextState == Pause || nextState == Archived
+	case Pause:
+		return nextState == Play || nextState == Stop || nextState == Archived
+	case Archived:
+		return nextState == Stop
+	case Stop:
+		return nextState == Play || nextState == Archived
+	}
+
+	return false
+}
+
 type StateType string
 
 const (
