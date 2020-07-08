@@ -258,7 +258,7 @@ func (s *SessionUseCase) stop(sessionID string) error {
 
 	s.pusher.Push(&event.PushMessage{
 		SessionID: sessionID,
-		Msg:       entity.EventUnarchiving,
+		Msg:       entity.EventUnarchive,
 	})
 
 	return nil

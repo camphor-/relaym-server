@@ -35,12 +35,12 @@ var (
 
 	// EventArchived はセッションがアーカイブされた際に発されるイベントです。
 	EventArchived = &Event{
-		Type: "Archived",
+		Type: "ARCHIVED",
 	}
 
-	// EventUnarchiving はセッションのアーカイブが解除された際に発されるイベントです。
-	EventUnarchiving = &Event{
-		Type: "UNARCHIVING",
+	// EventUnarchive はセッションのアーカイブが解除された際に発されるイベントです。
+	EventUnarchive = &Event{
+		Type: "UNARCHIVE",
 	}
 )
 
