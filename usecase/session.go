@@ -236,7 +236,7 @@ func (s *SessionUseCase) archive(ctx context.Context, sessionID string) error {
 }
 
 // stop はセッションのstateをSTOPに変更します。
-// UNARCHIVE→STOPを想定しており、Unarchiveのイベントを最後にpushしています。
+// ARCHIVE→STOPを想定しており、Unarchiveのイベントを最後にpushしています。
 func (s *SessionUseCase) stop(sessionID string) error {
 	session, err := s.sessionRepo.FindByID(sessionID)
 	if err != nil {
