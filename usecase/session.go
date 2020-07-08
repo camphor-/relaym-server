@@ -247,7 +247,9 @@ func (s *SessionUseCase) stop(sessionID string) error {
 	}
 
 	if session.StateType == entity.Archived {
-		// TODO: timestampを更新する
+		if err := session.UpdateTimestamp(); err != nil {
+			return fmt.Errorf("update timestamp id=%s", sessionID)
+		}
 	}
 
 	if err := s.sessionRepo.Update(session); err != nil {
