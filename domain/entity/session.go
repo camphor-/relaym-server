@@ -204,7 +204,7 @@ const (
 	Play     StateType = "PLAY"
 	Pause    StateType = "PAUSE"
 	Stop     StateType = "STOP"
-	Archived StateType = "Archived"
+	Archived StateType = "ARCHIVED"
 )
 
 var stateTypes = []StateType{Play, Pause, Stop}
