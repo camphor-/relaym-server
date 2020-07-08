@@ -78,9 +78,18 @@ func (s *Session) MoveToStop() error {
 	return nil
 }
 
+// MoveArchivedToStop はセッションのStateTypeをARCHIVED→Stopに状態遷移します。
+func (s *Session) MoveArchivedToStop() error {
+	if s.StateType == Archived {
+		s.StateType = Stop
+		return nil
+	}
+	return fmt.Errorf("state type from %s to Stop: %w", s.StateType, ErrChangeSessionStateNotPermit)
+}
+
 // MoveToArchived はセッションのStateTypeをArchivedに状態遷移します。
 func (s *Session) MoveToArchived() error {
-	s.StateType = ARCHIVED
+	s.StateType = Archived
 	return nil
 }
 
@@ -195,7 +204,7 @@ const (
 	Play     StateType = "PLAY"
 	Pause    StateType = "PAUSE"
 	Stop     StateType = "STOP"
-	ARCHIVED StateType = "ARCHIVED"
+	Archived StateType = "Archived"
 )
 
 var stateTypes = []StateType{Play, Pause, Stop}

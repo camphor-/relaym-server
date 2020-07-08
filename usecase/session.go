@@ -89,19 +89,23 @@ func (s *SessionUseCase) CreateSession(sessionName string, creatorID string) (*e
 }
 
 // ChangeSessionState は与えられたセッションのstateを操作します。
-func (s *SessionUseCase) ChangeSessionState(ctx context.Context, sessionID string, st entity.StateType) error {
+func (s *SessionUseCase) ChangeSessionState(ctx context.Context, sessionID string, st NextState) error {
 	switch st {
-	case entity.Play:
+	case Play:
 		if err := s.playORResume(ctx, sessionID); err != nil {
 			return fmt.Errorf("playORResume sessionID=%s: %w", sessionID, err)
 		}
-	case entity.Pause:
+	case Pause:
 		if err := s.pause(ctx, sessionID); err != nil {
 			return fmt.Errorf("pause sessionID=%s: %w", sessionID, err)
 		}
-	case entity.ARCHIVED:
+	case Archived:
 		if err := s.archive(ctx, sessionID); err != nil {
 			return fmt.Errorf("archive sessionID=%s: %w", sessionID, err)
+		}
+	case Unarchive:
+		if err := s.unarchive(sessionID); err != nil {
+			return fmt.Errorf("unarchive sessionID=%s: %w", sessionID, err)
 		}
 	}
 	return nil
@@ -213,7 +217,7 @@ func (s *SessionUseCase) archive(ctx context.Context, sessionID string) error {
 		return fmt.Errorf("call pause api: %w", err)
 	}
 
-	s.tm.StopTimer(sessionID)
+	s.tm.DeleteTimer(sessionID)
 
 	if err := session.MoveToArchived(); err != nil {
 		return fmt.Errorf("move to archived id=%s: %w", sessionID, err)
@@ -226,6 +230,30 @@ func (s *SessionUseCase) archive(ctx context.Context, sessionID string) error {
 	s.pusher.Push(&event.PushMessage{
 		SessionID: sessionID,
 		Msg:       entity.EventArchived,
+	})
+
+	return nil
+}
+
+// unarchive はセッションのstateをARCHIVE→STOPに変更します。
+func (s *SessionUseCase) unarchive(sessionID string) error {
+	session, err := s.sessionRepo.FindByID(sessionID)
+	if err != nil {
+		return fmt.Errorf("FindByID sessionID=%s: %w", sessionID, err)
+	}
+
+	if err := session.MoveArchivedToStop(); err != nil {
+		return fmt.Errorf("move to archived id=%s: %w", sessionID, err)
+	}
+
+	// TODO: timestampも更新する
+	if err := s.sessionRepo.Update(session); err != nil {
+		return fmt.Errorf("update session id=%s: %w", sessionID, err)
+	}
+
+	s.pusher.Push(&event.PushMessage{
+		SessionID: sessionID,
+		Msg:       entity.EventUnarchiving,
 	})
 
 	return nil
@@ -466,3 +494,12 @@ func (s *SessionUseCase) GetSession(ctx context.Context, sessionID string) (*ent
 func (s *SessionUseCase) GetActiveDevices(ctx context.Context) ([]*entity.Device, error) {
 	return s.userCli.GetActiveDevices(ctx)
 }
+
+type NextState string
+
+const (
+	Play      NextState = "PLAY"
+	Pause     NextState = "PAUSE"
+	Archived  NextState = "Archived"
+	Unarchive NextState = "Unarchive"
+)
