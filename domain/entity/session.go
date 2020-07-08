@@ -204,7 +204,7 @@ const (
 	Archived StateType = "ARCHIVED"
 )
 
-var stateTypes = []StateType{Play, Pause, Stop}
+var stateTypes = []StateType{Play, Pause, Stop, Archived}
 
 // NewStateType はstringから対応するStateTypeを生成します。
 func NewStateType(stateType string) (StateType, error) {
