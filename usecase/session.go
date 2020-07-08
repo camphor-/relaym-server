@@ -500,6 +500,6 @@ type NextState string
 const (
 	Play      NextState = "PLAY"
 	Pause     NextState = "PAUSE"
-	Archived  NextState = "Archived"
-	Unarchive NextState = "Unarchive"
+	Archived  NextState = "ARCHIVED"
+	Unarchive NextState = "UNARCHIVED"
 )
