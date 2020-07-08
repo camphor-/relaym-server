@@ -374,7 +374,7 @@ func TestSessionHandler_State(t *testing.T) {
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
-			c.SetPath("/sessions/:id/playback")
+			c.SetPath("/sessions/:id/state")
 			c.SetParamNames("id")
 			c.SetParamValues(tt.sessionID)
 

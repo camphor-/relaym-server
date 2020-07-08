@@ -95,7 +95,7 @@ console.assert(setDeviceRes.ok,"デバイスのセットに失敗しました",s
 
 console.log("----------STEP7 : 再生----------")
 
-const playRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session.id}/playback`, {
+const playRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session.id}/state`, {
     "headers": {
         "X-CSRF-TOKEN": "relaym",
         "content-type":"application/json"
@@ -112,7 +112,7 @@ await sleep(5000)
 
 console.log("----------STEP8 : 一時停止----------")
 
-const pauseRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session.id}/playback`, {
+const pauseRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session.id}/state`, {
     "headers": {
         "X-CSRF-TOKEN": "relaym",
         "content-type":"application/json"
@@ -127,7 +127,7 @@ await sleep(5000)
 
 console.log("----------STEP9 : 再度再生----------")
 
-const rePlayRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session.id}/playback`, {
+const rePlayRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session.id}/state`, {
     "headers": {
         "X-CSRF-TOKEN": "relaym",
         "content-type":"application/json"

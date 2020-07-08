@@ -463,7 +463,7 @@ Spotifyで曲の検索を行います。
 #### INTERRUPT
 Spotifyの本体アプリ側で操作されて、Relaym側との同期が取れなくなったタイミングで発されるイベントです。
 
-セッションはSTOP状態になり、再度playback APIでPLAYにする必要があります。
+セッションはSTOP状態になり、再度state APIでPLAYにする必要があります。
 
 ```json
 {
