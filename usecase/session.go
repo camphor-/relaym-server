@@ -232,13 +232,13 @@ func (s *SessionUseCase) archive(ctx context.Context, session *entity.Session) e
 // stop はセッションのstateをSTOPに変更します。
 // ARCHIVE→STOPを想定しており、Unarchiveのイベントを最後にpushしています。
 func (s *SessionUseCase) stop(session *entity.Session) error {
-	session.MoveToStop()
-
 	if session.StateType == entity.Archived {
 		if err := session.UpdateTimestamp(); err != nil {
 			return fmt.Errorf("update timestamp id=%s", session.ID)
 		}
 	}
+
+	session.MoveToStop()
 
 	if err := s.sessionRepo.Update(session); err != nil {
 		return fmt.Errorf("update session id=%s: %w", session.ID, err)
