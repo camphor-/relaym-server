@@ -213,17 +213,17 @@ X-CSRF-Token: relaym
 | 404 | session not found | 指定されたidのセッションが存在しない |
 
 
-## PUT /sessions/:id/playback
+## PUT /sessions/:id/state
 
 ### 概要
 
-与えられたセッションの再生状態を操作します。
+与えられたセッションのstateを操作します。
 
 ### リクエスト
 
 ```json5
 {
-  "state": "PLAY" // 再生の状態: PLAY または PAUSE
+  "state": "PLAY" // 再生の状態: PLAY, PAUSE, STOP, ARCHIVED
 }
 ```
 
@@ -468,6 +468,22 @@ Spotifyの本体アプリ側で操作されて、Relaym側との同期が取れ�
 ```json
 {
 "type": "INTERRUPT"
+}
+```
+
+#### ARCHIVED
+セッションがARCHIVEされた際に発されるイベントです。
+```json
+{
+"type": "ARCHIVED"
+}
+```
+
+#### UNARCHIVED
+セッションのARCHIVEが解除された際に発されるイベントです。
+```json
+{
+"type": "UNARCHIVED"
 }
 ```
 
