@@ -213,8 +213,10 @@ func (s *SessionUseCase) archive(ctx context.Context, sessionID string) error {
 		return fmt.Errorf("FindByID sessionID=%s: %w", sessionID, err)
 	}
 
-	if err := s.playerCli.Pause(ctx, session.DeviceID); err != nil && !errors.Is(err, entity.ErrActiveDeviceNotFound) {
-		return fmt.Errorf("call pause api: %w", err)
+	if session.StateType == entity.Play {
+		if err := s.playerCli.Pause(ctx, session.DeviceID); err != nil && !errors.Is(err, entity.ErrActiveDeviceNotFound) {
+			return fmt.Errorf("call pause api: %w", err)
+		}
 	}
 
 	s.tm.DeleteTimer(sessionID)
