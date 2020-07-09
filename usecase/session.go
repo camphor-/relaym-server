@@ -114,15 +114,17 @@ func (s *SessionUseCase) playORResume(ctx context.Context, sessionID string) err
 	// err != nilだけど正常処理を行う。
 	var returnErr error
 
+	userID, _ := service.GetUserIDFromContext(ctx)
+
 	err = s.playerCli.SetRepeatMode(ctx, false, sess.DeviceID)
-	if errors.Is(err, entity.ErrActiveDeviceNotFound) {
+	if errors.Is(err, entity.ErrActiveDeviceNotFound) && sess.IsCreator(userID) {
 		returnErr = err
 	} else if err != nil {
 		return fmt.Errorf("call set repeat off api: %w", err)
 	}
 
 	err = s.playerCli.SetShuffleMode(ctx, false, sess.DeviceID)
-	if errors.Is(err, entity.ErrActiveDeviceNotFound) {
+	if errors.Is(err, entity.ErrActiveDeviceNotFound) && sess.IsCreator(userID) {
 		returnErr = err
 	} else if err != nil {
 		return fmt.Errorf("call set repeat off api: %w", err)
@@ -130,7 +132,7 @@ func (s *SessionUseCase) playORResume(ctx context.Context, sessionID string) err
 
 	if sess.IsResume(entity.Play) {
 		err := s.playerCli.Play(ctx, sess.DeviceID)
-		if errors.Is(err, entity.ErrActiveDeviceNotFound) {
+		if errors.Is(err, entity.ErrActiveDeviceNotFound) && sess.IsCreator(userID) {
 			returnErr = err
 		} else if err != nil {
 			return fmt.Errorf("call play api: %w", err)

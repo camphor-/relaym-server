@@ -27,6 +27,7 @@ func TestSessionHandler_Playback(t *testing.T) {
 		name                     string
 		sessionID                string
 		body                     string
+		userID                   string
 		prepareMockPlayerFn      func(m *mock_spotify.MockPlayer)
 		prepareMockPusherFn      func(m *mock_event.MockPusher)
 		prepareMockUserRepoFn    func(m *mock_repository.MockUser)
@@ -60,9 +61,10 @@ func TestSessionHandler_Playback(t *testing.T) {
 		},
 		{
 			// https://github.com/camphor-/relaym-client/issues/195
-			name:      "PLAYで再生するデバイスがオフラインかつStateがPauseのときは403を返しつつも再生処理を行う",
+			name:      "PLAYで再生するデバイスがオフラインかつStateがPauseかつセッション作成者のリクエストのときは403を返しつつも再生処理を行う",
 			sessionID: "sessionID",
 			body:      `{"state": "PLAY"}`,
+			userID:    "creator_id",
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
 				m.EXPECT().SetRepeatMode(gomock.Any(), false, "device_id").Return(entity.ErrActiveDeviceNotFound)
 				m.EXPECT().SetShuffleMode(gomock.Any(), false, "device_id").Return(entity.ErrActiveDeviceNotFound)
@@ -96,6 +98,58 @@ func TestSessionHandler_Playback(t *testing.T) {
 						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
 					},
 				}).Return(nil)
+			},
+			wantErr:  true,
+			wantCode: http.StatusForbidden,
+		},
+		{
+			name:      "PLAYで再生するデバイスがオフラインかつStateがPauseかつセッション作成者以外のリクエストなら403で再生処理は行わない",
+			sessionID: "sessionID",
+			body:      `{"state": "PLAY"}`,
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().SetRepeatMode(gomock.Any(), false, "device_id").Return(entity.ErrActiveDeviceNotFound)
+			},
+			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+					ID:        "sessionID",
+					Name:      "session_name",
+					CreatorID: "creator_id",
+					QueueHead: 0,
+					DeviceID:  "device_id",
+					StateType: entity.Pause,
+					QueueTracks: []*entity.QueueTrack{
+						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
+					},
+				}, nil)
+			},
+			wantErr:  true,
+			wantCode: http.StatusForbidden,
+		},
+		{
+			name:      "PLAYで再生するデバイスがオフラインかつStateがStopなら403",
+			sessionID: "sessionID",
+			body:      `{"state": "PLAY"}`,
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().SetRepeatMode(gomock.Any(), false, "device_id").Return(entity.ErrActiveDeviceNotFound)
+			},
+			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+					ID:        "sessionID",
+					Name:      "session_name",
+					CreatorID: "creator_id",
+					QueueHead: 0,
+					DeviceID:  "device_id",
+					StateType: entity.Stop,
+					QueueTracks: []*entity.QueueTrack{
+						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
+					},
+				}, nil)
 			},
 			wantErr:  true,
 			wantCode: http.StatusForbidden,
@@ -320,6 +374,7 @@ func TestSessionHandler_Playback(t *testing.T) {
 			c.SetPath("/sessions/:id/playback")
 			c.SetParamNames("id")
 			c.SetParamValues(tt.sessionID)
+			c = setToContext(c, tt.userID, nil)
 
 			// モックの準備
 			ctrl := gomock.NewController(t)
