@@ -237,45 +237,6 @@ func TestSession_MoveToPlay(t *testing.T) {
 	}
 }
 
-func TestSession_MoveToStop(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name    string
-		session *Session
-		wantErr bool
-	}{
-		{
-			name: "Play",
-			session: &Session{
-				StateType: Play,
-			},
-			wantErr: false,
-		},
-		{
-			name: "Pause",
-			session: &Session{
-				StateType: Pause,
-			},
-			wantErr: false,
-		},
-		{
-			name: "Stop",
-			session: &Session{
-				StateType: Stop,
-			},
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.session.MoveToStop(); (err != nil) != tt.wantErr {
-				t.Errorf("MoveToStop() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
 func TestSession_GoNextTrack(t *testing.T) {
 	t.Parallel()
 

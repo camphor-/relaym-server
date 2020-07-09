@@ -88,28 +88,40 @@ func (s *SessionUseCase) CreateSession(sessionName string, creatorID string) (*e
 	return entity.NewSessionWithUser(newSession, creator), nil
 }
 
-// ChangePlaybackState は与えられたセッションの再生状態を操作します。
-func (s *SessionUseCase) ChangePlaybackState(ctx context.Context, sessionID string, st entity.StateType) error {
+// ChangeSessionState は与えられたセッションのstateを操作します。
+func (s *SessionUseCase) ChangeSessionState(ctx context.Context, sessionID string, st entity.StateType) error {
+	session, err := s.sessionRepo.FindByID(sessionID)
+	if err != nil {
+		return fmt.Errorf("find session id=%s: %w", sessionID, err)
+	}
+
+	if !session.IsValidNextStateFromAPI(st) {
+		return fmt.Errorf("state type from %s to %s: %w", session.StateType, st, entity.ErrChangeSessionStateNotPermit)
+	}
+
 	switch st {
 	case entity.Play:
-		if err := s.playORResume(ctx, sessionID); err != nil {
+		if err := s.playORResume(ctx, session); err != nil {
 			return fmt.Errorf("playORResume sessionID=%s: %w", sessionID, err)
 		}
 	case entity.Pause:
-		if err := s.pause(ctx, sessionID); err != nil {
+		if err := s.pause(ctx, session); err != nil {
 			return fmt.Errorf("pause sessionID=%s: %w", sessionID, err)
+		}
+	case entity.Archived:
+		if err := s.archive(ctx, session); err != nil {
+			return fmt.Errorf("archive sessionID=%s: %w", sessionID, err)
+		}
+	case entity.Stop:
+		if err := s.stop(session); err != nil {
+			return fmt.Errorf("unarchive sessionID=%s: %w", sessionID, err)
 		}
 	}
 	return nil
 }
 
-// Play はセッションのstateを STOP, PAUSE → PLAY に変更して曲の再生を始めます。
-func (s *SessionUseCase) playORResume(ctx context.Context, sessionID string) error {
-	sess, err := s.sessionRepo.FindByID(sessionID)
-	if err != nil {
-		return fmt.Errorf("find session id=%s: %w", sessionID, err)
-	}
-
+// PlayORResume はセッションのstateを STOP, PAUSE → PLAY に変更して曲の再生を始めます。
+func (s *SessionUseCase) playORResume(ctx context.Context, sess *entity.Session) error {
 	if err := s.playerCli.SetRepeatMode(ctx, false, sess.DeviceID); err != nil {
 		return fmt.Errorf("call set repeat off api: %w", err)
 	}
@@ -129,17 +141,17 @@ func (s *SessionUseCase) playORResume(ctx context.Context, sessionID string) err
 	}
 
 	if err := sess.MoveToPlay(); err != nil {
-		return fmt.Errorf("move to play id=%s: %w", sessionID, err)
+		return fmt.Errorf("move to play id=%s: %w", sess.ID, err)
 	}
 
 	if err := s.sessionRepo.Update(sess); err != nil {
-		return fmt.Errorf("update session id=%s: %w", sessionID, err)
+		return fmt.Errorf("update session id=%s: %w", sess.ID, err)
 	}
 
-	go s.startTrackEndTrigger(ctx, sessionID)
+	go s.startTrackEndTrigger(ctx, sess.ID)
 
 	s.pusher.Push(&event.PushMessage{
-		SessionID: sessionID,
+		SessionID: sess.ID,
 		Msg:       entity.EventPlay,
 	})
 
@@ -170,29 +182,79 @@ func (s *SessionUseCase) stopToPlay(ctx context.Context, sess *entity.Session) e
 }
 
 // Pause はセッションのstateをPLAY→PAUSEに変更して曲の再生を一時停止します。
-func (s *SessionUseCase) pause(ctx context.Context, sessionID string) error {
-	sess, err := s.sessionRepo.FindByID(sessionID)
-	if err != nil {
-		return fmt.Errorf("find session id=%s: %w", sessionID, err)
-	}
-
+func (s *SessionUseCase) pause(ctx context.Context, sess *entity.Session) error {
 	if err := s.playerCli.Pause(ctx, sess.DeviceID); err != nil && !errors.Is(err, entity.ErrActiveDeviceNotFound) {
 		return fmt.Errorf("call pause api: %w", err)
 	}
 
-	s.tm.StopTimer(sessionID)
+	s.tm.StopTimer(sess.ID)
 
 	if err := sess.MoveToPause(); err != nil {
-		return fmt.Errorf("move to pause id=%s: %w", sessionID, err)
+		return fmt.Errorf("move to pause id=%s: %w", sess.ID, err)
 	}
 
 	if err := s.sessionRepo.Update(sess); err != nil {
-		return fmt.Errorf("update session id=%s: %w", sessionID, err)
+		return fmt.Errorf("update session id=%s: %w", sess.ID, err)
 	}
 
 	s.pusher.Push(&event.PushMessage{
-		SessionID: sessionID,
+		SessionID: sess.ID,
 		Msg:       entity.EventPause,
+	})
+
+	return nil
+}
+
+// archive はセッションのstateをARCHIVEDに変更します。
+func (s *SessionUseCase) archive(ctx context.Context, session *entity.Session) error {
+	if session.StateType == entity.Play {
+		if err := s.playerCli.Pause(ctx, session.DeviceID); err != nil && !errors.Is(err, entity.ErrActiveDeviceNotFound) {
+			return fmt.Errorf("call pause api: %w", err)
+		}
+	}
+
+	s.tm.DeleteTimer(session.ID)
+
+	session.MoveToArchived()
+
+	if err := s.sessionRepo.Update(session); err != nil {
+		return fmt.Errorf("update session id=%s: %w", session.ID, err)
+	}
+
+	s.pusher.Push(&event.PushMessage{
+		SessionID: session.ID,
+		Msg:       entity.EventArchived,
+	})
+
+	return nil
+}
+
+// stop はセッションのstateをSTOPに変更します。
+func (s *SessionUseCase) stop(session *entity.Session) error {
+	if session.StateType == entity.Archived {
+		if err := s.archiveToStop(session); err != nil {
+			return fmt.Errorf("call archiveToCall: %w", err)
+		}
+		return nil
+	}
+
+	return fmt.Errorf("state type from %s to STOP: %w", session.StateType, entity.ErrChangeSessionStateNotPermit)
+}
+
+func (s *SessionUseCase) archiveToStop(session *entity.Session) error {
+	if err := session.UpdateTimestamp(); err != nil {
+		return fmt.Errorf("update timestamp id=%s", session.ID)
+	}
+
+	session.MoveToStop()
+
+	if err := s.sessionRepo.Update(session); err != nil {
+		return fmt.Errorf("update session id=%s: %w", session.ID, err)
+	}
+
+	s.pusher.Push(&event.PushMessage{
+		SessionID: session.ID,
+		Msg:       entity.EventUnarchive,
 	})
 
 	return nil
@@ -350,11 +412,7 @@ func (s *SessionUseCase) handleInterrupt(sess *entity.Session) error {
 	logger := log.New()
 	logger.Debugj(map[string]interface{}{"message": "interrupt detected", "sessionID": sess.ID})
 
-	if err := sess.MoveToStop(); err != nil {
-		// 必ずPlayされているのでこのエラーになることはないはず
-		logger.Errorj(map[string]interface{}{"message": "failed to move to stop", "sessionID": sess.ID, "error": err.Error()})
-		return fmt.Errorf("move to stop: id=%s: %v", sess.ID, err)
-	}
+	sess.MoveToStop()
 
 	s.pusher.Push(&event.PushMessage{
 		SessionID: sess.ID,

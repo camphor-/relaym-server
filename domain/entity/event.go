@@ -32,6 +32,16 @@ var (
 	EventInterrupt = &Event{
 		Type: "INTERRUPT",
 	}
+
+	// EventArchived はセッションがアーカイブされた際に発されるイベントです。
+	EventArchived = &Event{
+		Type: "ARCHIVED",
+	}
+
+	// EventUnarchive はセッションのアーカイブが解除された際に発されるイベントです。
+	EventUnarchive = &Event{
+		Type: "UNARCHIVE",
+	}
 )
 
 // NewEventNextTrack はセッションの曲の再生が (正常に) 次の曲に移った際に発されるイベントを生成します。

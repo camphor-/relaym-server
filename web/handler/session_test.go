@@ -22,7 +22,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func TestSessionHandler_Playback(t *testing.T) {
+func TestSessionHandler_State(t *testing.T) {
 	tests := []struct {
 		name                     string
 		sessionID                string
@@ -57,6 +57,30 @@ func TestSessionHandler_Playback(t *testing.T) {
 			},
 			wantErr:  true,
 			wantCode: http.StatusNotFound,
+		},
+		{
+			name:                  "不正なstateの変更(Play to Stop)が呼び出されるとErrChangeSessionStateNotPermit(status code: 400)",
+			sessionID:             "sessionID",
+			body:                  `{"state": "STOP"}`,
+			prepareMockPlayerFn:   func(m *mock_spotify.MockPlayer) {},
+			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+					ID:        "sessionID",
+					Name:      "session_name",
+					CreatorID: "creator_id",
+					QueueHead: 0,
+					DeviceID:  "device_id",
+					StateType: entity.Play,
+					QueueTracks: []*entity.QueueTrack{
+						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
+					},
+				}, nil)
+			},
+			wantErr:  true,
+			wantCode: http.StatusBadRequest,
 		},
 		{
 			name:      "PLAYで再生するデバイスがオフラインのとき403",
@@ -257,6 +281,78 @@ func TestSessionHandler_Playback(t *testing.T) {
 			wantCode: http.StatusAccepted,
 		},
 		{
+			name:                "STOPで正しく再生リクエストが処理されたとき202",
+			sessionID:           "sessionID",
+			body:                `{"state": "STOP"}`,
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {},
+			prepareMockPusherFn: func(m *mock_event.MockPusher) {
+				m.EXPECT().Push(&event.PushMessage{
+					SessionID: "sessionID",
+					Msg:       entity.EventUnarchive,
+				})
+			},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+					ID:          "sessionID",
+					Name:        "session_name",
+					CreatorID:   "creator_id",
+					QueueHead:   0,
+					DeviceID:    "device_id",
+					StateType:   "ARCHIVED",
+					QueueTracks: nil,
+				}, nil)
+				m.EXPECT().Update(&entity.Session{
+					ID:          "sessionID",
+					Name:        "session_name",
+					CreatorID:   "creator_id",
+					QueueHead:   0,
+					DeviceID:    "device_id",
+					StateType:   "STOP",
+					QueueTracks: nil,
+				}).Return(nil)
+			},
+			wantErr:  false,
+			wantCode: http.StatusAccepted,
+		},
+		{
+			name:      "ARCHIVEDで正しく再生リクエストが処理されたとき202",
+			sessionID: "sessionID",
+			body:      `{"state": "ARCHIVED"}`,
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().Pause(gomock.Any(), "device_id").Return(nil)
+			},
+			prepareMockPusherFn: func(m *mock_event.MockPusher) {
+				m.EXPECT().Push(&event.PushMessage{
+					SessionID: "sessionID",
+					Msg:       entity.EventArchived,
+				})
+			},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+					ID:          "sessionID",
+					Name:        "session_name",
+					CreatorID:   "creator_id",
+					QueueHead:   0,
+					DeviceID:    "device_id",
+					StateType:   "PLAY",
+					QueueTracks: nil,
+				}, nil)
+				m.EXPECT().Update(&entity.Session{
+					ID:          "sessionID",
+					Name:        "session_name",
+					CreatorID:   "creator_id",
+					QueueHead:   0,
+					DeviceID:    "device_id",
+					StateType:   "ARCHIVED",
+					QueueTracks: nil,
+				}).Return(nil)
+			},
+			wantErr:  false,
+			wantCode: http.StatusAccepted,
+		},
+		{
 			name:      "PAUSEで正しく再生リクエストが処理されたとき202",
 			sessionID: "sessionID",
 			body:      `{"state": "PAUSE"}`,
@@ -302,7 +398,7 @@ func TestSessionHandler_Playback(t *testing.T) {
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
-			c.SetPath("/sessions/:id/playback")
+			c.SetPath("/sessions/:id/state")
 			c.SetParamNames("id")
 			c.SetParamValues(tt.sessionID)
 
@@ -321,14 +417,14 @@ func TestSessionHandler_Playback(t *testing.T) {
 			h := &SessionHandler{
 				uc: uc,
 			}
-			err := h.Playback(c)
+			err := h.State(c)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Playback() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("State() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
 			// ステータスコードのチェック
 			if er, ok := err.(*echo.HTTPError); ok && er.Code != tt.wantCode {
-				t.Errorf("Playback() code = %d, want = %d", rec.Code, tt.wantCode)
+				t.Errorf("State() code = %d, want = %d", rec.Code, tt.wantCode)
 			}
 		})
 	}
