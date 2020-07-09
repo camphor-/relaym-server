@@ -110,8 +110,8 @@ func (s *SessionUseCase) playORResume(ctx context.Context, sessionID string) err
 		return fmt.Errorf("find session id=%s: %w", sessionID, err)
 	}
 
-	// active device not foundになった場合、スマホ側でSpotifyアプリを強制的に開かせてactiveにするので、
-	// err != nilだけど正常処理を行う。
+	// active device not foundになった場合、スマホ側でSpotifyアプリを強制的に開かせてactiveにするので、正常処理をする。
+	// その処理を切り替えるフラグとして使う。
 	var returnErr error
 
 	userID, _ := service.GetUserIDFromContext(ctx)
