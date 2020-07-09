@@ -69,10 +69,6 @@ func TestSessionHandler_Playback(t *testing.T) {
 				m.EXPECT().Play(gomock.Any(), "device_id").Return(nil)
 			},
 			prepareMockPusherFn: func(m *mock_event.MockPusher) {
-				m.EXPECT().Push(&event.PushMessage{
-					SessionID: "sessionID",
-					Msg:       entity.EventPlay,
-				})
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
