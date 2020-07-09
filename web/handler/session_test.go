@@ -440,26 +440,6 @@ func TestSessionHandler_SetDevice(t *testing.T) {
 			wantCode:              http.StatusNotFound,
 		},
 		{
-			name:      "リクエストしたユーザがセッションの作成者ではないと403",
-			userID:    "user_id",
-			sessionID: "session_id",
-			body:      `{"device_id": "device_id"}`,
-			prepareMockRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID("session_id").Return(&entity.Session{
-					ID:          "session_id",
-					Name:        "name",
-					CreatorID:   "creator_id",
-					QueueHead:   0,
-					DeviceID:    "device_id",
-					StateType:   "PAUSE",
-					QueueTracks: nil,
-				}, nil)
-			},
-			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
-			wantErr:               true,
-			wantCode:              http.StatusForbidden,
-		},
-		{
 			name:      "正しくデバイスをセットできると204",
 			userID:    "creator_id",
 			sessionID: "session_id",

@@ -389,11 +389,6 @@ func (s *SessionUseCase) SetDevice(ctx context.Context, sessionID string, device
 		return fmt.Errorf("find session id=%s: %w", sessionID, err)
 	}
 
-	userID, ok := service.GetUserIDFromContext(ctx)
-	if !ok || !sess.IsCreator(userID) {
-		return fmt.Errorf("userID=%s creatorID=%s: %w", userID, sess.CreatorID, entity.ErrUserIsNotSessionCreator)
-	}
-
 	sess.DeviceID = deviceID
 	if err := s.sessionRepo.Update(sess); err != nil {
 		return fmt.Errorf("update device id: device_id=%s session_id=%s: %w", deviceID, sess.ID, err)
