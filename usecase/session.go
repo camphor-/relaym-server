@@ -95,7 +95,7 @@ func (s *SessionUseCase) ChangeSessionState(ctx context.Context, sessionID strin
 		return fmt.Errorf("find session id=%s: %w", sessionID, err)
 	}
 
-	if !session.IsValidNextState(st) {
+	if !session.IsValidNextStateFromAPI(st) {
 		return fmt.Errorf("state type from %s to %s: %w", session.StateType, st, entity.ErrChangeSessionStateNotPermit)
 	}
 

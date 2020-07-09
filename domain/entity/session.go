@@ -193,7 +193,7 @@ func (s *Session) isEmptyQueue() bool {
 	return len(s.QueueTracks) == 0
 }
 
-// IsValidNextState は外部からリクエストされたstateの変更の正当性を評価します
+// IsValidNextStateFromAPI は外部からリクエストされたstateの変更の正当性を評価します
 func (s *Session) IsValidNextStateFromAPI(nextState StateType) bool {
 	if s.StateType == nextState {
 		return true
