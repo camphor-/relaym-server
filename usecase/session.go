@@ -110,16 +110,29 @@ func (s *SessionUseCase) playORResume(ctx context.Context, sessionID string) err
 		return fmt.Errorf("find session id=%s: %w", sessionID, err)
 	}
 
-	if err := s.playerCli.SetRepeatMode(ctx, false, sess.DeviceID); err != nil {
+	// active device not foundになった場合、スマホ側でSpotifyアプリを強制的に開かせてactiveにするので、
+	// err != nilだけど正常処理を行う。
+	var returnErr error
+
+	err = s.playerCli.SetRepeatMode(ctx, false, sess.DeviceID)
+	if errors.Is(err, entity.ErrActiveDeviceNotFound) {
+		returnErr = err
+	} else if err != nil {
 		return fmt.Errorf("call set repeat off api: %w", err)
 	}
 
-	if err := s.playerCli.SetShuffleMode(ctx, false, sess.DeviceID); err != nil {
+	err = s.playerCli.SetShuffleMode(ctx, false, sess.DeviceID)
+	if errors.Is(err, entity.ErrActiveDeviceNotFound) {
+		returnErr = err
+	} else if err != nil {
 		return fmt.Errorf("call set repeat off api: %w", err)
 	}
 
 	if sess.IsResume(entity.Play) {
-		if err := s.playerCli.Play(ctx, sess.DeviceID); err != nil {
+		err := s.playerCli.Play(ctx, sess.DeviceID)
+		if errors.Is(err, entity.ErrActiveDeviceNotFound) {
+			returnErr = err
+		} else if err != nil {
 			return fmt.Errorf("call play api: %w", err)
 		}
 	} else {
@@ -138,12 +151,16 @@ func (s *SessionUseCase) playORResume(ctx context.Context, sessionID string) err
 
 	go s.startTrackEndTrigger(ctx, sessionID)
 
-	s.pusher.Push(&event.PushMessage{
-		SessionID: sessionID,
-		Msg:       entity.EventPlay,
-	})
+	// nilじゃない場合にイベントを送ってしまうと、client側が GET /sessions/:id を叩いてしまい、
+	// 即座に INTERRUPT が発火されてしまって困るので条件分岐する。
+	if returnErr == nil {
+		s.pusher.Push(&event.PushMessage{
+			SessionID: sessionID,
+			Msg:       entity.EventPlay,
+		})
+	}
 
-	return nil
+	return returnErr
 }
 
 func (s *SessionUseCase) stopToPlay(ctx context.Context, sess *entity.Session) error {
@@ -220,7 +237,7 @@ func (s *SessionUseCase) startTrackEndTrigger(ctx context.Context, sessionID str
 	logger := log.New()
 	logger.Debugj(map[string]interface{}{"message": "start track end trigger", "sessionID": sessionID})
 
-	time.Sleep(5 * time.Second) // 曲の再生が始まるのを待つ
+	time.Sleep(7 * time.Second) // 曲の再生が始まるのを待つ
 	playingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
 	if err != nil {
 		logger.Errorj(map[string]interface{}{

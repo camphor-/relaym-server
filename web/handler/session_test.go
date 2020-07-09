@@ -59,14 +59,21 @@ func TestSessionHandler_Playback(t *testing.T) {
 			wantCode: http.StatusNotFound,
 		},
 		{
-			name:      "PLAYで再生するデバイスがオフラインのとき403",
+			// https://github.com/camphor-/relaym-client/issues/195
+			name:      "PLAYで再生するデバイスがオフラインかつStateがPauseのときは403を返しつつも再生処理を行う",
 			sessionID: "sessionID",
 			body:      `{"state": "PLAY"}`,
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
 				m.EXPECT().SetRepeatMode(gomock.Any(), false, "device_id").Return(entity.ErrActiveDeviceNotFound)
-
+				m.EXPECT().SetShuffleMode(gomock.Any(), false, "device_id").Return(entity.ErrActiveDeviceNotFound)
+				m.EXPECT().Play(gomock.Any(), "device_id").Return(nil)
 			},
-			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
+			prepareMockPusherFn: func(m *mock_event.MockPusher) {
+				m.EXPECT().Push(&event.PushMessage{
+					SessionID: "sessionID",
+					Msg:       entity.EventPlay,
+				})
+			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
 				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
@@ -81,6 +88,18 @@ func TestSessionHandler_Playback(t *testing.T) {
 						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
 					},
 				}, nil)
+				m.EXPECT().Update(&entity.Session{
+					ID:        "sessionID",
+					Name:      "session_name",
+					CreatorID: "creator_id",
+					QueueHead: 0,
+					DeviceID:  "device_id",
+					StateType: "PLAY",
+					QueueTracks: []*entity.QueueTrack{
+						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
+					},
+				}).Return(nil)
 			},
 			wantErr:  true,
 			wantCode: http.StatusForbidden,
