@@ -59,6 +59,30 @@ func TestSessionHandler_State(t *testing.T) {
 			wantCode: http.StatusNotFound,
 		},
 		{
+			name:                  "不正なstateの変更(Play to Stop)が呼び出されるとErrChangeSessionStateNotPermit(status code: 400)",
+			sessionID:             "sessionID",
+			body:                  `{"state": "STOP"}`,
+			prepareMockPlayerFn:   func(m *mock_spotify.MockPlayer) {},
+			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+					ID:        "sessionID",
+					Name:      "session_name",
+					CreatorID: "creator_id",
+					QueueHead: 0,
+					DeviceID:  "device_id",
+					StateType: entity.Play,
+					QueueTracks: []*entity.QueueTrack{
+						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
+					},
+				}, nil)
+			},
+			wantErr:  true,
+			wantCode: http.StatusBadRequest,
+		},
+		{
 			name:      "PLAYで再生するデバイスがオフラインのとき403",
 			sessionID: "sessionID",
 			body:      `{"state": "PLAY"}`,
