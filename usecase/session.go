@@ -382,17 +382,13 @@ func (s *SessionUseCase) handleInterrupt(sess *entity.Session) error {
 
 // SetDevice は指定されたidのセッションの作成者と再生する端末を紐付けて再生するデバイスを指定します。
 func (s *SessionUseCase) SetDevice(ctx context.Context, sessionID string, deviceID string) error {
-	userID, ok := service.GetUserIDFromContext(ctx)
-	if !ok {
-		return errors.New("get user id from context")
-	}
-
 	sess, err := s.sessionRepo.FindByID(sessionID)
 	if err != nil {
 		return fmt.Errorf("find session id=%s: %w", sessionID, err)
 	}
 
-	if !sess.IsCreator(userID) {
+	userID, ok := service.GetUserIDFromContext(ctx)
+	if !ok || !sess.IsCreator(userID) {
 		return fmt.Errorf("userID=%s creatorID=%s: %w", userID, sess.CreatorID, entity.ErrUserIsNotSessionCreator)
 	}
 

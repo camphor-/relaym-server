@@ -4,7 +4,10 @@ import (
 	"errors"
 	"net/http"
 
+	"golang.org/x/oauth2"
+
 	"github.com/camphor-/relaym-server/domain/entity"
+	"github.com/camphor-/relaym-server/domain/service"
 	"github.com/camphor-/relaym-server/log"
 	"github.com/camphor-/relaym-server/usecase"
 
@@ -48,7 +51,14 @@ func (m *CreatorTokenMiddleware) SetCreatorTokenToContext(next echo.HandlerFunc)
 		}
 		token = newToken
 
-		c = setToContext(c, creatorID, token)
+		c = setToCreatorContext(c, creatorID, token)
 		return next(c)
 	}
+}
+func setToCreatorContext(c echo.Context, userID string, token *oauth2.Token) echo.Context {
+	ctx := c.Request().Context()
+	ctx = service.SetCreatorIDToContext(ctx, userID)
+	ctx = service.SetTokenToContext(ctx, token)
+	c.SetRequest(c.Request().WithContext(ctx))
+	return c
 }

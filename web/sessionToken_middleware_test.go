@@ -67,7 +67,7 @@ func TestSessionTokenMiddleware_SetTokenToContext(t *testing.T) {
 			prepareAuthRepo: func(r *mock_repository.MockAuth) {},
 			prepareAuthCli:  func(c *mock_spotify.MockAuth) {},
 			next: func(c echo.Context) error {
-				userID, ok := service.GetUserIDFromContext(c.Request().Context())
+				userID, ok := service.GetCreatorIDFromContext(c.Request().Context())
 				if !ok {
 					t.Errorf("CreatorTokenMiddleware.SetCreatorTokenToContext() userID not found in context")
 				}
@@ -126,7 +126,7 @@ func TestSessionTokenMiddleware_SetTokenToContext(t *testing.T) {
 				}, nil)
 			},
 			next: func(c echo.Context) error {
-				userID, ok := service.GetUserIDFromContext(c.Request().Context())
+				userID, ok := service.GetCreatorIDFromContext(c.Request().Context())
 				if !ok {
 					t.Errorf("CreatorTokenMiddleware.SetCreatorTokenToContext() userID not found in context")
 				}
