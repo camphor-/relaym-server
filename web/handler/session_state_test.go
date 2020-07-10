@@ -30,41 +30,15 @@ func TestSessionHandler_State(t *testing.T) {
 		wantCode                 int
 	}{
 		{
-			name:      "ARCHIVEDで正しく再生リクエストが処理されたとき202",
-			sessionID: "sessionID",
-			body:      `{"state": "ARCHIVED"}`,
-			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
-				m.EXPECT().Pause(gomock.Any(), "device_id").Return(nil)
-			},
-			prepareMockPusherFn: func(m *mock_event.MockPusher) {
-				m.EXPECT().Push(&event.PushMessage{
-					SessionID: "sessionID",
-					Msg:       entity.EventArchived,
-				})
-			},
-			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
-			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
-					ID:          "sessionID",
-					Name:        "session_name",
-					CreatorID:   "creator_id",
-					QueueHead:   0,
-					DeviceID:    "device_id",
-					StateType:   "PLAY",
-					QueueTracks: nil,
-				}, nil)
-				m.EXPECT().Update(&entity.Session{
-					ID:          "sessionID",
-					Name:        "session_name",
-					CreatorID:   "creator_id",
-					QueueHead:   0,
-					DeviceID:    "device_id",
-					StateType:   "ARCHIVED",
-					QueueTracks: nil,
-				}).Return(nil)
-			},
-			wantErr:  false,
-			wantCode: http.StatusAccepted,
+			name:                     "存在しないstateのとき400",
+			sessionID:                "sessionID",
+			body:                     `{"state": "INVALID"}`,
+			prepareMockPlayerFn:      func(m *mock_spotify.MockPlayer) {},
+			prepareMockPusherFn:      func(m *mock_event.MockPusher) {},
+			prepareMockUserRepoFn:    func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {},
+			wantErr:                  true,
+			wantCode:                 http.StatusBadRequest,
 		},
 	}
 	for _, tt := range tests {
