@@ -120,18 +120,33 @@ func (s *SessionUseCase) ChangeSessionState(ctx context.Context, sessionID strin
 	return nil
 }
 
-// PlayORResume はセッションのstateを STOP, PAUSE → PLAY に変更して曲の再生を始めます。
+// playORResume はセッションのstateを STOP, PAUSE → PLAY に変更して曲の再生を始めます。
 func (s *SessionUseCase) playORResume(ctx context.Context, sess *entity.Session) error {
-	if err := s.playerCli.SetRepeatMode(ctx, false, sess.DeviceID); err != nil {
+	// active device not foundになった場合、スマホ側でSpotifyアプリを強制的に開かせてactiveにするので、正常処理をする。
+	// その処理を切り替えるフラグとして使う。
+	var returnErr error
+
+	userID, _ := service.GetUserIDFromContext(ctx)
+
+	err := s.playerCli.SetRepeatMode(ctx, false, sess.DeviceID)
+	if errors.Is(err, entity.ErrActiveDeviceNotFound) && sess.IsCreator(userID) {
+		returnErr = err
+	} else if err != nil {
 		return fmt.Errorf("call set repeat off api: %w", err)
 	}
 
-	if err := s.playerCli.SetShuffleMode(ctx, false, sess.DeviceID); err != nil {
+	err = s.playerCli.SetShuffleMode(ctx, false, sess.DeviceID)
+	if errors.Is(err, entity.ErrActiveDeviceNotFound) && sess.IsCreator(userID) {
+		returnErr = err
+	} else if err != nil {
 		return fmt.Errorf("call set repeat off api: %w", err)
 	}
 
 	if sess.IsResume(entity.Play) {
-		if err := s.playerCli.Play(ctx, sess.DeviceID); err != nil {
+		err := s.playerCli.Play(ctx, sess.DeviceID)
+		if errors.Is(err, entity.ErrActiveDeviceNotFound) && sess.IsCreator(userID) {
+			returnErr = err
+		} else if err != nil {
 			return fmt.Errorf("call play api: %w", err)
 		}
 	} else {
@@ -150,12 +165,16 @@ func (s *SessionUseCase) playORResume(ctx context.Context, sess *entity.Session)
 
 	go s.startTrackEndTrigger(ctx, sess.ID)
 
-	s.pusher.Push(&event.PushMessage{
-		SessionID: sess.ID,
-		Msg:       entity.EventPlay,
-	})
+	// nilじゃない場合にイベントを送ってしまうと、client側が GET /sessions/:id を叩いてしまい、
+	// 即座に INTERRUPT が発火されてしまって困るので条件分岐する。
+	if returnErr == nil {
+		s.pusher.Push(&event.PushMessage{
+			SessionID: sess.ID,
+			Msg:       entity.EventPlay,
+		})
+	}
 
-	return nil
+	return returnErr
 }
 
 func (s *SessionUseCase) stopToPlay(ctx context.Context, sess *entity.Session) error {
@@ -282,7 +301,7 @@ func (s *SessionUseCase) startTrackEndTrigger(ctx context.Context, sessionID str
 	logger := log.New()
 	logger.Debugj(map[string]interface{}{"message": "start track end trigger", "sessionID": sessionID})
 
-	time.Sleep(5 * time.Second) // 曲の再生が始まるのを待つ
+	time.Sleep(7 * time.Second) // 曲の再生が始まるのを待つ
 	playingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
 	if err != nil {
 		logger.Errorj(map[string]interface{}{
@@ -423,18 +442,9 @@ func (s *SessionUseCase) handleInterrupt(sess *entity.Session) error {
 
 // SetDevice は指定されたidのセッションの作成者と再生する端末を紐付けて再生するデバイスを指定します。
 func (s *SessionUseCase) SetDevice(ctx context.Context, sessionID string, deviceID string) error {
-	userID, ok := service.GetUserIDFromContext(ctx)
-	if !ok {
-		return errors.New("get user id from context")
-	}
-
 	sess, err := s.sessionRepo.FindByID(sessionID)
 	if err != nil {
 		return fmt.Errorf("find session id=%s: %w", sessionID, err)
-	}
-
-	if !sess.IsCreator(userID) {
-		return fmt.Errorf("userID=%s creatorID=%s: %w", userID, sess.CreatorID, entity.ErrUserIsNotSessionCreator)
 	}
 
 	sess.DeviceID = deviceID
