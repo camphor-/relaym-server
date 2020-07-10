@@ -57,18 +57,9 @@ func TestSessionHandler_State(t *testing.T) {
 			// モックの準備
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
-			mockPlayer := mock_spotify.NewMockPlayer(ctrl)
-			tt.prepareMockPlayerFn(mockPlayer)
-			mockPusher := mock_event.NewMockPusher(ctrl)
-			tt.prepareMockPusherFn(mockPusher)
-			mockUserRepo := mock_repository.NewMockUser(ctrl)
-			tt.prepareMockUserRepoFn(mockUserRepo)
-			mockSessionRepo := mock_repository.NewMockSession(ctrl)
-			tt.prepareMockSessionRepoFn(mockSessionRepo)
-			uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, nil, nil, mockPusher)
-			h := &SessionHandler{
-				uc: uc,
-			}
+			h := newSessionHandlerForTest(t, ctrl, tt.prepareMockPlayerFn, tt.prepareMockPusherFn,
+				tt.prepareMockUserRepoFn, tt.prepareMockSessionRepoFn)
+
 			err := h.State(c)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("State() error = %v, wantErr %v", err, tt.wantErr)
