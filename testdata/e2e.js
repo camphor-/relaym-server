@@ -15,23 +15,10 @@ console.assert(getMeRes.ok,"自分の情報を取得に失敗しました",getMe
 const user = await getMeRes.json()
 console.log(user)
 
-console.log("----------STEP2 : デバイスを取得----------")
-
-const getDevicesRes = await fetch("http://relaym.local:8080/api/v3/users/me/devices", {
-    "headers": {
-        "X-CSRF-TOKEN": "relaym",
-        "content-type":"application/json"
-    },
-    "method": "GET",
-    "mode": "cors",
-    "credentials": "include"
-});
-console.assert(getDevicesRes.ok,"デバイスの取得に失敗しました",getDevicesRes.status)
-const devices = await getDevicesRes.json()
-console.log(devices)
 
 
-console.log("----------STEP3 : セッションの作成----------")
+
+console.log("----------STEP2 : セッションの作成----------")
 
 const sessionName = 'test'
 const createSessionRes = await fetch("http://relaym.local:8080/api/v3/sessions", {
@@ -47,6 +34,21 @@ const createSessionRes = await fetch("http://relaym.local:8080/api/v3/sessions",
 console.assert(createSessionRes.ok,"セッションの作成に失敗しました",createSessionRes.status)
 const session = await createSessionRes.json()
 console.log(session)
+
+console.log("----------STEP3 : デバイスを取得----------")
+
+const getDevicesRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session.id}/devices`, {
+    "headers": {
+        "X-CSRF-TOKEN": "relaym",
+        "content-type":"application/json"
+    },
+    "method": "GET",
+    "mode": "cors",
+    "credentials": "include"
+});
+console.assert(getDevicesRes.ok,"デバイスの取得に失敗しました",getDevicesRes.status)
+const devices = await getDevicesRes.json()
+console.log(devices)
 
 console.log("----------STEP4 : セッションに曲を追加(1曲目)----------")
 
@@ -95,7 +97,7 @@ console.assert(setDeviceRes.ok,"デバイスのセットに失敗しました",s
 
 console.log("----------STEP7 : 再生----------")
 
-const playRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session.id}/playback`, {
+const playRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session.id}/state`, {
     "headers": {
         "X-CSRF-TOKEN": "relaym",
         "content-type":"application/json"
@@ -112,7 +114,7 @@ await sleep(5000)
 
 console.log("----------STEP8 : 一時停止----------")
 
-const pauseRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session.id}/playback`, {
+const pauseRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session.id}/state`, {
     "headers": {
         "X-CSRF-TOKEN": "relaym",
         "content-type":"application/json"
@@ -127,7 +129,7 @@ await sleep(5000)
 
 console.log("----------STEP9 : 再度再生----------")
 
-const rePlayRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session.id}/playback`, {
+const rePlayRes = await fetch(`http://relaym.local:8080/api/v3/sessions/${session.id}/state`, {
     "headers": {
         "X-CSRF-TOKEN": "relaym",
         "content-type":"application/json"

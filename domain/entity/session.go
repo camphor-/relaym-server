@@ -73,9 +73,13 @@ func (s *Session) MoveToPause() error {
 }
 
 // MoveToStop はセッションのStateTypeをStopに状態遷移します。
-func (s *Session) MoveToStop() error {
+func (s *Session) MoveToStop() {
 	s.StateType = Stop
-	return nil
+}
+
+// MoveToArchived はセッションのStateTypeをArchivedに状態遷移します。
+func (s *Session) MoveToArchived() {
+	s.StateType = Archived
 }
 
 // IsCreator は指定されたユーザがセッションの作成者かどうか返します。
@@ -178,20 +182,47 @@ func (s *Session) IsPlaying() bool {
 	return s.StateType == Play
 }
 
+// UpdateTimestamp はsessionのTimestampを現在の時刻に更新します。
+func (s *Session) UpdateTimestamp() error {
+	// TODO: timestampを更新する
+	return nil
+}
+
 // isEmptyQueue はキューが空かどうか返します。
 func (s *Session) isEmptyQueue() bool {
 	return len(s.QueueTracks) == 0
 }
 
+// IsValidNextStateFromAPI は外部からリクエストされたstateの変更の正当性を評価します
+func (s *Session) IsValidNextStateFromAPI(nextState StateType) bool {
+	if s.StateType == nextState {
+		return true
+	}
+
+	switch s.StateType {
+	case Play:
+		return nextState == Pause || nextState == Archived
+	case Pause:
+		return nextState == Play || nextState == Archived
+	case Archived:
+		return nextState == Stop
+	case Stop:
+		return nextState == Play || nextState == Archived
+	}
+
+	return false
+}
+
 type StateType string
 
 const (
-	Play  StateType = "PLAY"
-	Pause StateType = "PAUSE"
-	Stop  StateType = "STOP"
+	Play     StateType = "PLAY"
+	Pause    StateType = "PAUSE"
+	Stop     StateType = "STOP"
+	Archived StateType = "ARCHIVED"
 )
 
-var stateTypes = []StateType{Play, Pause, Stop}
+var stateTypes = []StateType{Play, Pause, Stop, Archived}
 
 // NewStateType はstringから対応するStateTypeを生成します。
 func NewStateType(stateType string) (StateType, error) {

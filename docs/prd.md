@@ -127,6 +127,7 @@ https://coolors.co/dc4a5e-14213d-707070-eeeeee-ffffff
 | PLAY | 曲が再生されている状態 |
 | PAUSE | 曲を再生していたが途中で一時停止ボタンを押した状態|
 | STOP | 曲の再生を一度も開始していない or すべての曲の再生が終了した状態 | 
+| ARCHIVED | セッションがアーカイブされた状態 | 
 
 #### 状態遷移パターン
 
@@ -134,7 +135,9 @@ https://coolors.co/dc4a5e-14213d-707070-eeeeee-ffffff
 - PLAY → STOP
 - PLAY → PAUSE
 - PAUSE → PLAY
-- PAUSE → SATOP
+- PAUSE → STOP
+- PLAY | PAUSE | STOP → ARCHIVED
+- ARCHIVED → STOP
 
 
 ### 曲の再生

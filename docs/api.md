@@ -213,17 +213,17 @@ X-CSRF-Token: relaym
 | 404 | session not found | 指定されたidのセッションが存在しない |
 
 
-## PUT /sessions/:id/playback
+## PUT /sessions/:id/state
 
 ### 概要
 
-与えられたセッションの再生状態を操作します。
+与えられたセッションのstateを操作します。
 
 ### リクエスト
 
 ```json5
 {
-  "state": "PLAY" // 再生の状態: PLAY または PAUSE
+  "state": "PLAY" // 再生の状態: PLAY, PAUSE, STOP, ARCHIVED
 }
 ```
 
@@ -243,7 +243,7 @@ X-CSRF-Token: relaym
 | ---- | -------- | -------- |
 | 400 | invalid state     | 不正なstate |
 | 400 | queue track not found | キューが存在しないので操作を開始できない |
-| 400 | change session state is not permits | STOPのときにPAUSEにしようとするとエラー | 
+| 400 | requested state is not allowed | 許可されていないstateへの変更(許可されているstateの変更は[PRD](prd.md)を参照) | 
 | 400 | next queue track not found | 再生が終了してStopになったが次のキューが無いので再生を開始できない |   
 | 403 | active device not found | アクティブなデバイスが存在しないので操作ができない |
 | 404 | session not found | 指定されたidのセッションが存在しない |
@@ -463,11 +463,27 @@ Spotifyで曲の検索を行います。
 #### INTERRUPT
 Spotifyの本体アプリ側で操作されて、Relaym側との同期が取れなくなったタイミングで発されるイベントです。
 
-セッションはSTOP状態になり、再度playback APIでPLAYにする必要があります。
+セッションはSTOP状態になり、再度state APIでPLAYにする必要があります。
 
 ```json
 {
 "type": "INTERRUPT"
+}
+```
+
+#### ARCHIVED
+セッションがARCHIVEされた際に発されるイベントです。
+```json
+{
+"type": "ARCHIVED"
+}
+```
+
+#### UNARCHIVED
+セッションのARCHIVEが解除された際に発されるイベントです。
+```json
+{
+"type": "UNARCHIVED"
 }
 ```
 

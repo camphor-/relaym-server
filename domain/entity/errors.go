@@ -38,7 +38,7 @@ var (
 	ErrInvalidStateType = errors.New("invalid state type")
 
 	// ErrChangeSessionStateNotPermit はセッションのステートの状態遷移が許可されていない場合のエラーを表します。
-	ErrChangeSessionStateNotPermit = errors.New("change session state is not permits")
+	ErrChangeSessionStateNotPermit = errors.New("requested state is not allowed")
 
 	// ErrLoginSessionNotFound はセッション(login)が存在しないエラーを表します。
 	ErrLoginSessionNotFound = errors.New("loginSession not found")
