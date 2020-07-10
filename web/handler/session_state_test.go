@@ -411,6 +411,18 @@ func TestSessionHandler_State_PLAY(t *testing.T) {
 			wantErr:  true,
 			wantCode: http.StatusNotFound,
 		},
+		{
+			name:                  "StateType=ARCHIVED: 不正なstate遷移なので400",
+			sessionID:             "sessionID",
+			prepareMockPlayerFn:   func(m *mock_spotify.MockPlayer) {},
+			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("sessionID").Return(&entity.Session{StateType: entity.Archived}, nil)
+			},
+			wantErr:  true,
+			wantCode: http.StatusBadRequest,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -587,21 +599,25 @@ func TestSessionHandler_State_PAUSE(t *testing.T) {
 			wantCode: http.StatusAccepted,
 		},
 		{
-			name:                  "StateType=STOP: STOPからPAUSEにすることはできないので400",
+			name:                  "StateType=STOP: 不正なstate遷移なので400",
 			sessionID:             "sessionID",
 			prepareMockPlayerFn:   func(m *mock_spotify.MockPlayer) {},
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
-					ID:          "sessionID",
-					Name:        "session_name",
-					CreatorID:   "creator_id",
-					QueueHead:   0,
-					DeviceID:    "device_id",
-					StateType:   entity.Stop,
-					QueueTracks: nil,
-				}, nil)
+				m.EXPECT().FindByID("sessionID").Return(&entity.Session{StateType: entity.Stop}, nil)
+			},
+			wantErr:  true,
+			wantCode: http.StatusBadRequest,
+		},
+		{
+			name:                  "StateType=ARCHIVED: 不正なstate遷移なので400",
+			sessionID:             "sessionID",
+			prepareMockPlayerFn:   func(m *mock_spotify.MockPlayer) {},
+			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("sessionID").Return(&entity.Session{StateType: entity.Archived}, nil)
 			},
 			wantErr:  true,
 			wantCode: http.StatusBadRequest,
