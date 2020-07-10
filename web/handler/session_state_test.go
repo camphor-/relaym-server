@@ -711,7 +711,7 @@ func TestSessionHandler_State_STOP(t *testing.T) {
 			wantCode: http.StatusBadRequest,
 		},
 		{
-			name:                  "StateType=STOP: 不正なstateの変更なので400",
+			name:                  "StateType=STOP: なにもせずに202",
 			sessionID:             "sessionID",
 			prepareMockPlayerFn:   func(m *mock_spotify.MockPlayer) {},
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
@@ -719,8 +719,8 @@ func TestSessionHandler_State_STOP(t *testing.T) {
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
 				m.EXPECT().FindByID("sessionID").Return(&entity.Session{StateType: entity.Stop}, nil)
 			},
-			wantErr:  true,
-			wantCode: http.StatusBadRequest,
+			wantErr:  false,
+			wantCode: http.StatusAccepted,
 		},
 	}
 	for _, tt := range tests {
