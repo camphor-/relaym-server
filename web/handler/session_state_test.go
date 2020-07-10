@@ -589,7 +589,6 @@ func TestSessionHandler_State_PLAY(t *testing.T) {
 			wantErr:  true,
 			wantCode: http.StatusForbidden,
 		},
-
 		{
 			name:      "StateType=PAUSE: 再生するデバイスがオフラインかつセッション作成者以外のリクエストのとき403",
 			sessionID: "sessionID",
@@ -734,6 +733,201 @@ func TestSessionHandler_State_PLAY(t *testing.T) {
 			// httptestの準備
 			e := echo.New()
 			req := httptest.NewRequest(http.MethodPut, "/", strings.NewReader(`{"state": "PLAY"}`))
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			c.SetPath("/sessions/:id/state")
+			c.SetParamNames("id")
+			c.SetParamValues(tt.sessionID)
+			c = setToContext(c, tt.userID, nil)
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			h := newSessionHandlerForTest(t, ctrl, tt.prepareMockPlayerFn, tt.prepareMockPusherFn,
+				tt.prepareMockUserRepoFn, tt.prepareMockSessionRepoFn)
+
+			err := h.State(c)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("State() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			if er, ok := err.(*echo.HTTPError); ok && er.Code != tt.wantCode {
+				t.Errorf("State() code = %d, want = %d", rec.Code, tt.wantCode)
+			}
+		})
+	}
+}
+
+func TestSessionHandler_State_PAUSE(t *testing.T) {
+	tests := []struct {
+		name                     string
+		sessionID                string
+		userID                   string
+		prepareMockPlayerFn      func(m *mock_spotify.MockPlayer)
+		prepareMockPusherFn      func(m *mock_event.MockPusher)
+		prepareMockUserRepoFn    func(m *mock_repository.MockUser)
+		prepareMockSessionRepoFn func(m *mock_repository.MockSession)
+		wantErr                  bool
+		wantCode                 int
+	}{
+		{
+			name:      "StateType=PLAY: 正しく一時停止処理が行われたら202",
+			sessionID: "sessionID",
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().Pause(gomock.Any(), "device_id").Return(nil)
+			},
+			prepareMockPusherFn: func(m *mock_event.MockPusher) {
+				m.EXPECT().Push(&event.PushMessage{SessionID: "sessionID", Msg: entity.EventPause})
+			},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+					ID:          "sessionID",
+					Name:        "session_name",
+					CreatorID:   "creator_id",
+					QueueHead:   0,
+					DeviceID:    "device_id",
+					StateType:   entity.Play,
+					QueueTracks: nil,
+				}, nil)
+				m.EXPECT().Update(&entity.Session{
+					ID:          "sessionID",
+					Name:        "session_name",
+					CreatorID:   "creator_id",
+					QueueHead:   0,
+					DeviceID:    "device_id",
+					StateType:   entity.Pause,
+					QueueTracks: nil,
+				}).Return(nil)
+			},
+			wantErr:  false,
+			wantCode: http.StatusAccepted,
+		},
+		{
+			name:      "StateType=PLAY: 再生するデバイスがオフラインのときは、既に再生が止まっているはずなので202",
+			sessionID: "sessionID",
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().Pause(gomock.Any(), "device_id").Return(entity.ErrActiveDeviceNotFound)
+			},
+			prepareMockPusherFn: func(m *mock_event.MockPusher) {
+				m.EXPECT().Push(&event.PushMessage{SessionID: "sessionID", Msg: entity.EventPause})
+			},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+					ID:          "sessionID",
+					Name:        "session_name",
+					CreatorID:   "creator_id",
+					DeviceID:    "device_id",
+					QueueHead:   0,
+					StateType:   entity.Play,
+					QueueTracks: nil,
+				}, nil)
+				m.EXPECT().Update(&entity.Session{
+					ID:          "sessionID",
+					Name:        "session_name",
+					CreatorID:   "creator_id",
+					DeviceID:    "device_id",
+					QueueHead:   0,
+					StateType:   entity.Pause,
+					QueueTracks: nil,
+				}).Return(nil)
+			},
+			wantErr:  false,
+			wantCode: http.StatusAccepted,
+		},
+		{
+			name:      "StateType=PAUSE: 既にPAUSEでも一応一時停止APIを叩いて202",
+			sessionID: "sessionID",
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().Pause(gomock.Any(), "device_id").Return(nil)
+			},
+			prepareMockPusherFn: func(m *mock_event.MockPusher) {
+				m.EXPECT().Push(&event.PushMessage{SessionID: "sessionID", Msg: entity.EventPause})
+			},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+					ID:          "sessionID",
+					Name:        "session_name",
+					CreatorID:   "creator_id",
+					QueueHead:   0,
+					DeviceID:    "device_id",
+					StateType:   entity.Pause,
+					QueueTracks: nil,
+				}, nil)
+				m.EXPECT().Update(&entity.Session{
+					ID:          "sessionID",
+					Name:        "session_name",
+					CreatorID:   "creator_id",
+					DeviceID:    "device_id",
+					QueueHead:   0,
+					StateType:   entity.Pause,
+					QueueTracks: nil,
+				}).Return(nil)
+			},
+			wantErr:  false,
+			wantCode: http.StatusAccepted,
+		},
+		{
+			name:      "StateType=PAUSE: 既にPAUSEでも一応一時停止APIを叩くが、デバイスがオフラインなら既に再生が止まっているはずなので202",
+			sessionID: "sessionID",
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().Pause(gomock.Any(), "device_id").Return(entity.ErrActiveDeviceNotFound)
+			},
+			prepareMockPusherFn: func(m *mock_event.MockPusher) {
+				m.EXPECT().Push(&event.PushMessage{SessionID: "sessionID", Msg: entity.EventPause})
+			},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+					ID:          "sessionID",
+					Name:        "session_name",
+					CreatorID:   "creator_id",
+					QueueHead:   0,
+					DeviceID:    "device_id",
+					StateType:   entity.Pause,
+					QueueTracks: nil,
+				}, nil)
+				m.EXPECT().Update(&entity.Session{
+					ID:          "sessionID",
+					Name:        "session_name",
+					CreatorID:   "creator_id",
+					DeviceID:    "device_id",
+					QueueHead:   0,
+					StateType:   entity.Pause,
+					QueueTracks: nil,
+				}).Return(nil)
+			},
+			wantErr:  false,
+			wantCode: http.StatusAccepted,
+		},
+		{
+			name:                  "StateType=STOP: STOPからPAUSEにすることはできないので400",
+			sessionID:             "sessionID",
+			prepareMockPlayerFn:   func(m *mock_spotify.MockPlayer) {},
+			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+					ID:          "sessionID",
+					Name:        "session_name",
+					CreatorID:   "creator_id",
+					QueueHead:   0,
+					DeviceID:    "device_id",
+					StateType:   entity.Stop,
+					QueueTracks: nil,
+				}, nil)
+			},
+			wantErr:  true,
+			wantCode: http.StatusBadRequest,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// httptestの準備
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPut, "/", strings.NewReader(`{"state": "PAUSE"}`))
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
