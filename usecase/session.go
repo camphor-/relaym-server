@@ -226,10 +226,13 @@ func (s *SessionUseCase) pause(ctx context.Context, sess *entity.Session) error 
 
 // archive はセッションのstateをARCHIVEDに変更します。
 func (s *SessionUseCase) archive(ctx context.Context, session *entity.Session) error {
-	if session.StateType == entity.Play {
+	switch session.StateType {
+	case entity.Play:
 		if err := s.playerCli.Pause(ctx, session.DeviceID); err != nil && !errors.Is(err, entity.ErrActiveDeviceNotFound) {
 			return fmt.Errorf("call pause api: %w", err)
 		}
+	case entity.Archived:
+		return nil
 	}
 
 	s.tm.DeleteTimer(session.ID)
