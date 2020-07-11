@@ -355,10 +355,6 @@ func (s *SessionUseCase) handleTrackEnd(ctx context.Context, sessionID string) (
 		return nil, false, fmt.Errorf("find session id=%s: %v", sessionID, err)
 	}
 
-	if sess.StateType == entity.Archived {
-
-	}
-
 	defer func() {
 		if err := s.sessionRepo.Update(sess); err != nil {
 			if returnErr != nil {
@@ -368,6 +364,17 @@ func (s *SessionUseCase) handleTrackEnd(ctx context.Context, sessionID string) (
 			}
 		}
 	}()
+
+	if sess.StateType == entity.Archived {
+		s.tm.DeleteTimer(sessionID)
+
+		s.pusher.Push(&event.PushMessage{
+			SessionID: sessionID,
+			Msg:       entity.EventArchived,
+		})
+
+		return nil, false, nil
+	}
 
 	if err := sess.GoNextTrack(); err != nil && errors.Is(err, entity.ErrSessionAllTracksFinished) {
 		s.handleAllTrackFinish(sess)
