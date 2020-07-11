@@ -581,7 +581,7 @@ func TestSessionHandler_State_STOP(t *testing.T) {
 						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
 					},
 				}, nil)
-				m.EXPECT().Update(&entity.Session{
+				m.EXPECT().UpdateWithTimeStamp(&entity.Session{
 					ID:        "sessionID",
 					Name:      "session_name",
 					CreatorID: "creator_id",

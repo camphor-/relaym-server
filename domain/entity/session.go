@@ -182,12 +182,6 @@ func (s *Session) IsPlaying() bool {
 	return s.StateType == Play
 }
 
-// UpdateTimestamp はsessionのTimestampを現在の時刻に更新します。
-func (s *Session) UpdateTimestamp() error {
-	// TODO: timestampを更新する
-	return nil
-}
-
 // isEmptyQueue はキューが空かどうか返します。
 func (s *Session) isEmptyQueue() bool {
 	return len(s.QueueTracks) == 0

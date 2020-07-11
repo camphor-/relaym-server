@@ -267,13 +267,9 @@ func (s *SessionUseCase) stop(session *entity.Session) error {
 }
 
 func (s *SessionUseCase) archiveToStop(session *entity.Session) error {
-	if err := session.UpdateTimestamp(); err != nil {
-		return fmt.Errorf("update timestamp id=%s", session.ID)
-	}
-
 	session.MoveToStop()
 
-	if err := s.sessionRepo.Update(session); err != nil {
+	if err := s.sessionRepo.UpdateWithTimeStamp(session); err != nil {
 		return fmt.Errorf("update session id=%s: %w", session.ID, err)
 	}
 
@@ -357,6 +353,10 @@ func (s *SessionUseCase) handleTrackEnd(ctx context.Context, sessionID string) (
 	sess, err := s.sessionRepo.FindByID(sessionID)
 	if err != nil {
 		return nil, false, fmt.Errorf("find session id=%s: %v", sessionID, err)
+	}
+
+	if sess.StateType == entity.Archived {
+
 	}
 
 	defer func() {
