@@ -14,4 +14,5 @@ type Session interface {
 	Update(*entity.Session) error
 	StoreQueueTrack(*entity.QueueTrackToStore) error
 	FindCreatorTokenBySessionID(string) (*oauth2.Token, string, error)
+	ArchiveSessionsForBatch() error
 }

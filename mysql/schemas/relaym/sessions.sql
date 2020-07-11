@@ -5,6 +5,8 @@ CREATE TABLE IF NOT EXISTS `sessions` (
   `queue_head` INT NOT NULL COMMENT 'プレイヤーにセットされている曲のindex（0-indexed）（可変）',
   `state_type` ENUM("PLAY","PAUSE","STOP","ARCHIVED") NOT NULL,
   `device_id` varchar(255) COLLATE utf8mb4_bin NOT NULL COMMENT '再生する端末のID(存在しない場合は空文字列)',
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  `unarchived_at` timestamp COMMENT '最後にArchiveが解除された日時',
   PRIMARY KEY (`id`),
   INDEX `sessions_user_id_fk_idx` (`creator_id` ASC) VISIBLE,
   CONSTRAINT `sessions_user_id_fk`

@@ -106,3 +106,17 @@ func (mr *MockSessionMockRecorder) FindCreatorTokenBySessionID(arg0 interface{})
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindCreatorTokenBySessionID", reflect.TypeOf((*MockSession)(nil).FindCreatorTokenBySessionID), arg0)
 }
+
+// ArchiveSessionsForBatch mocks base method
+func (m *MockSession) ArchiveSessionsForBatch() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ArchiveSessionsForBatch")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ArchiveSessionsForBatch indicates an expected call of ArchiveSessionsForBatch
+func (mr *MockSessionMockRecorder) ArchiveSessionsForBatch() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ArchiveSessionsForBatch", reflect.TypeOf((*MockSession)(nil).ArchiveSessionsForBatch))
+}

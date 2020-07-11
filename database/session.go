@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"golang.org/x/oauth2"
 
@@ -121,6 +122,16 @@ func (r *SessionRepository) Update(session *entity.Session) error {
 func (r *SessionRepository) StoreQueueTrack(queueTrack *entity.QueueTrackToStore) error {
 	if _, err := r.dbMap.Exec("INSERT INTO queue_tracks(`index`, uri, session_id) SELECT COALESCE(MAX(`index`),-1)+1, ?, ? from queue_tracks as qt WHERE session_id = ?;", queueTrack.URI, queueTrack.SessionID, queueTrack.SessionID); err != nil {
 		return fmt.Errorf("insert queue_tracks: %w", err)
+	}
+	return nil
+}
+
+// ArchiveSessionsForBatch は以下の条件に当てはまるSessionのstateをArchivedに変更します
+//// - 作成から3日以上が経過している。もしくはArchiveが解除されてから3日以上が経過している
+func (r *SessionRepository) ArchiveSessionsForBatch() error {
+	threeDaysBefore := time.Now().Add(-3 * 24 * time.Hour)
+	if _, err := r.dbMap.Exec("UPDATE sessions SET state_type = 'ARCHIVED' WHERE state_type != 'ARCHIVED' AND (created_at < ? AND unarchived_at IS NULL) OR unarchived_at < ?;", threeDaysBefore, threeDaysBefore); err != nil {
+		return fmt.Errorf("update session state_type to ARCHIVED: %w", err)
 	}
 	return nil
 }
