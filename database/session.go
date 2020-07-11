@@ -27,6 +27,7 @@ type SessionRepository struct {
 // NewSessionRepository はSessionRepositoryのポインタを生成する関数です
 func NewSessionRepository(dbMap *gorp.DbMap) *SessionRepository {
 	dbMap.AddTableWithName(sessionDTO{}, "sessions").SetKeys(false, "ID")
+	dbMap.AddTableWithName(sessionWithUnarchivedAtDTO{}, "sessions").SetKeys(false, "ID")
 	dbMap.AddTableWithName(queueTrackDTO{}, "queue_tracks")
 	return &SessionRepository{dbMap: dbMap}
 }
@@ -118,6 +119,24 @@ func (r *SessionRepository) Update(session *entity.Session) error {
 	return nil
 }
 
+// UpdateWithTimeStamp はセッションの情報を更新し、同時にUnarchivedAtも現在の時刻に更新します。
+func (r *SessionRepository) UpdateWithTimeStamp(session *entity.Session) error {
+	dto := &sessionWithUnarchivedAtDTO{
+		ID:           session.ID,
+		Name:         session.Name,
+		CreatorID:    session.CreatorID,
+		QueueHead:    session.QueueHead,
+		StateType:    session.StateType.String(),
+		DeviceID:     session.DeviceID,
+		UnarchivedAt: time.Now(),
+	}
+
+	if _, err := r.dbMap.Update(dto); err != nil {
+		return fmt.Errorf("update session: %w", err)
+	}
+	return nil
+}
+
 // StoreQueueTrack はQueueTrackをDBに挿入します。
 func (r *SessionRepository) StoreQueueTrack(queueTrack *entity.QueueTrackToStore) error {
 	if _, err := r.dbMap.Exec("INSERT INTO queue_tracks(`index`, uri, session_id) SELECT COALESCE(MAX(`index`),-1)+1, ?, ? from queue_tracks as qt WHERE session_id = ?;", queueTrack.URI, queueTrack.SessionID, queueTrack.SessionID); err != nil {
@@ -165,6 +184,16 @@ type sessionDTO struct {
 	QueueHead int    `db:"queue_head"`
 	StateType string `db:"state_type"`
 	DeviceID  string `db:"device_id"`
+}
+
+type sessionWithUnarchivedAtDTO struct {
+	ID           string    `db:"id"`
+	Name         string    `db:"name"`
+	CreatorID    string    `db:"creator_id"`
+	QueueHead    int       `db:"queue_head"`
+	StateType    string    `db:"state_type"`
+	DeviceID     string    `db:"device_id"`
+	UnarchivedAt time.Time `db:"unarchived_at"`
 }
 
 type queueTrackDTO struct {

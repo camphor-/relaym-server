@@ -77,6 +77,20 @@ func (mr *MockSessionMockRecorder) Update(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockSession)(nil).Update), arg0)
 }
 
+// UpdateWithTimeStamp mocks base method
+func (m *MockSession) UpdateWithTimeStamp(arg0 *entity.Session) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateWithTimeStamp", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateWithTimeStamp indicates an expected call of UpdateWithTimeStamp
+func (mr *MockSessionMockRecorder) UpdateWithTimeStamp(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWithTimeStamp", reflect.TypeOf((*MockSession)(nil).UpdateWithTimeStamp), arg0)
+}
+
 // StoreQueueTrack mocks base method
 func (m *MockSession) StoreQueueTrack(arg0 *entity.QueueTrackToStore) error {
 	m.ctrl.T.Helper()
