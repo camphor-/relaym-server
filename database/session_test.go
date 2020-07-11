@@ -549,3 +549,158 @@ func TestSessionRepository_FindCreatorTokenBySessionID(t *testing.T) {
 		})
 	}
 }
+
+func TestSessionRepository_ArchiveSessionsForBatch(t *testing.T) {
+	// Prepare
+	dbMap, err := NewDB()
+	if err != nil {
+		t.Fatal(err)
+	}
+	user := &userDTO{
+		ID:            "existing_user",
+		SpotifyUserID: "existing_user_spotify",
+		DisplayName:   "existing_user_display_name",
+	}
+	newSession := &sessionDTOWithCreatedAt{
+		ID:        "existing_session_id1",
+		Name:      "existing_session_name",
+		CreatorID: "existing_user",
+		QueueHead: 0,
+		StateType: "PLAY",
+		DeviceID:  "device_id",
+		CreatedAt: time.Now().Add(-1 * 24 * time.Hour),
+	}
+
+	oldSession := &sessionDTOWithCreatedAt{
+		ID:        "existing_session_id2",
+		Name:      "existing_session_name",
+		CreatorID: "existing_user",
+		QueueHead: 0,
+		StateType: "PLAY",
+		DeviceID:  "device_id",
+		CreatedAt: time.Now().Add(-4 * 24 * time.Hour),
+	}
+
+	oldButUnarchivedSession := &sessionDTOWithTimeStamps{
+		ID:           "existing_session_id3",
+		Name:         "existing_session_name",
+		CreatorID:    "existing_user",
+		QueueHead:    0,
+		StateType:    "PLAY",
+		DeviceID:     "device_id",
+		CreatedAt:    time.Now().Add(-4 * 24 * time.Hour),
+		UnarchivedAt: time.Now().Add(-1 * 24 * time.Hour),
+	}
+
+	unarchived4DaysAgoSession := &sessionDTOWithTimeStamps{
+		ID:           "existing_session_id4",
+		Name:         "existing_session_name",
+		CreatorID:    "existing_user",
+		QueueHead:    0,
+		StateType:    "PLAY",
+		DeviceID:     "device_id",
+		CreatedAt:    time.Now().Add(-5 * 24 * time.Hour),
+		UnarchivedAt: time.Now().Add(-4 * 24 * time.Hour),
+	}
+
+	tests := []struct {
+		name      string
+		session   interface{} // unarchived_atがnilのレコードを作成するためにはsessionDTOWithTimeStampsを使えない
+		wantState entity.StateType
+	}{
+		{
+			name:      "新しいsessionはARCHIVEされない",
+			session:   newSession,
+			wantState: "PLAY",
+		},
+		{
+			name:      "古いsessionはARCHIVEされる",
+			session:   oldSession,
+			wantState: "ARCHIVED",
+		},
+		{
+			name:      "古いが最近UnarchiveされたsessionはARCHIVEされない",
+			session:   oldButUnarchivedSession,
+			wantState: "PLAY",
+		},
+		{
+			name:      "古くてかつUnarchiveも最近されていないsessionはARCHIVEされる",
+			session:   unarchived4DaysAgoSession,
+			wantState: "ARCHIVED",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dbMap.AddTableWithName(userDTO{}, "users")
+			dbMap.AddTableWithName(sessionDTOWithCreatedAt{}, "sessions")
+			dbMap.AddTableWithName(sessionDTOWithTimeStamps{}, "sessions")
+			truncateTable(t, dbMap)
+
+			if err := dbMap.Insert(user); err != nil {
+				t.Errorf("SessionRepository.ArchiveSessionsForBatch() error = %v", err)
+				return
+			}
+
+			sessionWithCreatedAt, ok := tt.session.(*sessionDTOWithCreatedAt)
+			var id string
+			if ok {
+				if err := dbMap.Insert(sessionWithCreatedAt); err != nil {
+					t.Errorf("SessionRepository.ArchiveSessionsForBatch() error = %v", err)
+					return
+				}
+				id = sessionWithCreatedAt.ID
+			} else {
+				sessionWithTimeStamps, ok := tt.session.(*sessionDTOWithTimeStamps)
+				if !ok {
+					t.Errorf("SessionRepository.ArchiveSessionsForBatch() error = %v", err)
+					return
+				}
+				if err := dbMap.Insert(sessionWithTimeStamps); err != nil {
+					t.Errorf("SessionRepository.ArchiveSessionsForBatch() error = %v", err)
+					return
+				}
+				id = sessionWithTimeStamps.ID
+			}
+
+			r := &SessionRepository{
+				dbMap: dbMap,
+			}
+			if err := r.ArchiveSessionsForBatch(); err != nil {
+				t.Errorf("SessionRepository.ArchiveSessionsForBatch() error = %v", err)
+				return
+			}
+
+			session, err := r.FindByID(id)
+			if err != nil {
+				t.Errorf("SessionRepository.ArchiveSessionsForBatch() error = %v", err)
+				return
+			}
+
+			if session.StateType != tt.wantState {
+				t.Errorf("SessionRepository.ArchiveSessionsForBatch() wantState = %s, state = %s", session.StateType, tt.wantState)
+				return
+			}
+		})
+	}
+}
+
+type sessionDTOWithTimeStamps struct {
+	ID           string    `db:"id"`
+	Name         string    `db:"name"`
+	CreatorID    string    `db:"creator_id"`
+	QueueHead    int       `db:"queue_head"`
+	StateType    string    `db:"state_type"`
+	DeviceID     string    `db:"device_id"`
+	CreatedAt    time.Time `db:"created_at"`
+	UnarchivedAt time.Time `db:"unarchived_at"`
+}
+
+type sessionDTOWithCreatedAt struct {
+	ID        string    `db:"id"`
+	Name      string    `db:"name"`
+	CreatorID string    `db:"creator_id"`
+	QueueHead int       `db:"queue_head"`
+	StateType string    `db:"state_type"`
+	DeviceID  string    `db:"device_id"`
+	CreatedAt time.Time `db:"created_at"`
+}
