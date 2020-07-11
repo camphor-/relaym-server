@@ -388,6 +388,64 @@ func TestSessionUseCase_handleTrackEnd(t *testing.T) {
 			wantNextTrack:            false,
 			wantErr:                  true,
 		},
+		{
+			name:      "呼び出された時点でsessionのstateがARCHIVEDになっていた時にはtimerをdeleteしてArchivedのイベントを送信する",
+			sessionID: "sessionID",
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+			},
+			prepareMockPusherFn: func(m *mock_event.MockPusher) {
+				m.EXPECT().Push(&event.PushMessage{
+					SessionID: "sessionID",
+					Msg:       entity.EventArchived,
+				})
+			},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+					ID:        "sessionID",
+					Name:      "name",
+					CreatorID: "creatorID",
+					DeviceID:  "deviceID",
+					StateType: entity.Archived,
+					QueueHead: 0,
+					QueueTracks: []*entity.QueueTrack{
+						{
+							Index:     0,
+							URI:       "spotify:track:asfafefea",
+							SessionID: "sessionID",
+						},
+						{
+							Index:     1,
+							URI:       "spotify:track:differentTrack",
+							SessionID: "sessionID",
+						},
+					},
+				}, nil)
+				m.EXPECT().Update(&entity.Session{
+					ID:        "sessionID",
+					Name:      "name",
+					CreatorID: "creatorID",
+					DeviceID:  "deviceID",
+					StateType: entity.Archived,
+					QueueHead: 0,
+					QueueTracks: []*entity.QueueTrack{
+						{
+							Index:     0,
+							URI:       "spotify:track:asfafefea",
+							SessionID: "sessionID",
+						},
+						{
+							Index:     1,
+							URI:       "spotify:track:differentTrack",
+							SessionID: "sessionID",
+						},
+					},
+				}).Return(nil)
+			},
+			wantTriggerAfterTrackEnd: false,
+			wantNextTrack:            false,
+			wantErr:                  false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
