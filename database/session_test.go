@@ -684,6 +684,77 @@ func TestSessionRepository_ArchiveSessionsForBatch(t *testing.T) {
 	}
 }
 
+func TestSessionRepository_UpdateWithTimeStamp(t *testing.T) {
+	// Prepare
+	dbMap, err := NewDB()
+	if err != nil {
+		t.Fatal(err)
+	}
+	dbMap.AddTableWithName(sessionDTO{}, "sessions")
+	dbMap.AddTableWithName(sessionDTOWithTimeStamps{}, "sessions")
+	dbMap.AddTableWithName(userDTO{}, "users")
+	dbMap.AddTableWithName(queueTrackDTO{}, "queue_tracks")
+	truncateTable(t, dbMap)
+	user := &userDTO{
+		ID:            "existing_user",
+		SpotifyUserID: "existing_user_spotify",
+		DisplayName:   "existing_user_display_name",
+	}
+	session := &sessionDTO{
+		ID:        "existing_session_id",
+		Name:      "existing_session_name",
+		CreatorID: "existing_user",
+		QueueHead: 0,
+		StateType: "PAUSE",
+		DeviceID:  "device_id",
+	}
+	if err := dbMap.Insert(user, session); err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name             string
+		session          *entity.Session
+		wantUnarchivedAt time.Time
+		wantErr          bool
+	}{
+		{
+			name: "正常に動作し、unarchivedAtも更新される",
+			session: &entity.Session{
+				ID:          "existing_session_id",
+				Name:        "existing_session_name",
+				CreatorID:   "existing_user",
+				DeviceID:    "new_device_id",
+				StateType:   entity.Play,
+				QueueHead:   1,
+				QueueTracks: []*entity.QueueTrack{},
+			},
+			wantUnarchivedAt: time.Now().UTC(),
+			wantErr:          false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := NewSessionRepository(dbMap)
+			if err := r.UpdateWithTimeStamp(tt.session); (err != nil) != tt.wantErr {
+				t.Errorf("UpdateWithTimeStamp() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			if !tt.wantErr {
+				var dto sessionDTOWithTimeStamps
+
+				if err := r.dbMap.SelectOne(&dto, "SELECT id, name, creator_id, queue_head, state_type, device_id, created_at, unarchived_at FROM sessions WHERE id = ?", tt.session.ID); err != nil {
+					t.Fatal(err)
+				}
+
+				if !dto.UnarchivedAt.After(tt.wantUnarchivedAt.Add(-time.Minute)) {
+					t.Errorf("UpdateWithTimeStamp() want unarchivedAt: %s, got: %s", tt.wantUnarchivedAt, dto.UnarchivedAt)
+				}
+			}
+		})
+	}
+}
+
 type sessionDTOWithTimeStamps struct {
 	ID           string    `db:"id"`
 	Name         string    `db:"name"`
