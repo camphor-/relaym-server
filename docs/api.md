@@ -524,3 +524,19 @@ Spotifyの認証が終わった際にリダイレクトされてくるエンド�
 | code | 補足 |
 | - | - |
 |302 | GET /login で受け取ったredirect_url に認証用のクッキーをつけてリダイレクトします |
+
+## POST /batch/archive
+
+### 概要
+
+以下の条件のいずれかに当てはまるsessionのstateをARCHIVEDに変更します
+夜間にcronで叩かれることを想定しています
+
+- `created_at`が3日以上前で、かつ`unarchived_at`が`null`(一度もarchiveが解除されていない)もの
+- `unarchived_at`が3日以上前
+
+### レスポンス
+| code | 補足 |
+| - | - |
+| 200 | |
+|400| 何らかのエラーが発生 |
