@@ -674,7 +674,7 @@ func TestSessionRepository_UpdateWithExpiredAt(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fakedate := time.Date(2020, time.December, 4, 12, 0, 0, 0, time.UTC)
+	fakeDate := time.Date(2020, time.December, 4, 12, 0, 0, 0, time.UTC)
 
 	tests := []struct {
 		name    string
@@ -698,7 +698,7 @@ func TestSessionRepository_UpdateWithExpiredAt(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := NewSessionRepository(dbMap)
-			if err := r.UpdateWithExpiredAt(tt.session, &fakedate); (err != nil) != tt.wantErr {
+			if err := r.UpdateWithExpiredAt(tt.session, &fakeDate); (err != nil) != tt.wantErr {
 				t.Errorf("UpdateWithExpiredAt() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
@@ -709,10 +709,10 @@ func TestSessionRepository_UpdateWithExpiredAt(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				threeDaysAfter := fakedate.AddDate(0, 0, 3)
+				threeDaysAfter := fakeDate.AddDate(0, 0, 3)
 
 				if dto.ExpiredAt != threeDaysAfter {
-					t.Errorf("UpdateWithExpiredAt() want expierdAt: %s, got: %s", fakedate.AddDate(0, 0, 3), dto.ExpiredAt)
+					t.Errorf("UpdateWithExpiredAt() want expierdAt: %s, got: %s", fakeDate.AddDate(0, 0, 3), dto.ExpiredAt)
 				}
 			}
 		})
