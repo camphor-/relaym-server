@@ -27,7 +27,7 @@ type SessionRepository struct {
 // NewSessionRepository はSessionRepositoryのポインタを生成する関数です
 func NewSessionRepository(dbMap *gorp.DbMap) *SessionRepository {
 	dbMap.AddTableWithName(sessionDTO{}, "sessions").SetKeys(false, "ID")
-	dbMap.AddTableWithName(sessionWithUnarchivedAtDTO{}, "sessions").SetKeys(false, "ID")
+	dbMap.AddTableWithName(sessionWithoutExpiredAtDTO{}, "sessions").SetKeys(false, "ID")
 	dbMap.AddTableWithName(queueTrackDTO{}, "queue_tracks")
 	return &SessionRepository{dbMap: dbMap}
 }
@@ -91,6 +91,7 @@ func (r *SessionRepository) StoreSession(session *entity.Session) error {
 		QueueHead: session.QueueHead,
 		StateType: session.StateType.String(),
 		DeviceID:  session.DeviceID,
+		ExpiredAt: time.Now(),
 	}
 
 	if err := r.dbMap.Insert(dto); err != nil {
@@ -104,7 +105,7 @@ func (r *SessionRepository) StoreSession(session *entity.Session) error {
 
 // Update はセッションの情報を更新します。
 func (r *SessionRepository) Update(session *entity.Session) error {
-	dto := &sessionDTO{
+	dto := &sessionWithoutExpiredAtDTO{
 		ID:        session.ID,
 		Name:      session.Name,
 		CreatorID: session.CreatorID,
@@ -119,16 +120,17 @@ func (r *SessionRepository) Update(session *entity.Session) error {
 	return nil
 }
 
-// UpdateWithTimeStamp はセッションの情報を更新し、同時にUnarchivedAtも現在の時刻に更新します。
-func (r *SessionRepository) UpdateWithTimeStamp(session *entity.Session) error {
-	dto := &sessionWithUnarchivedAtDTO{
-		ID:           session.ID,
-		Name:         session.Name,
-		CreatorID:    session.CreatorID,
-		QueueHead:    session.QueueHead,
-		StateType:    session.StateType.String(),
-		DeviceID:     session.DeviceID,
-		UnarchivedAt: time.Now(),
+// UpdateWithExpiredAt はセッションの情報を更新し、同時にUnarchivedAtも現在の時刻に更新します。
+func (r *SessionRepository) UpdateWithExpiredAt(session *entity.Session, currentDateTime *time.Time) error {
+	threeDaysAfter := currentDateTime.AddDate(0, 0, 3)
+	dto := &sessionDTO{
+		ID:        session.ID,
+		Name:      session.Name,
+		CreatorID: session.CreatorID,
+		QueueHead: session.QueueHead,
+		StateType: session.StateType.String(),
+		DeviceID:  session.DeviceID,
+		ExpiredAt: threeDaysAfter,
 	}
 
 	if _, err := r.dbMap.Update(dto); err != nil {
@@ -148,8 +150,8 @@ func (r *SessionRepository) StoreQueueTrack(queueTrack *entity.QueueTrackToStore
 // ArchiveSessionsForBatch は以下の条件に当てはまるSessionのstateをArchivedに変更します
 //// - 作成から3日以上が経過している。もしくはArchiveが解除されてから3日以上が経過している
 func (r *SessionRepository) ArchiveSessionsForBatch() error {
-	threeDaysBefore := time.Now().Add(-3 * 24 * time.Hour)
-	if _, err := r.dbMap.Exec("UPDATE sessions SET state_type = 'ARCHIVED' WHERE state_type != 'ARCHIVED' AND (created_at < ? AND unarchived_at IS NULL) OR unarchived_at < ?;", threeDaysBefore, threeDaysBefore); err != nil {
+	currentDateTime := time.Now()
+	if _, err := r.dbMap.Exec("UPDATE sessions SET state_type = 'ARCHIVED' WHERE state_type != 'ARCHIVED' AND expired_at < ?;", currentDateTime); err != nil {
 		return fmt.Errorf("update session state_type to ARCHIVED: %w", err)
 	}
 	return nil
@@ -178,22 +180,22 @@ func (r *SessionRepository) toQueueTracks(resultQueueTracks []queueTrackDTO) []*
 }
 
 type sessionDTO struct {
+	ID        string    `db:"id"`
+	Name      string    `db:"name"`
+	CreatorID string    `db:"creator_id"`
+	QueueHead int       `db:"queue_head"`
+	StateType string    `db:"state_type"`
+	DeviceID  string    `db:"device_id"`
+	ExpiredAt time.Time `db:"expired_at"`
+}
+
+type sessionWithoutExpiredAtDTO struct {
 	ID        string `db:"id"`
 	Name      string `db:"name"`
 	CreatorID string `db:"creator_id"`
 	QueueHead int    `db:"queue_head"`
 	StateType string `db:"state_type"`
 	DeviceID  string `db:"device_id"`
-}
-
-type sessionWithUnarchivedAtDTO struct {
-	ID           string    `db:"id"`
-	Name         string    `db:"name"`
-	CreatorID    string    `db:"creator_id"`
-	QueueHead    int       `db:"queue_head"`
-	StateType    string    `db:"state_type"`
-	DeviceID     string    `db:"device_id"`
-	UnarchivedAt time.Time `db:"unarchived_at"`
 }
 
 type queueTrackDTO struct {

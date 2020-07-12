@@ -34,6 +34,7 @@ func TestSessionRepository_FindByID(t *testing.T) {
 		QueueHead: 0,
 		StateType: "PLAY",
 		DeviceID:  "device_id",
+		ExpiredAt: time.Now(),
 	}
 	queueTrack := &queueTrackDTO{
 		Index:     0,
@@ -115,6 +116,7 @@ func TestSessionRepository_StoreSession(t *testing.T) {
 		QueueHead: 0,
 		StateType: "PLAY",
 		DeviceID:  "device_id",
+		ExpiredAt: time.Now(),
 	}
 	if err := dbMap.Insert(user, session); err != nil {
 		t.Fatal(err)
@@ -171,6 +173,7 @@ func TestSessionRepository_Update(t *testing.T) {
 		t.Fatal(err)
 	}
 	dbMap.AddTableWithName(sessionDTO{}, "sessions")
+	dbMap.AddTableWithName(sessionWithoutExpiredAtDTO{}, "sessions")
 	dbMap.AddTableWithName(userDTO{}, "users")
 	dbMap.AddTableWithName(queueTrackDTO{}, "queue_tracks")
 	truncateTable(t, dbMap)
@@ -186,6 +189,7 @@ func TestSessionRepository_Update(t *testing.T) {
 		QueueHead: 0,
 		StateType: "PAUSE",
 		DeviceID:  "device_id",
+		ExpiredAt: time.Now(),
 	}
 	sameFieldSession := &sessionDTO{
 		ID:        "same_field_session_id",
@@ -193,6 +197,7 @@ func TestSessionRepository_Update(t *testing.T) {
 		CreatorID: "existing_user",
 		QueueHead: 0,
 		StateType: "PAUSE",
+		ExpiredAt: time.Now(),
 	}
 	if err := dbMap.Insert(user, session, sameFieldSession); err != nil {
 		t.Fatal(err)
@@ -234,6 +239,7 @@ func TestSessionRepository_Update(t *testing.T) {
 			r := NewSessionRepository(dbMap)
 			if err := r.Update(tt.session); (err != nil) != tt.wantErr {
 				t.Errorf("Update() error = %v, wantErr %v", err, tt.wantErr)
+				return
 			}
 
 			if !tt.wantErr {
@@ -272,6 +278,7 @@ func TestSessionRepository_StoreQueueTrack(t *testing.T) {
 		CreatorID: "existing_user",
 		QueueHead: 0,
 		StateType: "PLAY",
+		ExpiredAt: time.Now(),
 	}
 	sessionHasNoQueueTrack := &sessionDTO{
 		ID:        "session_with_no_queue_track_id",
@@ -279,6 +286,7 @@ func TestSessionRepository_StoreQueueTrack(t *testing.T) {
 		CreatorID: "existing_user",
 		QueueHead: 0,
 		StateType: "PLAY",
+		ExpiredAt: time.Now(),
 	}
 	queueTracks := &queueTrackDTO{
 		Index:     0,
@@ -358,6 +366,7 @@ func TestSessionRepository_getQueueTrackBySessionID(t *testing.T) {
 		CreatorID: "existing_user",
 		QueueHead: 0,
 		StateType: "PLAY",
+		ExpiredAt: time.Now(),
 	}
 	sessionHasManyQueueTracks := &sessionDTO{
 		ID:        "session_has_many_queue_tracks_id",
@@ -365,6 +374,7 @@ func TestSessionRepository_getQueueTrackBySessionID(t *testing.T) {
 		CreatorID: "existing_user",
 		QueueHead: 0,
 		StateType: "PLAY",
+		ExpiredAt: time.Now(),
 	}
 
 	queueTrack1 := &queueTrackDTO{
@@ -493,6 +503,7 @@ func TestSessionRepository_FindCreatorTokenBySessionID(t *testing.T) {
 		QueueHead: 0,
 		StateType: "STOP",
 		DeviceID:  "device_id",
+		ExpiredAt: time.Now(),
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -561,51 +572,29 @@ func TestSessionRepository_ArchiveSessionsForBatch(t *testing.T) {
 		SpotifyUserID: "existing_user_spotify",
 		DisplayName:   "existing_user_display_name",
 	}
-	newSession := &sessionDTOWithCreatedAt{
+	oldSession := &sessionDTO{
 		ID:        "existing_session_id1",
 		Name:      "existing_session_name",
 		CreatorID: "existing_user",
 		QueueHead: 0,
 		StateType: "PLAY",
 		DeviceID:  "device_id",
-		CreatedAt: time.Now().Add(-1 * 24 * time.Hour),
+		ExpiredAt: time.Now().Add(-1 * 24 * time.Hour),
 	}
 
-	oldSession := &sessionDTOWithCreatedAt{
+	newSession := &sessionDTO{
 		ID:        "existing_session_id2",
 		Name:      "existing_session_name",
 		CreatorID: "existing_user",
 		QueueHead: 0,
 		StateType: "PLAY",
 		DeviceID:  "device_id",
-		CreatedAt: time.Now().Add(-4 * 24 * time.Hour),
-	}
-
-	oldButUnarchivedSession := &sessionDTOWithTimeStamps{
-		ID:           "existing_session_id3",
-		Name:         "existing_session_name",
-		CreatorID:    "existing_user",
-		QueueHead:    0,
-		StateType:    "PLAY",
-		DeviceID:     "device_id",
-		CreatedAt:    time.Now().Add(-4 * 24 * time.Hour),
-		UnarchivedAt: time.Now().Add(-1 * 24 * time.Hour),
-	}
-
-	unarchived4DaysAgoSession := &sessionDTOWithTimeStamps{
-		ID:           "existing_session_id4",
-		Name:         "existing_session_name",
-		CreatorID:    "existing_user",
-		QueueHead:    0,
-		StateType:    "PLAY",
-		DeviceID:     "device_id",
-		CreatedAt:    time.Now().Add(-5 * 24 * time.Hour),
-		UnarchivedAt: time.Now().Add(-4 * 24 * time.Hour),
+		ExpiredAt: time.Now().Add(1 * 24 * time.Hour),
 	}
 
 	tests := []struct {
 		name      string
-		session   interface{} // unarchived_atがnilのレコードを作成するためにはsessionDTOWithTimeStampsを使えない
+		session   *sessionDTO // unarchived_atがnilのレコードを作成するためにはsessionDTOWithTimeStampsを使えない
 		wantState entity.StateType
 	}{
 		{
@@ -618,22 +607,11 @@ func TestSessionRepository_ArchiveSessionsForBatch(t *testing.T) {
 			session:   oldSession,
 			wantState: "ARCHIVED",
 		},
-		{
-			name:      "古いが最近UnarchiveされたsessionはARCHIVEされない",
-			session:   oldButUnarchivedSession,
-			wantState: "PLAY",
-		},
-		{
-			name:      "古くてかつUnarchiveも最近されていないsessionはARCHIVEされる",
-			session:   unarchived4DaysAgoSession,
-			wantState: "ARCHIVED",
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dbMap.AddTableWithName(userDTO{}, "users")
-			dbMap.AddTableWithName(sessionDTOWithCreatedAt{}, "sessions")
-			dbMap.AddTableWithName(sessionDTOWithTimeStamps{}, "sessions")
+			dbMap.AddTableWithName(sessionDTO{}, "sessions")
 			truncateTable(t, dbMap)
 
 			if err := dbMap.Insert(user); err != nil {
@@ -641,25 +619,9 @@ func TestSessionRepository_ArchiveSessionsForBatch(t *testing.T) {
 				return
 			}
 
-			sessionWithCreatedAt, ok := tt.session.(*sessionDTOWithCreatedAt)
-			var id string
-			if ok {
-				if err := dbMap.Insert(sessionWithCreatedAt); err != nil {
-					t.Errorf("SessionRepository.ArchiveSessionsForBatch() error = %v", err)
-					return
-				}
-				id = sessionWithCreatedAt.ID
-			} else {
-				sessionWithTimeStamps, ok := tt.session.(*sessionDTOWithTimeStamps)
-				if !ok {
-					t.Errorf("SessionRepository.ArchiveSessionsForBatch() error = %v", err)
-					return
-				}
-				if err := dbMap.Insert(sessionWithTimeStamps); err != nil {
-					t.Errorf("SessionRepository.ArchiveSessionsForBatch() error = %v", err)
-					return
-				}
-				id = sessionWithTimeStamps.ID
+			if err := dbMap.Insert(tt.session); err != nil {
+				t.Errorf("SessionRepository.ArchiveSessionsForBatch() error = %v", err)
+				return
 			}
 
 			r := &SessionRepository{
@@ -670,7 +632,7 @@ func TestSessionRepository_ArchiveSessionsForBatch(t *testing.T) {
 				return
 			}
 
-			session, err := r.FindByID(id)
+			session, err := r.FindByID(tt.session.ID)
 			if err != nil {
 				t.Errorf("SessionRepository.ArchiveSessionsForBatch() error = %v", err)
 				return
@@ -684,14 +646,13 @@ func TestSessionRepository_ArchiveSessionsForBatch(t *testing.T) {
 	}
 }
 
-func TestSessionRepository_UpdateWithTimeStamp(t *testing.T) {
+func TestSessionRepository_UpdateWithExpiredAt(t *testing.T) {
 	// Prepare
 	dbMap, err := NewDB()
 	if err != nil {
 		t.Fatal(err)
 	}
 	dbMap.AddTableWithName(sessionDTO{}, "sessions")
-	dbMap.AddTableWithName(sessionDTOWithTimeStamps{}, "sessions")
 	dbMap.AddTableWithName(userDTO{}, "users")
 	dbMap.AddTableWithName(queueTrackDTO{}, "queue_tracks")
 	truncateTable(t, dbMap)
@@ -707,19 +668,21 @@ func TestSessionRepository_UpdateWithTimeStamp(t *testing.T) {
 		QueueHead: 0,
 		StateType: "PAUSE",
 		DeviceID:  "device_id",
+		ExpiredAt: time.Date(2020, time.December, 1, 12, 0, 0, 0, time.UTC),
 	}
 	if err := dbMap.Insert(user, session); err != nil {
 		t.Fatal(err)
 	}
 
+	fakedate := time.Date(2020, time.December, 4, 12, 0, 0, 0, time.UTC)
+
 	tests := []struct {
-		name             string
-		session          *entity.Session
-		wantUnarchivedAt time.Time
-		wantErr          bool
+		name    string
+		session *entity.Session
+		wantErr bool
 	}{
 		{
-			name: "正常に動作し、unarchivedAtも更新される",
+			name: "正常に動作し、expiredAtも更新される",
 			session: &entity.Session{
 				ID:          "existing_session_id",
 				Name:        "existing_session_name",
@@ -729,49 +692,29 @@ func TestSessionRepository_UpdateWithTimeStamp(t *testing.T) {
 				QueueHead:   1,
 				QueueTracks: []*entity.QueueTrack{},
 			},
-			wantUnarchivedAt: time.Now().UTC(),
-			wantErr:          false,
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := NewSessionRepository(dbMap)
-			if err := r.UpdateWithTimeStamp(tt.session); (err != nil) != tt.wantErr {
-				t.Errorf("UpdateWithTimeStamp() error = %v, wantErr %v", err, tt.wantErr)
+			if err := r.UpdateWithExpiredAt(tt.session, &fakedate); (err != nil) != tt.wantErr {
+				t.Errorf("UpdateWithExpiredAt() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
 			if !tt.wantErr {
-				var dto sessionDTOWithTimeStamps
+				var dto sessionDTO
 
-				if err := r.dbMap.SelectOne(&dto, "SELECT id, name, creator_id, queue_head, state_type, device_id, created_at, unarchived_at FROM sessions WHERE id = ?", tt.session.ID); err != nil {
+				if err := r.dbMap.SelectOne(&dto, "SELECT id, name, creator_id, queue_head, state_type, device_id, expired_at FROM sessions WHERE id = ?", tt.session.ID); err != nil {
 					t.Fatal(err)
 				}
 
-				if !dto.UnarchivedAt.After(tt.wantUnarchivedAt.Add(-time.Minute)) {
-					t.Errorf("UpdateWithTimeStamp() want unarchivedAt: %s, got: %s", tt.wantUnarchivedAt, dto.UnarchivedAt)
+				threeDaysAfter := fakedate.AddDate(0, 0, 3)
+
+				if dto.ExpiredAt != threeDaysAfter {
+					t.Errorf("UpdateWithExpiredAt() want expierdAt: %s, got: %s", fakedate.AddDate(0, 0, 3), dto.ExpiredAt)
 				}
 			}
 		})
 	}
-}
-
-type sessionDTOWithTimeStamps struct {
-	ID           string    `db:"id"`
-	Name         string    `db:"name"`
-	CreatorID    string    `db:"creator_id"`
-	QueueHead    int       `db:"queue_head"`
-	StateType    string    `db:"state_type"`
-	DeviceID     string    `db:"device_id"`
-	CreatedAt    time.Time `db:"created_at"`
-	UnarchivedAt time.Time `db:"unarchived_at"`
-}
-
-type sessionDTOWithCreatedAt struct {
-	ID        string    `db:"id"`
-	Name      string    `db:"name"`
-	CreatorID string    `db:"creator_id"`
-	QueueHead int       `db:"queue_head"`
-	StateType string    `db:"state_type"`
-	DeviceID  string    `db:"device_id"`
-	CreatedAt time.Time `db:"created_at"`
 }
