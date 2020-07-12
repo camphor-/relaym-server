@@ -529,11 +529,10 @@ Spotifyの認証が終わった際にリダイレクトされてくるエンド�
 
 ### 概要
 
-以下の条件のいずれかに当てはまるsessionのstateをARCHIVEDに変更します
+以下の条件に当てはまるsessionのstateをARCHIVEDに変更します
 夜間にcronで叩かれることを想定しています
 
-- `created_at`が3日以上前で、かつ`unarchived_at`が`null`(一度もarchiveが解除されていない)のsession
-- `unarchived_at`が3日以上前のsession
+- `expired_at`に現在の時刻より前に設定されている
 
 ### レスポンス
 | code | 補足 |
