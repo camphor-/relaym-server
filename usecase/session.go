@@ -269,7 +269,9 @@ func (s *SessionUseCase) stop(session *entity.Session) error {
 func (s *SessionUseCase) archiveToStop(session *entity.Session) error {
 	session.MoveToStop()
 
-	if err := s.sessionRepo.UpdateWithTimeStamp(session); err != nil {
+	currentDateTime := time.Now()
+
+	if err := s.sessionRepo.UpdateWithExpiredAt(session, &currentDateTime); err != nil {
 		return fmt.Errorf("update session id=%s: %w", session.ID, err)
 	}
 

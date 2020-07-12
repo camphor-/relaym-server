@@ -9,6 +9,7 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	oauth2 "golang.org/x/oauth2"
 	reflect "reflect"
+	time "time"
 )
 
 // MockSession is a mock of Session interface
@@ -77,18 +78,18 @@ func (mr *MockSessionMockRecorder) Update(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockSession)(nil).Update), arg0)
 }
 
-// UpdateWithTimeStamp mocks base method
-func (m *MockSession) UpdateWithTimeStamp(arg0 *entity.Session) error {
+// UpdateWithExpiredAt mocks base method
+func (m *MockSession) UpdateWithExpiredAt(arg0 *entity.Session, arg1 *time.Time) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateWithTimeStamp", arg0)
+	ret := m.ctrl.Call(m, "UpdateWithExpiredAt", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// UpdateWithTimeStamp indicates an expected call of UpdateWithTimeStamp
-func (mr *MockSessionMockRecorder) UpdateWithTimeStamp(arg0 interface{}) *gomock.Call {
+// UpdateWithExpiredAt indicates an expected call of UpdateWithExpiredAt
+func (mr *MockSessionMockRecorder) UpdateWithExpiredAt(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWithTimeStamp", reflect.TypeOf((*MockSession)(nil).UpdateWithTimeStamp), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWithExpiredAt", reflect.TypeOf((*MockSession)(nil).UpdateWithExpiredAt), arg0, arg1)
 }
 
 // StoreQueueTrack mocks base method
