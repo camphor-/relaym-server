@@ -120,7 +120,7 @@ func (r *SessionRepository) Update(session *entity.Session) error {
 	return nil
 }
 
-// UpdateWithExpiredAt はセッションの情報を更新し、同時にUnarchivedAtも現在の時刻に更新します。
+// UpdateWithExpiredAt はセッションの情報を更新し、同時にExpiredAtを更新します。
 func (r *SessionRepository) UpdateWithExpiredAt(session *entity.Session, currentDateTime *time.Time) error {
 	threeDaysAfter := currentDateTime.AddDate(0, 0, 3)
 	dto := &sessionDTO{

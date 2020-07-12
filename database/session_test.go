@@ -594,7 +594,7 @@ func TestSessionRepository_ArchiveSessionsForBatch(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		session   *sessionDTO // unarchived_atがnilのレコードを作成するためにはsessionDTOWithTimeStampsを使えない
+		session   *sessionDTO
 		wantState entity.StateType
 	}{
 		{
