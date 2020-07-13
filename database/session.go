@@ -151,7 +151,7 @@ func (r *SessionRepository) StoreQueueTrack(queueTrack *entity.QueueTrackToStore
 // ArchiveSessionsForBatch は以下の条件に当てはまるSessionのstateをArchivedに変更します
 //// - 作成から3日以上が経過している。もしくはArchiveが解除されてから3日以上が経過している
 func (r *SessionRepository) ArchiveSessionsForBatch() error {
-	currentDateTime := time.Now()
+	currentDateTime := time.Now().UTC()
 	if _, err := r.dbMap.Exec("UPDATE sessions SET state_type = 'ARCHIVED' WHERE state_type != 'ARCHIVED' AND expired_at < ?;", currentDateTime); err != nil {
 		return fmt.Errorf("update session state_type to ARCHIVED: %w", err)
 	}
