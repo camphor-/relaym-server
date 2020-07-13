@@ -27,7 +27,6 @@ type SessionRepository struct {
 // NewSessionRepository はSessionRepositoryのポインタを生成する関数です
 func NewSessionRepository(dbMap *gorp.DbMap) *SessionRepository {
 	dbMap.AddTableWithName(sessionDTO{}, "sessions").SetKeys(false, "ID")
-	dbMap.AddTableWithName(sessionWithoutExpiredAtDTO{}, "sessions").SetKeys(false, "ID")
 	dbMap.AddTableWithName(queueTrackDTO{}, "queue_tracks")
 	return &SessionRepository{dbMap: dbMap}
 }
@@ -35,7 +34,7 @@ func NewSessionRepository(dbMap *gorp.DbMap) *SessionRepository {
 // FindByID は指定されたIDを持つsessionをDBから取得します
 func (r *SessionRepository) FindByID(id string) (*entity.Session, error) {
 	var dto sessionDTO
-	if err := r.dbMap.SelectOne(&dto, "SELECT id, name, creator_id, queue_head, state_type, device_id FROM sessions WHERE id = ?", id); err != nil {
+	if err := r.dbMap.SelectOne(&dto, "SELECT id, name, creator_id, queue_head, state_type, device_id, expired_at FROM sessions WHERE id = ?", id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("select session: %w", entity.ErrSessionNotFound)
 		}
@@ -60,6 +59,7 @@ func (r *SessionRepository) FindByID(id string) (*entity.Session, error) {
 		StateType:   stateType,
 		QueueHead:   dto.QueueHead,
 		QueueTracks: queueTracks,
+		ExpiredAt:   dto.ExpiredAt,
 	}, nil
 }
 
@@ -84,6 +84,7 @@ func (r *SessionRepository) FindCreatorTokenBySessionID(sessionID string) (*oaut
 
 // StoreSession はSessionをDBに挿入します。
 func (r *SessionRepository) StoreSession(session *entity.Session) error {
+	threeDaysAfter := time.Now().AddDate(0, 0, 3)
 	dto := &sessionDTO{
 		ID:        session.ID,
 		Name:      session.Name,
@@ -91,7 +92,7 @@ func (r *SessionRepository) StoreSession(session *entity.Session) error {
 		QueueHead: session.QueueHead,
 		StateType: session.StateType.String(),
 		DeviceID:  session.DeviceID,
-		ExpiredAt: time.Now(),
+		ExpiredAt: threeDaysAfter,
 	}
 
 	if err := r.dbMap.Insert(dto); err != nil {
@@ -105,13 +106,14 @@ func (r *SessionRepository) StoreSession(session *entity.Session) error {
 
 // Update はセッションの情報を更新します。
 func (r *SessionRepository) Update(session *entity.Session) error {
-	dto := &sessionWithoutExpiredAtDTO{
+	dto := &sessionDTO{
 		ID:        session.ID,
 		Name:      session.Name,
 		CreatorID: session.CreatorID,
 		QueueHead: session.QueueHead,
 		StateType: session.StateType.String(),
 		DeviceID:  session.DeviceID,
+		ExpiredAt: session.ExpiredAt,
 	}
 
 	if _, err := r.dbMap.Update(dto); err != nil {
@@ -121,8 +123,7 @@ func (r *SessionRepository) Update(session *entity.Session) error {
 }
 
 // UpdateWithExpiredAt はセッションの情報を更新し、同時にExpiredAtを更新します。
-func (r *SessionRepository) UpdateWithExpiredAt(session *entity.Session, currentDateTime *time.Time) error {
-	threeDaysAfter := currentDateTime.AddDate(0, 0, 3)
+func (r *SessionRepository) UpdateWithExpiredAt(session *entity.Session, newExpiredAt time.Time) error {
 	dto := &sessionDTO{
 		ID:        session.ID,
 		Name:      session.Name,
@@ -130,7 +131,7 @@ func (r *SessionRepository) UpdateWithExpiredAt(session *entity.Session, current
 		QueueHead: session.QueueHead,
 		StateType: session.StateType.String(),
 		DeviceID:  session.DeviceID,
-		ExpiredAt: threeDaysAfter,
+		ExpiredAt: newExpiredAt,
 	}
 
 	if _, err := r.dbMap.Update(dto); err != nil {
@@ -187,15 +188,6 @@ type sessionDTO struct {
 	StateType string    `db:"state_type"`
 	DeviceID  string    `db:"device_id"`
 	ExpiredAt time.Time `db:"expired_at"`
-}
-
-type sessionWithoutExpiredAtDTO struct {
-	ID        string `db:"id"`
-	Name      string `db:"name"`
-	CreatorID string `db:"creator_id"`
-	QueueHead int    `db:"queue_head"`
-	StateType string `db:"state_type"`
-	DeviceID  string `db:"device_id"`
 }
 
 type queueTrackDTO struct {

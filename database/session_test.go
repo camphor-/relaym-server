@@ -34,7 +34,7 @@ func TestSessionRepository_FindByID(t *testing.T) {
 		QueueHead: 0,
 		StateType: "PLAY",
 		DeviceID:  "device_id",
-		ExpiredAt: time.Now(),
+		ExpiredAt: time.Date(2020, time.December, 1, 12, 0, 0, 0, time.UTC),
 	}
 	queueTrack := &queueTrackDTO{
 		Index:     0,
@@ -68,6 +68,7 @@ func TestSessionRepository_FindByID(t *testing.T) {
 						SessionID: "existing_session_id",
 					},
 				},
+				ExpiredAt: time.Date(2020, time.December, 1, 12, 0, 0, 0, time.UTC),
 			},
 			wantErr: nil,
 		},
@@ -173,7 +174,6 @@ func TestSessionRepository_Update(t *testing.T) {
 		t.Fatal(err)
 	}
 	dbMap.AddTableWithName(sessionDTO{}, "sessions")
-	dbMap.AddTableWithName(sessionWithoutExpiredAtDTO{}, "sessions")
 	dbMap.AddTableWithName(userDTO{}, "users")
 	dbMap.AddTableWithName(queueTrackDTO{}, "queue_tracks")
 	truncateTable(t, dbMap)
@@ -189,7 +189,7 @@ func TestSessionRepository_Update(t *testing.T) {
 		QueueHead: 0,
 		StateType: "PAUSE",
 		DeviceID:  "device_id",
-		ExpiredAt: time.Now(),
+		ExpiredAt: time.Date(2020, time.December, 1, 12, 0, 0, 0, time.UTC),
 	}
 	sameFieldSession := &sessionDTO{
 		ID:        "same_field_session_id",
@@ -197,7 +197,7 @@ func TestSessionRepository_Update(t *testing.T) {
 		CreatorID: "existing_user",
 		QueueHead: 0,
 		StateType: "PAUSE",
-		ExpiredAt: time.Now(),
+		ExpiredAt: time.Date(2020, time.December, 1, 12, 0, 0, 0, time.UTC),
 	}
 	if err := dbMap.Insert(user, session, sameFieldSession); err != nil {
 		t.Fatal(err)
@@ -218,6 +218,7 @@ func TestSessionRepository_Update(t *testing.T) {
 				StateType:   entity.Play,
 				QueueHead:   1,
 				QueueTracks: []*entity.QueueTrack{},
+				ExpiredAt:   time.Date(2020, time.December, 1, 12, 0, 0, 0, time.UTC),
 			},
 			wantErr: false,
 		},
@@ -230,6 +231,7 @@ func TestSessionRepository_Update(t *testing.T) {
 				QueueHead:   0,
 				StateType:   entity.Pause,
 				QueueTracks: []*entity.QueueTrack{},
+				ExpiredAt:   time.Date(2020, time.December, 1, 12, 0, 0, 0, time.UTC),
 			},
 			wantErr: false,
 		},
@@ -674,12 +676,11 @@ func TestSessionRepository_UpdateWithExpiredAt(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fakeDate := time.Date(2020, time.December, 4, 12, 0, 0, 0, time.UTC)
-
 	tests := []struct {
-		name    string
-		session *entity.Session
-		wantErr bool
+		name         string
+		session      *entity.Session
+		newExpiredAt time.Time
+		wantErr      bool
 	}{
 		{
 			name: "正常に動作し、expiredAtも更新される",
@@ -692,13 +693,14 @@ func TestSessionRepository_UpdateWithExpiredAt(t *testing.T) {
 				QueueHead:   1,
 				QueueTracks: []*entity.QueueTrack{},
 			},
-			wantErr: false,
+			newExpiredAt: time.Date(2020, time.December, 7, 12, 0, 0, 0, time.UTC),
+			wantErr:      false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := NewSessionRepository(dbMap)
-			if err := r.UpdateWithExpiredAt(tt.session, &fakeDate); (err != nil) != tt.wantErr {
+			if err := r.UpdateWithExpiredAt(tt.session, tt.newExpiredAt); (err != nil) != tt.wantErr {
 				t.Errorf("UpdateWithExpiredAt() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
@@ -709,10 +711,8 @@ func TestSessionRepository_UpdateWithExpiredAt(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				threeDaysAfter := fakeDate.AddDate(0, 0, 3)
-
-				if dto.ExpiredAt != threeDaysAfter {
-					t.Errorf("UpdateWithExpiredAt() want expierdAt: %s, got: %s", fakeDate.AddDate(0, 0, 3), dto.ExpiredAt)
+				if dto.ExpiredAt != tt.newExpiredAt {
+					t.Errorf("UpdateWithExpiredAt() want expierdAt: %s, got: %s", tt.newExpiredAt, dto.ExpiredAt)
 				}
 			}
 		})
