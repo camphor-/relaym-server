@@ -2,6 +2,7 @@ package entity
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/camphor-/relaym-server/log"
 
@@ -17,6 +18,7 @@ type Session struct {
 	StateType   StateType
 	QueueHead   int
 	QueueTracks []*QueueTrack
+	ExpiredAt   time.Time
 }
 
 type SessionWithUser struct {

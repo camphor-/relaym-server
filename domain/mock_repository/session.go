@@ -79,7 +79,7 @@ func (mr *MockSessionMockRecorder) Update(arg0 interface{}) *gomock.Call {
 }
 
 // UpdateWithExpiredAt mocks base method
-func (m *MockSession) UpdateWithExpiredAt(arg0 *entity.Session, arg1 *time.Time) error {
+func (m *MockSession) UpdateWithExpiredAt(arg0 *entity.Session, arg1 time.Time) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateWithExpiredAt", arg0, arg1)
 	ret0, _ := ret[0].(error)
