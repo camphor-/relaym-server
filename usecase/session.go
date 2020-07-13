@@ -269,7 +269,7 @@ func (s *SessionUseCase) stop(session *entity.Session) error {
 func (s *SessionUseCase) archiveToStop(session *entity.Session) error {
 	session.MoveToStop()
 
-	threeDaysAfter := time.Now().AddDate(0, 0, 3)
+	threeDaysAfter := time.Now().AddDate(0, 0, 3).UTC()
 	if err := s.sessionRepo.UpdateWithExpiredAt(session, threeDaysAfter); err != nil {
 		return fmt.Errorf("update session id=%s: %w", session.ID, err)
 	}

@@ -84,7 +84,7 @@ func (r *SessionRepository) FindCreatorTokenBySessionID(sessionID string) (*oaut
 
 // StoreSession はSessionをDBに挿入します。
 func (r *SessionRepository) StoreSession(session *entity.Session) error {
-	threeDaysAfter := time.Now().AddDate(0, 0, 3)
+	threeDaysAfter := time.Now().AddDate(0, 0, 3).UTC()
 	dto := &sessionDTO{
 		ID:        session.ID,
 		Name:      session.Name,
