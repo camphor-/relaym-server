@@ -11,7 +11,7 @@ import (
 )
 
 // NewServer はミドルウェアやハンドラーが登録されたechoの構造体を返します。
-func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, sessionUC *usecase.SessionUseCase, trackUC *usecase.TrackUseCase, hub *ws.Hub) *echo.Echo {
+func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, sessionUC *usecase.SessionUseCase, trackUC *usecase.TrackUseCase, batchUC *usecase.BatchUseCase, hub *ws.Hub) *echo.Echo {
 	e := echo.New()
 
 	e.Use(middleware.Logger())
@@ -47,10 +47,14 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, session
 	sessionHandler := handler.NewSessionHandler(sessionUC)
 	authHandler := handler.NewAuthHandler(authUC, config.FrontendURL())
 	wsHandler := handler.NewWebSocketHandler(hub, sessionUC)
+	batchHandler := handler.NewBatchHandler(batchUC)
 
 	v3 := e.Group("/api/v3")
 	v3.GET("/login", authHandler.Login)
 	v3.GET("/callback", authHandler.Callback)
+
+	batch := v3.Group("/batch")
+	batch.POST("/archive", batchHandler.PostArchive)
 
 	authed := v3.Group("", NewAuthMiddleware(authUC).Authenticate)
 

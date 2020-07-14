@@ -581,7 +581,7 @@ func TestSessionHandler_State_STOP(t *testing.T) {
 						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
 					},
 				}, nil)
-				m.EXPECT().Update(&entity.Session{
+				m.EXPECT().UpdateWithExpiredAt(&entity.Session{
 					ID:        "sessionID",
 					Name:      "session_name",
 					CreatorID: "creator_id",
@@ -592,7 +592,7 @@ func TestSessionHandler_State_STOP(t *testing.T) {
 						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
 						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
 					},
-				}).Return(nil)
+				}, gomock.Any()).Return(nil)
 			},
 			wantErr:  false,
 			wantCode: http.StatusAccepted,

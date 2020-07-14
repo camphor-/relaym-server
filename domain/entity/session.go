@@ -2,6 +2,7 @@ package entity
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/camphor-/relaym-server/log"
 
@@ -17,6 +18,7 @@ type Session struct {
 	StateType   StateType
 	QueueHead   int
 	QueueTracks []*QueueTrack
+	ExpiredAt   time.Time
 }
 
 type SessionWithUser struct {
@@ -180,12 +182,6 @@ func (s *Session) canMoveFromStopToPlay() error {
 // IsPlaying は現在のStateTypeがPlayかどうか返します。
 func (s *Session) IsPlaying() bool {
 	return s.StateType == Play
-}
-
-// UpdateTimestamp はsessionのTimestampを現在の時刻に更新します。
-func (s *Session) UpdateTimestamp() error {
-	// TODO: timestampを更新する
-	return nil
 }
 
 // isEmptyQueue はキューが空かどうか返します。

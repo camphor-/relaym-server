@@ -9,6 +9,7 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	oauth2 "golang.org/x/oauth2"
 	reflect "reflect"
+	time "time"
 )
 
 // MockSession is a mock of Session interface
@@ -77,6 +78,20 @@ func (mr *MockSessionMockRecorder) Update(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockSession)(nil).Update), arg0)
 }
 
+// UpdateWithExpiredAt mocks base method
+func (m *MockSession) UpdateWithExpiredAt(arg0 *entity.Session, arg1 time.Time) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateWithExpiredAt", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateWithExpiredAt indicates an expected call of UpdateWithExpiredAt
+func (mr *MockSessionMockRecorder) UpdateWithExpiredAt(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWithExpiredAt", reflect.TypeOf((*MockSession)(nil).UpdateWithExpiredAt), arg0, arg1)
+}
+
 // StoreQueueTrack mocks base method
 func (m *MockSession) StoreQueueTrack(arg0 *entity.QueueTrackToStore) error {
 	m.ctrl.T.Helper()
@@ -105,4 +120,18 @@ func (m *MockSession) FindCreatorTokenBySessionID(arg0 string) (*oauth2.Token, s
 func (mr *MockSessionMockRecorder) FindCreatorTokenBySessionID(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindCreatorTokenBySessionID", reflect.TypeOf((*MockSession)(nil).FindCreatorTokenBySessionID), arg0)
+}
+
+// ArchiveSessionsForBatch mocks base method
+func (m *MockSession) ArchiveSessionsForBatch() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ArchiveSessionsForBatch")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ArchiveSessionsForBatch indicates an expected call of ArchiveSessionsForBatch
+func (mr *MockSessionMockRecorder) ArchiveSessionsForBatch() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ArchiveSessionsForBatch", reflect.TypeOf((*MockSession)(nil).ArchiveSessionsForBatch))
 }
