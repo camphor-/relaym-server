@@ -57,7 +57,7 @@ func TestSessionHandler_State(t *testing.T) {
 			// モックの準備
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
-			h := newSessionHandlerForTest(t, ctrl, tt.prepareMockPlayerFn, tt.prepareMockPusherFn,
+			h := newSessionStateHandlerForTest(t, ctrl, tt.prepareMockPlayerFn, tt.prepareMockPusherFn,
 				tt.prepareMockUserRepoFn, tt.prepareMockSessionRepoFn)
 
 			err := h.State(c)
@@ -334,7 +334,7 @@ func TestSessionHandler_State_PLAY(t *testing.T) {
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
-			h := newSessionHandlerForTest(t, ctrl, tt.prepareMockPlayerFn, tt.prepareMockPusherFn,
+			h := newSessionStateHandlerForTest(t, ctrl, tt.prepareMockPlayerFn, tt.prepareMockPusherFn,
 				tt.prepareMockUserRepoFn, tt.prepareMockSessionRepoFn)
 
 			err := h.State(c)
@@ -533,7 +533,7 @@ func TestSessionHandler_State_PAUSE(t *testing.T) {
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
-			h := newSessionHandlerForTest(t, ctrl, tt.prepareMockPlayerFn, tt.prepareMockPusherFn,
+			h := newSessionStateHandlerForTest(t, ctrl, tt.prepareMockPlayerFn, tt.prepareMockPusherFn,
 				tt.prepareMockUserRepoFn, tt.prepareMockSessionRepoFn)
 
 			err := h.State(c)
@@ -650,7 +650,7 @@ func TestSessionHandler_State_STOP(t *testing.T) {
 			// モックの準備
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
-			h := newSessionHandlerForTest(t, ctrl, tt.prepareMockPlayerFn, tt.prepareMockPusherFn,
+			h := newSessionStateHandlerForTest(t, ctrl, tt.prepareMockPlayerFn, tt.prepareMockPusherFn,
 				tt.prepareMockUserRepoFn, tt.prepareMockSessionRepoFn)
 			err := h.State(c)
 			if (err != nil) != tt.wantErr {
@@ -828,7 +828,7 @@ func TestSessionHandler_State_ARCHIVED(t *testing.T) {
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
-			h := newSessionHandlerForTest(t, ctrl, tt.prepareMockPlayerFn, tt.prepareMockPusherFn,
+			h := newSessionStateHandlerForTest(t, ctrl, tt.prepareMockPlayerFn, tt.prepareMockPusherFn,
 				tt.prepareMockUserRepoFn, tt.prepareMockSessionRepoFn)
 
 			err := h.State(c)
@@ -844,7 +844,7 @@ func TestSessionHandler_State_ARCHIVED(t *testing.T) {
 }
 
 // モックの準備
-func newSessionHandlerForTest(
+func newSessionStateHandlerForTest(
 	t *testing.T,
 	ctrl *gomock.Controller,
 	prepareMockPlayerFn func(m *mock_spotify.MockPlayer),
@@ -861,6 +861,8 @@ func newSessionHandlerForTest(
 	prepareMockUserRepoFn(mockUserRepo)
 	mockSessionRepo := mock_repository.NewMockSession(ctrl)
 	prepareMockSessionRepoFn(mockSessionRepo)
-	uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, nil, nil, mockPusher)
-	return &SessionHandler{uc: uc}
+	timerUC := usecase.NewSessionTimerUseCase(mockSessionRepo, mockPlayer, mockPusher)
+	uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, nil, nil, mockPusher, timerUC)
+	stateUC := usecase.NewSessionStateUseCase(mockSessionRepo, mockPlayer, mockPusher, timerUC)
+	return &SessionHandler{uc: uc, stateUC: stateUC}
 }

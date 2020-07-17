@@ -44,11 +44,13 @@ func main() {
 
 	userUC := usecase.NewUserUseCase(spotifyCli, userRepo)
 	authUC := usecase.NewAuthUseCase(spotifyCli, spotifyCli, authRepo, userRepo, sessionRepo)
-	sessionUC := usecase.NewSessionUseCase(sessionRepo, userRepo, spotifyCli, spotifyCli, spotifyCli, hub)
+	sessionTimerUC := usecase.NewSessionTimerUseCase(sessionRepo, spotifyCli, hub)
+	sessionUC := usecase.NewSessionUseCase(sessionRepo, userRepo, spotifyCli, spotifyCli, spotifyCli, hub, sessionTimerUC)
+	sessionStateUC := usecase.NewSessionStateUseCase(sessionRepo, spotifyCli, hub, sessionTimerUC)
 	trackUC := usecase.NewTrackUseCase(spotifyCli)
 	batchUC := usecase.NewBatchUseCase(sessionRepo, hub)
 
-	s := web.NewServer(authUC, userUC, sessionUC, trackUC, batchUC, hub)
+	s := web.NewServer(authUC, userUC, sessionUC, sessionStateUC, trackUC, batchUC, hub)
 
 	// シグナルを受け取れるようにgoroutine内でサーバを起動する
 	go func() {
