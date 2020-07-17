@@ -108,7 +108,7 @@ func TestSessionHandler_SetDevice(t *testing.T) {
 			mockUserRepo := mock_repository.NewMockUser(ctrl)
 			tt.prepareMockUserRepoFn(mockUserRepo)
 
-			uc := usecase.NewSessionUseCase(mockRepo, mockUserRepo, nil, nil, nil, nil)
+			uc := usecase.NewSessionUseCase(mockRepo, mockUserRepo, nil, nil, nil, nil, nil)
 			h := &SessionHandler{uc: uc}
 
 			err := h.SetDevice(c)
@@ -204,18 +204,8 @@ func TestSessionHandler_PostSession(t *testing.T) {
 			// モックの準備
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
-			mockPlayer := mock_spotify.NewMockPlayer(ctrl)
-			tt.prepareMockPlayerFn(mockPlayer)
-			mockPusher := mock_event.NewMockPusher(ctrl)
-			tt.prepareMockPusherFn(mockPusher)
-			mockSessionRepo := mock_repository.NewMockSession(ctrl)
-			tt.prepareMockSessionRepoFn(mockSessionRepo)
-			mockUserRepo := mock_repository.NewMockUser(ctrl)
-			tt.prepareMockUserRepoFn(mockUserRepo)
-			uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, nil, nil, mockPusher)
-			h := &SessionHandler{
-				uc: uc,
-			}
+			h := newSessionStateHandlerForTest(t, ctrl, tt.prepareMockPlayerFn, tt.prepareMockPusherFn, tt.prepareMockUserRepoFn, tt.prepareMockSessionRepoFn)
+
 			postErr := h.PostSession(c)
 			if (postErr != nil) != tt.wantErr {
 				t.Errorf("PostSession() error = %v, wantErr %v", postErr, tt.wantErr)
@@ -378,18 +368,8 @@ func TestSessionHandler_Enqueue(t *testing.T) {
 			// モックの準備
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
-			mockPlayer := mock_spotify.NewMockPlayer(ctrl)
-			tt.prepareMockPlayerFn(mockPlayer)
-			mockPusher := mock_event.NewMockPusher(ctrl)
-			tt.prepareMockPusherFn(mockPusher)
-			mockUserRepo := mock_repository.NewMockUser(ctrl)
-			tt.prepareMockUserRepoFn(mockUserRepo)
-			mockSessionRepo := mock_repository.NewMockSession(ctrl)
-			tt.prepareMockSessionRepoFn(mockSessionRepo)
-			uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, nil, nil, mockPusher)
-			h := &SessionHandler{
-				uc: uc,
-			}
+			h := newSessionStateHandlerForTest(t, ctrl, tt.prepareMockPlayerFn, tt.prepareMockPusherFn, tt.prepareMockUserRepoFn, tt.prepareMockSessionRepoFn)
+
 			err := h.Enqueue(c)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Enqueue() error = %v, wantErr %v", err, tt.wantErr)
@@ -731,20 +711,7 @@ func TestSessionHandler_GetSession(t *testing.T) {
 			// モックの準備
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
-			mockPlayer := mock_spotify.NewMockPlayer(ctrl)
-			tt.prepareMockPlayerFn(mockPlayer)
-			mockPusher := mock_event.NewMockPusher(ctrl)
-			tt.prepareMockPusherFn(mockPusher)
-			mockSessionRepo := mock_repository.NewMockSession(ctrl)
-			tt.prepareMockSessionRepoFn(mockSessionRepo)
-			mockUserRepo := mock_repository.NewMockUser(ctrl)
-			tt.prepareMockUserRepoFn(mockUserRepo)
-			mockTrackCli := mock_spotify.NewMockTrackClient(ctrl)
-			tt.prepareMockTrackCliFn(mockTrackCli)
-			uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, mockTrackCli, nil, mockPusher)
-			h := &SessionHandler{
-				uc: uc,
-			}
+			h := newSessionHandlerForTest(t, ctrl, tt.prepareMockPlayerFn, tt.prepareMockTrackCliFn, tt.prepareMockPusherFn, tt.prepareMockUserRepoFn, tt.prepareMockSessionRepoFn)
 			err := h.GetSession(c)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetSession() error = %v, wantErr %v", err, tt.wantErr)
@@ -831,7 +798,7 @@ func TestUserHandler_GetActiveDevices(t *testing.T) {
 			defer ctrl.Finish()
 			mock := mock_spotify.NewMockUser(ctrl)
 			tt.prepareMockUserSpo(mock)
-			uc := usecase.NewSessionUseCase(nil, nil, nil, nil, mock, nil)
+			uc := usecase.NewSessionUseCase(nil, nil, nil, nil, mock, nil, nil)
 			h := &SessionHandler{uc: uc}
 
 			err := h.GetActiveDevices(c)
@@ -859,4 +826,30 @@ func TestUserHandler_GetActiveDevices(t *testing.T) {
 
 func convToPointer(given int64) *int64 {
 	return &given
+}
+
+// モックの準備
+func newSessionHandlerForTest(
+	t *testing.T,
+	ctrl *gomock.Controller,
+	prepareMockPlayerFn func(m *mock_spotify.MockPlayer),
+	prepareMockTrackFun func(m *mock_spotify.MockTrackClient),
+	prepareMockPusherFn func(m *mock_event.MockPusher),
+	prepareMockUserRepoFn func(m *mock_repository.MockUser),
+	prepareMockSessionRepoFn func(m *mock_repository.MockSession)) *SessionHandler {
+	t.Helper()
+
+	mockPlayer := mock_spotify.NewMockPlayer(ctrl)
+	prepareMockPlayerFn(mockPlayer)
+	mockTrackCli := mock_spotify.NewMockTrackClient(ctrl)
+	prepareMockTrackFun(mockTrackCli)
+	mockPusher := mock_event.NewMockPusher(ctrl)
+	prepareMockPusherFn(mockPusher)
+	mockUserRepo := mock_repository.NewMockUser(ctrl)
+	prepareMockUserRepoFn(mockUserRepo)
+	mockSessionRepo := mock_repository.NewMockSession(ctrl)
+	prepareMockSessionRepoFn(mockSessionRepo)
+	timerUC := usecase.NewSessionTimerUseCase(mockSessionRepo, mockPlayer, mockPusher)
+	uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, mockTrackCli, nil, mockPusher, timerUC)
+	return &SessionHandler{uc: uc}
 }

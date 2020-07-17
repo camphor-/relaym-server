@@ -15,12 +15,13 @@ import (
 
 // SessionHandler は /sessions 以下のエンドポイントを管理する構造体です。
 type SessionHandler struct {
-	uc *usecase.SessionUseCase
+	uc      *usecase.SessionUseCase
+	stateUC *usecase.SessionStateUseCase
 }
 
 // NewSessionHandler はSessionHandlerのポインタを生成する関数です。
-func NewSessionHandler(uc *usecase.SessionUseCase) *SessionHandler {
-	return &SessionHandler{uc: uc}
+func NewSessionHandler(uc *usecase.SessionUseCase, stateUC *usecase.SessionStateUseCase) *SessionHandler {
+	return &SessionHandler{uc: uc, stateUC: stateUC}
 }
 
 // PostSession は POST /sessions に対応するハンドラーです。
@@ -120,7 +121,7 @@ func (h *SessionHandler) State(c echo.Context) error {
 
 	ctx := c.Request().Context()
 	sessionID := c.Param("id")
-	if err := h.uc.ChangeSessionState(ctx, sessionID, st); err != nil {
+	if err := h.stateUC.ChangeSessionState(ctx, sessionID, st); err != nil {
 		switch {
 		case errors.Is(err, entity.ErrQueueTrackNotFound):
 			return echo.NewHTTPError(http.StatusBadRequest, entity.ErrQueueTrackNotFound.Error())
