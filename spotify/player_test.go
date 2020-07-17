@@ -119,7 +119,7 @@ func TestClient_Pause(t *testing.T) {
 	}
 }
 
-func TestClient_AddToQueue(t *testing.T) {
+func TestClient_Enqueue(t *testing.T) {
 
 	tests := []struct {
 		name    string
@@ -148,8 +148,8 @@ func TestClient_AddToQueue(t *testing.T) {
 			ctx := context.Background()
 			ctx = service.SetTokenToContext(ctx, token)
 
-			if err := c.AddToQueue(ctx, tt.trackID, ""); (err != nil) != tt.wantErr {
-				t.Errorf("AddToQueue() error = %v, wantErr %v", err, tt.wantErr)
+			if err := c.Enqueue(ctx, tt.trackID, ""); (err != nil) != tt.wantErr {
+				t.Errorf("Enqueue() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

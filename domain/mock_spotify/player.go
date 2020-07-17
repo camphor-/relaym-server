@@ -91,18 +91,18 @@ func (mr *MockPlayerMockRecorder) Pause(ctx, deviceID interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Pause", reflect.TypeOf((*MockPlayer)(nil).Pause), ctx, deviceID)
 }
 
-// AddToQueue mocks base method
-func (m *MockPlayer) AddToQueue(ctx context.Context, trackURI, deviceID string) error {
+// Enqueue mocks base method
+func (m *MockPlayer) Enqueue(ctx context.Context, trackURI, deviceID string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddToQueue", ctx, trackURI, deviceID)
+	ret := m.ctrl.Call(m, "Enqueue", ctx, trackURI, deviceID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// AddToQueue indicates an expected call of AddToQueue
-func (mr *MockPlayerMockRecorder) AddToQueue(ctx, trackURI, deviceID interface{}) *gomock.Call {
+// Enqueue indicates an expected call of Enqueue
+func (mr *MockPlayerMockRecorder) Enqueue(ctx, trackURI, deviceID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddToQueue", reflect.TypeOf((*MockPlayer)(nil).AddToQueue), ctx, trackURI, deviceID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Enqueue", reflect.TypeOf((*MockPlayer)(nil).Enqueue), ctx, trackURI, deviceID)
 }
 
 // SetRepeatMode mocks base method

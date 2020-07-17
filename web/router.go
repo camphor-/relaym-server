@@ -11,7 +11,7 @@ import (
 )
 
 // NewServer はミドルウェアやハンドラーが登録されたechoの構造体を返します。
-func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, sessionUC *usecase.SessionUseCase, trackUC *usecase.TrackUseCase, batchUC *usecase.BatchUseCase, hub *ws.Hub) *echo.Echo {
+func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, sessionUC *usecase.SessionUseCase, sessionStateUC *usecase.SessionStateUseCase, trackUC *usecase.TrackUseCase, batchUC *usecase.BatchUseCase, hub *ws.Hub) *echo.Echo {
 	e := echo.New()
 
 	e.Use(middleware.Logger())
@@ -44,7 +44,7 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, session
 
 	userHandler := handler.NewUserHandler(userUC)
 	trackHandler := handler.NewTrackHandler(trackUC)
-	sessionHandler := handler.NewSessionHandler(sessionUC)
+	sessionHandler := handler.NewSessionHandler(sessionUC, sessionStateUC)
 	authHandler := handler.NewAuthHandler(authUC, config.FrontendURL())
 	wsHandler := handler.NewWebSocketHandler(hub, sessionUC)
 	batchHandler := handler.NewBatchHandler(batchUC)
@@ -69,7 +69,7 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, session
 	sessionWithCreatorToken.GET("/search", trackHandler.SearchTracks)
 	sessionWithCreatorToken.GET("/devices", sessionHandler.GetActiveDevices)
 	sessionWithCreatorToken.PUT("/devices", sessionHandler.SetDevice)
-	sessionWithCreatorToken.POST("/queue", sessionHandler.AddQueue)
+	sessionWithCreatorToken.POST("/queue", sessionHandler.Enqueue)
 	sessionWithCreatorToken.PUT("/state", sessionHandler.State)
 	sessionWithCreatorToken.GET("/ws", wsHandler.WebSocket)
 	return e
