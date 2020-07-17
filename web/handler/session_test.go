@@ -241,7 +241,7 @@ func TestSessionHandler_PostSession(t *testing.T) {
 	}
 }
 
-func TestSessionHandler_AddQueue(t *testing.T) {
+func TestSessionHandler_Enqueue(t *testing.T) {
 	session := &entity.Session{
 		ID:        "sessionID",
 		Name:      "sessionName",
@@ -293,7 +293,7 @@ func TestSessionHandler_AddQueue(t *testing.T) {
 		wantCode                 int
 	}{
 		{
-			name:                "正しいuriが渡されると正常に動作し、sessionがqueueの最後から二番目以内ではない曲を再生している場合はAddToQueueを叩かない",
+			name:                "正しいuriが渡されると正常に動作し、sessionがqueueの最後から二番目以内ではない曲を再生している場合はEnqueueを叩かない",
 			sessionID:           "sessionHadManyTracksID",
 			body:                `{"uri": "spotify:track:valid_uri"}`,
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {},
@@ -315,11 +315,11 @@ func TestSessionHandler_AddQueue(t *testing.T) {
 			wantCode: http.StatusNoContent,
 		},
 		{
-			name:      "正しくuriが渡されると正常に動作し、sessionがqueueの最後から二番目以内の曲を再生している場合はAddToQueueを叩く",
+			name:      "正しくuriが渡されると正常に動作し、sessionがqueueの最後から二番目以内の曲を再生している場合はEnqueueを叩く",
 			sessionID: "sessionID",
 			body:      `{"uri": "spotify:track:valid_uri"}`,
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
-				m.EXPECT().AddToQueue(gomock.Any(), "spotify:track:valid_uri", "sessionDeviceID").Return(nil)
+				m.EXPECT().Enqueue(gomock.Any(), "spotify:track:valid_uri", "sessionDeviceID").Return(nil)
 			},
 			prepareMockPusherFn: func(m *mock_event.MockPusher) {
 				m.EXPECT().Push(&event.PushMessage{
@@ -390,14 +390,14 @@ func TestSessionHandler_AddQueue(t *testing.T) {
 			h := &SessionHandler{
 				uc: uc,
 			}
-			err := h.AddQueue(c)
+			err := h.Enqueue(c)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("AddQueue() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Enqueue() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
 			// ステータスコードのチェック
 			if er, ok := err.(*echo.HTTPError); ok && er.Code != tt.wantCode {
-				t.Errorf("AddQueue() code = %d, want = %d", rec.Code, tt.wantCode)
+				t.Errorf("Enqueue() code = %d, want = %d", rec.Code, tt.wantCode)
 			}
 		})
 	}

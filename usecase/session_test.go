@@ -174,7 +174,7 @@ func TestSessionUseCase_handleTrackEnd(t *testing.T) {
 						},
 					},
 				}, nil)
-				m.EXPECT().AddToQueue(gomock.Any(), "spotify:track:3", "deviceID").Return(nil)
+				m.EXPECT().Enqueue(gomock.Any(), "spotify:track:3", "deviceID").Return(nil)
 			},
 			prepareMockPusherFn: func(m *mock_event.MockPusher) {
 				m.EXPECT().Push(&event.PushMessage{

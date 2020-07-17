@@ -40,8 +40,8 @@ func NewSessionUseCase(sessionRepo repository.Session, userRepo repository.User,
 	}
 }
 
-// AddQueueTrack はセッションのqueueにTrackを追加します。
-func (s *SessionUseCase) AddQueueTrack(ctx context.Context, sessionID string, trackURI string) error {
+// EnqueueTrack はセッションのqueueにTrackを追加します。
+func (s *SessionUseCase) EnqueueTrack(ctx context.Context, sessionID string, trackURI string) error {
 	session, err := s.sessionRepo.FindByID(sessionID)
 	if err != nil {
 		return fmt.Errorf("FindByID sessionID=%s: %w", sessionID, err)
@@ -55,10 +55,10 @@ func (s *SessionUseCase) AddQueueTrack(ctx context.Context, sessionID string, tr
 		return fmt.Errorf("StoreQueueTrack URI=%s, sessionID=%s: %w", trackURI, sessionID, err)
 	}
 
-	if session.ShouldCallAddQueueAPINow() {
-		err = s.playerCli.AddToQueue(ctx, trackURI, session.DeviceID)
+	if session.ShouldCallEnqueueAPINow() {
+		err = s.playerCli.Enqueue(ctx, trackURI, session.DeviceID)
 		if err != nil {
-			return fmt.Errorf("AddToQueue URI=%s, sessionID=%s: %w", trackURI, sessionID, err)
+			return fmt.Errorf("Enqueue URI=%s, sessionID=%s: %w", trackURI, sessionID, err)
 		}
 	}
 	s.pusher.Push(&event.PushMessage{
@@ -193,7 +193,7 @@ func (s *SessionUseCase) stopToPlay(ctx context.Context, sess *entity.Session) e
 			}
 			continue
 		}
-		if err := s.playerCli.AddToQueue(ctx, trackURIs[i], sess.DeviceID); err != nil {
+		if err := s.playerCli.Enqueue(ctx, trackURIs[i], sess.DeviceID); err != nil {
 			return fmt.Errorf("call add queue api trackURI=%s: %w", trackURIs[i], err)
 		}
 	}
@@ -384,7 +384,7 @@ func (s *SessionUseCase) handleTrackEnd(ctx context.Context, sessionID string) (
 
 	track := sess.TrackURIShouldBeAddedWhenHandleTrackEnd()
 	if track != "" {
-		if err := s.playerCli.AddToQueue(ctx, track, sess.DeviceID); err != nil {
+		if err := s.playerCli.Enqueue(ctx, track, sess.DeviceID); err != nil {
 			return nil, false, fmt.Errorf("call add queue api trackURI=%s: %w", track, err)
 		}
 	}

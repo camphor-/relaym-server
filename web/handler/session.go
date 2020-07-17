@@ -69,8 +69,8 @@ func (h *SessionHandler) GetSession(c echo.Context) error {
 	return c.JSON(http.StatusOK, h.toSessionRes(session, playingInfo, tracks))
 }
 
-// AddQueue は POST /sessions/:id/queue に対応するハンドラーです。
-func (h *SessionHandler) AddQueue(c echo.Context) error {
+// Enqueue は POST /sessions/:id/queue に対応するハンドラーです。
+func (h *SessionHandler) Enqueue(c echo.Context) error {
 	logger := log.New()
 	type reqJSON struct {
 		URI string `json:"uri"`
@@ -88,7 +88,7 @@ func (h *SessionHandler) AddQueue(c echo.Context) error {
 	ctx := c.Request().Context()
 	sessionID := c.Param("id")
 
-	if err := h.uc.AddQueueTrack(ctx, sessionID, req.URI); err != nil {
+	if err := h.uc.EnqueueTrack(ctx, sessionID, req.URI); err != nil {
 		if errors.Is(err, entity.ErrSessionNotFound) {
 			logger.Debug(err)
 			return echo.NewHTTPError(http.StatusNotFound, entity.ErrSessionNotFound.Error())

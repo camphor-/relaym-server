@@ -158,11 +158,11 @@ func (c *Client) Pause(ctx context.Context, deviceID string) error {
 	return nil
 }
 
-// AddToQueue は曲を「次に再生される曲」に追加するAPIです。deviceIDが空の場合はデフォルトのデバイスで再生されます。
+// Enqueue は曲を「次に再生される曲」に追加するAPIです。deviceIDが空の場合はデフォルトのデバイスで再生されます。
 // APIが非同期で処理がされるため、リクエストが返ってきても曲の追加が完了しているとは限りません。
 // 設定が反映されたか確認するには CurrentlyPlaying() を叩く必要があります。
 // プレミアム会員必須
-func (c *Client) AddToQueue(ctx context.Context, trackURI string, deviceID string) error {
+func (c *Client) Enqueue(ctx context.Context, trackURI string, deviceID string) error {
 	trackID := strings.Replace(trackURI, "spotify:track:", "", 1)
 
 	token, ok := service.GetTokenFromContext(ctx)

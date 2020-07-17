@@ -202,8 +202,8 @@ func TestSessionHandler_State_PLAY(t *testing.T) {
 				m.EXPECT().SetShuffleMode(gomock.Any(), false, "device_id").Return(nil)
 				m.EXPECT().SkipAllTracks(gomock.Any(), "device_id", "spotify:track:5uQ0vKy2973Y9IUCd1wMEF").Return(nil)
 				m.EXPECT().PlayWithTracks(gomock.Any(), "device_id", []string{"spotify:track:5uQ0vKy2973Y9IUCd1wMEF"}).Return(nil)
-				m.EXPECT().AddToQueue(gomock.Any(), "spotify:track:49BRCNV7E94s7Q2FUhhT3w", "device_id").Return(nil)
-				m.EXPECT().AddToQueue(gomock.Any(), "spotify:track:3", "device_id").Return(nil)
+				m.EXPECT().Enqueue(gomock.Any(), "spotify:track:49BRCNV7E94s7Q2FUhhT3w", "device_id").Return(nil)
+				m.EXPECT().Enqueue(gomock.Any(), "spotify:track:3", "device_id").Return(nil)
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockPusherFn: func(m *mock_event.MockPusher) {
