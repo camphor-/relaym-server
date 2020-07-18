@@ -9,3 +9,9 @@ flavor=mysql:8.0
 host=relaym-mysql-dev
 port=3306
 user=relaym_dev
+
+[prod]
+flavor=mysql:8.0
+host=relaym-mysql-prod
+port=3306
+user=relaym_prod
