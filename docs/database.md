@@ -47,7 +47,16 @@ $ skeema pull local -p
 
 rootではなく一般ユーザを使う場合は適切に権限を設定する必要があります。
 
+dev環境の場合↓
 ```mysql
-GRANT SESSION_VARIABLES_ADMIN ON *.* TO `ユーザ名`@`%` ;
-GRANT ALL PRIVILEGES ON `ユーザ名`.* TO `テーブル名`@`%`;
+mysql> show grants for relaym_dev;
++-------------------------------------------------------------+
+| Grants for relaym_dev@%                                     |
++-------------------------------------------------------------+
+| GRANT USAGE ON *.* TO `relaym_dev`@`%`                      |
+| GRANT SESSION_VARIABLES_ADMIN ON *.* TO `relaym_dev`@`%`    |
+| GRANT ALL PRIVILEGES ON `_skeema_tmp`.* TO `relaym_dev`@`%` |
+| GRANT ALL PRIVILEGES ON `relaym_dev`.* TO `relaym_dev`@`%`  |
++-------------------------------------------------------------+
+4 rows in set (0.00 sec)
 ```
