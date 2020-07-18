@@ -12,7 +12,7 @@ mv "${TMPDIR}/skeema" /usr/local/bin/skeema
 
 cd /mysql
 # データベース名に環境のsuffixをつける
-sed -i "s/schema=relaym/schema=relaym_${ENV}/" ./schemas/relaym/.skeema
+sed -i "s/^schema=relaym$/schema=relaym_${ENV}/" ./schemas/relaym/.skeema
 skeema push -p"${DB_PASSWORD}" "${ENV}"
 
 exec "$@"
