@@ -34,6 +34,15 @@ func (m *CreatorTokenMiddleware) SetCreatorTokenToContext(next echo.HandlerFunc)
 			return echo.NewHTTPError(http.StatusNotFound)
 		}
 
+		loginUserID := ""
+		sessCookie, err := c.Cookie("session")
+		if err == nil {
+			userID, err := m.uc.GetUserIDFromSession(sessCookie.Value)
+			if err == nil {
+				loginUserID = userID
+			}
+		}
+
 		token, creatorID, err := m.uc.GetTokenAndCreatorIDBySessionID(sessionID)
 		if err != nil {
 			if errors.Is(err, entity.ErrSessionNotFound) {
@@ -51,13 +60,14 @@ func (m *CreatorTokenMiddleware) SetCreatorTokenToContext(next echo.HandlerFunc)
 		}
 		token = newToken
 
-		c = setToCreatorContext(c, creatorID, token)
+		c = setToCreatorContext(c, loginUserID, creatorID, token)
 		return next(c)
 	}
 }
-func setToCreatorContext(c echo.Context, userID string, token *oauth2.Token) echo.Context {
+func setToCreatorContext(c echo.Context, userID, creatorID string, token *oauth2.Token) echo.Context {
 	ctx := c.Request().Context()
-	ctx = service.SetCreatorIDToContext(ctx, userID)
+	ctx = service.SetUserIDToContext(ctx, userID)
+	ctx = service.SetCreatorIDToContext(ctx, creatorID)
 	ctx = service.SetTokenToContext(ctx, token)
 	c.SetRequest(c.Request().WithContext(ctx))
 	return c
