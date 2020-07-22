@@ -17,12 +17,18 @@ var (
 
 // SetUserIDToContext はユーザIDをContextにセットします。
 func SetUserIDToContext(ctx context.Context, userID string) context.Context {
-	return context.WithValue(ctx, userIDKey, userID)
+	if userID != "" {
+		return context.WithValue(ctx, userIDKey, userID)
+	}
+	return ctx
 }
 
 // SetCreatorIDToContext はセッション作成者のIDをContextにセットします。
 func SetCreatorIDToContext(ctx context.Context, userID string) context.Context {
-	return context.WithValue(ctx, creatorIDKey, userID)
+	if userID != "" {
+		return context.WithValue(ctx, creatorIDKey, userID)
+	}
+	return ctx
 }
 
 // SetTokenToContext はトークンをContextにセットします。
