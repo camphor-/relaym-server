@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 
+	"github.com/camphor-/relaym-server/domain/entity"
+
 	"os"
 	"os/signal"
 	"time"
@@ -42,9 +44,11 @@ func main() {
 	userRepo := database.NewUserRepository(dbMap)
 	sessionRepo := database.NewSessionRepository(dbMap)
 
+	syncCheckTimerManager := entity.NewSyncCheckTimerManager()
+
 	userUC := usecase.NewUserUseCase(spotifyCli, userRepo)
 	authUC := usecase.NewAuthUseCase(spotifyCli, spotifyCli, authRepo, userRepo, sessionRepo)
-	sessionTimerUC := usecase.NewSessionTimerUseCase(sessionRepo, spotifyCli, hub)
+	sessionTimerUC := usecase.NewSessionTimerUseCase(sessionRepo, spotifyCli, hub, syncCheckTimerManager)
 	sessionUC := usecase.NewSessionUseCase(sessionRepo, userRepo, spotifyCli, spotifyCli, spotifyCli, hub, sessionTimerUC)
 	sessionStateUC := usecase.NewSessionStateUseCase(sessionRepo, spotifyCli, hub, sessionTimerUC)
 	trackUC := usecase.NewTrackUseCase(spotifyCli)

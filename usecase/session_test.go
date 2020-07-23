@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/camphor-/relaym-server/domain/mock_spotify"
+
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/mock_repository"
 
@@ -17,6 +19,7 @@ func TestSessionUseCase_CanConnectToPusher(t *testing.T) {
 		name                     string
 		sessionID                string
 		prepareMockSessionRepoFn func(m *mock_repository.MockSession)
+		prepareMockPlayerFn      func(m *mock_spotify.MockPlayer)
 		wantErr                  bool
 	}{
 		{
@@ -32,7 +35,7 @@ func TestSessionUseCase_CanConnectToPusher(t *testing.T) {
 			sessionID: "sessionID",
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
 				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
-					ID:          "sessionID",
+					ID:          "sessionID1",
 					Name:        "session_name",
 					CreatorID:   "creator_id",
 					QueueHead:   0,
@@ -40,6 +43,31 @@ func TestSessionUseCase_CanConnectToPusher(t *testing.T) {
 					QueueTracks: []*entity.QueueTrack{},
 				}, nil)
 			},
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {},
+			//			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+			//				m.EXPECT().CurrentlyPlaying(gomock.Any()).Return(&entity.CurrentPlayingInfo{
+			//					Playing:  true,
+			//					Progress: 10000000,
+			//					Track: &entity.Track{
+			//						URI:      "spotify:track:06QTSGUEgcmKwiEJ0IMPig",
+			//						ID:       "06QTSGUEgcmKwiEJ0IMPig",
+			//						Name:     "Borderland",
+			//						Duration: 213066000000,
+			//						Artists:  []*entity.Artist{{Name: "MONOEYES"}},
+			//						URL:      "https://open.spotify.com/track/06QTSGUEgcmKwiEJ0IMPig",
+			//						Album: &entity.Album{
+			//							Name: "Interstate 46 E.P.",
+			//							Images: []*entity.AlbumImage{
+			//								{
+			//									URL:    "https://i.scdn.co/image/ab67616d0000b273b48630d6efcebca2596120c4",
+			//									Height: 640,
+			//									Width:  640,
+			//								},
+			//							},
+			//						},
+			//					},
+			//				}, nil)
+			//			},
 			wantErr: false,
 		},
 		{
@@ -47,7 +75,7 @@ func TestSessionUseCase_CanConnectToPusher(t *testing.T) {
 			sessionID: "sessionID",
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
 				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
-					ID:        "sessionID",
+					ID:        "sessionID2",
 					Name:      "session_name",
 					CreatorID: "creator_id",
 					QueueHead: 0,
@@ -58,6 +86,30 @@ func TestSessionUseCase_CanConnectToPusher(t *testing.T) {
 					},
 				}, nil)
 			},
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {},
+			//				m.EXPECT().CurrentlyPlaying(gomock.Any()).Return(&entity.CurrentPlayingInfo{
+			//					Playing:  true,
+			//					Progress: 10000000,
+			//					Track: &entity.Track{
+			//						URI:      "spotify:track:06QTSGUEgcmKwiEJ0IMPig",
+			//						ID:       "06QTSGUEgcmKwiEJ0IMPig",
+			//						Name:     "Borderland",
+			//						Duration: 213066000000,
+			//						Artists:  []*entity.Artist{{Name: "MONOEYES"}},
+			//						URL:      "https://open.spotify.com/track/06QTSGUEgcmKwiEJ0IMPig",
+			//						Album: &entity.Album{
+			//							Name: "Interstate 46 E.P.",
+			//							Images: []*entity.AlbumImage{
+			//								{
+			//									URL:    "https://i.scdn.co/image/ab67616d0000b273b48630d6efcebca2596120c4",
+			//									Height: 640,
+			//									Width:  640,
+			//								},
+			//							},
+			//						},
+			//					},
+			//				}, nil)
+			//			},
 			wantErr: false,
 		},
 	}
@@ -68,7 +120,10 @@ func TestSessionUseCase_CanConnectToPusher(t *testing.T) {
 			defer ctrl.Finish()
 			mockSessionRepo := mock_repository.NewMockSession(ctrl)
 			tt.prepareMockSessionRepoFn(mockSessionRepo)
-			stUC := NewSessionTimerUseCase(nil, nil, nil)
+			mockPlayer := mock_spotify.NewMockPlayer(ctrl)
+			tt.prepareMockSessionRepoFn(mockSessionRepo)
+			syncCheckTimerManager := entity.NewSyncCheckTimerManager()
+			stUC := NewSessionTimerUseCase(nil, mockPlayer, nil, syncCheckTimerManager)
 			s := NewSessionUseCase(mockSessionRepo, nil, nil, nil, nil, nil, stUC)
 
 			if err := s.CanConnectToPusher(context.Background(), tt.sessionID); (err != nil) != tt.wantErr {

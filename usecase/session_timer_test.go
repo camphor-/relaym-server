@@ -459,7 +459,9 @@ func TestSessionTimerUseCase_handleTrackEnd(t *testing.T) {
 			mockSessionRepo := mock_repository.NewMockSession(ctrl)
 			tt.prepareMockSessionRepoFn(mockSessionRepo)
 
-			s := NewSessionTimerUseCase(mockSessionRepo, mockPlayer, mockPusher)
+			syncCheckTimerManager := entity.NewSyncCheckTimerManager()
+
+			s := NewSessionTimerUseCase(mockSessionRepo, mockPlayer, mockPusher, syncCheckTimerManager)
 			gotTriggerAfterTrackEnd, gotNextTrack, err := s.handleTrackEnd(context.Background(), tt.sessionID)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("handleTrackEnd() error = %v, wantErr %v", err, tt.wantErr)
