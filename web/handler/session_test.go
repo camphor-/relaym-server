@@ -127,8 +127,9 @@ func TestSessionHandler_SetDevice(t *testing.T) {
 
 func TestSessionHandler_PostSession(t *testing.T) {
 	sessionResponse := &sessionRes{
-		ID:   "ID",
-		Name: "go! go! session!",
+		ID:                     "ID",
+		Name:                   "go! go! session!",
+		AllowToControlByOthers: true,
 		Creator: creatorJSON{
 			ID:          "creatorID",
 			DisplayName: "creatorDisplayName",
@@ -163,7 +164,7 @@ func TestSessionHandler_PostSession(t *testing.T) {
 	}{
 		{
 			name:                "nameを渡すと正常に動作する",
-			body:                `{"name": "go! go! session!"}`,
+			body:                `{"name": "go! go! session!", "allow_to_control_by_others": true}`,
 			userID:              "creatorID",
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {},
 			prepareMockPusherFn: func(m *mock_event.MockPusher) {},
@@ -179,7 +180,7 @@ func TestSessionHandler_PostSession(t *testing.T) {
 		},
 		{
 			name:                     "nameが空だとempty nameが返る",
-			body:                     `{"name": ""}`,
+			body:                     `{"name": "", "allow_to_control_by_others": true}`,
 			userID:                   "creatorID",
 			prepareMockPlayerFn:      func(m *mock_spotify.MockPlayer) {},
 			prepareMockPusherFn:      func(m *mock_event.MockPusher) {},
