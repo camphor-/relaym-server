@@ -41,9 +41,10 @@ func (s *SessionUseCase) EnqueueTrack(ctx context.Context, sessionID string, tra
 		return fmt.Errorf("FindByID sessionID=%s: %w", sessionID, err)
 	}
 
-	queueTrackToStore := entity.NewQueueTrackToStore(trackURI, sessionID)
-
-	err = s.sessionRepo.StoreQueueTrack(queueTrackToStore)
+	err = s.sessionRepo.StoreQueueTrack(&entity.QueueTrackToStore{
+		URI:       trackURI,
+		SessionID: sessionID,
+	})
 	if err != nil {
 		return fmt.Errorf("StoreQueueTrack URI=%s, sessionID=%s: %w", trackURI, sessionID, err)
 	}

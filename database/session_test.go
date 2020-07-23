@@ -37,7 +37,6 @@ func TestSessionRepository_FindByID(t *testing.T) {
 		ExpiredAt: time.Date(2020, time.December, 1, 12, 0, 0, 0, time.UTC),
 	}
 	queueTrack := &queueTrackDTO{
-		ID:        "trackID",
 		Index:     0,
 		URI:       "existing_uri",
 		SessionID: "existing_session_id",
@@ -292,7 +291,6 @@ func TestSessionRepository_StoreQueueTrack(t *testing.T) {
 		ExpiredAt: time.Now(),
 	}
 	queueTracks := &queueTrackDTO{
-		ID:        "trackID",
 		Index:     0,
 		URI:       "uri",
 		SessionID: "session_with_queue_track_id",
@@ -310,7 +308,6 @@ func TestSessionRepository_StoreQueueTrack(t *testing.T) {
 		{
 			name: "すでにひも付いているqueue_tracksが1つ以上存在するsessionsに新規queue_tracksを正しく紐づけて保存できる",
 			queueTrack: &entity.QueueTrackToStore{
-				ID:        "testTrack",
 				URI:       "new_uri",
 				SessionID: "session_with_queue_track_id",
 			},
@@ -320,7 +317,6 @@ func TestSessionRepository_StoreQueueTrack(t *testing.T) {
 		{
 			name: "ひも付いているqueue_tracksが1つも存在しないsessionsに新規queue_tracksを正しく紐づけて保存できる",
 			queueTrack: &entity.QueueTrackToStore{
-				ID:        "testTrack2",
 				URI:       "new_uri",
 				SessionID: "session_with_no_queue_track_id",
 			},
@@ -384,25 +380,21 @@ func TestSessionRepository_getQueueTrackBySessionID(t *testing.T) {
 	}
 
 	queueTrack1 := &queueTrackDTO{
-		ID:        "testTrack",
 		Index:     0,
 		URI:       "existing_uri1",
 		SessionID: "existing_session_id",
 	}
 	queueTrack2 := &queueTrackDTO{
-		ID:        "testTrack2",
 		Index:     0,
 		URI:       "existing_uri2",
 		SessionID: "session_has_many_queue_tracks_id",
 	}
 	queueTrack3 := &queueTrackDTO{
-		ID:        "testTrack3",
 		Index:     1,
 		URI:       "existing_uri3",
 		SessionID: "session_has_many_queue_tracks_id",
 	}
 	queueTrack4 := &queueTrackDTO{
-		ID:        "testTrack4",
 		Index:     2,
 		URI:       "existing_uri4",
 		SessionID: "session_has_many_queue_tracks_id",

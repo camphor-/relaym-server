@@ -296,7 +296,10 @@ func TestSessionHandler_Enqueue(t *testing.T) {
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
 				m.EXPECT().FindByID("sessionHadManyTracksID").Return(sessionHadManyTracks, nil)
-				m.EXPECT().StoreQueueTrack(gomock.Any()).Return(nil)
+				m.EXPECT().StoreQueueTrack(&entity.QueueTrackToStore{
+					URI:       "spotify:track:valid_uri",
+					SessionID: "sessionHadManyTracksID",
+				}).Return(nil)
 			},
 			wantErr:  false,
 			wantCode: http.StatusNoContent,
@@ -317,7 +320,10 @@ func TestSessionHandler_Enqueue(t *testing.T) {
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
 				m.EXPECT().FindByID("sessionID").Return(session, nil)
-				m.EXPECT().StoreQueueTrack(gomock.Any()).Return(nil)
+				m.EXPECT().StoreQueueTrack(&entity.QueueTrackToStore{
+					URI:       "spotify:track:valid_uri",
+					SessionID: "sessionID",
+				}).Return(nil)
 			},
 			wantErr:  false,
 			wantCode: http.StatusNoContent,
