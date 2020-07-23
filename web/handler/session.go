@@ -211,6 +211,9 @@ func (h *SessionHandler) toSessionRes(session *entity.SessionWithUser, info *ent
 	if session.StateType != entity.Stop && info != nil {
 		progress := info.Progress.Milliseconds()
 		state.Progress = &progress
+		var zero int64 = 0
+		state.Length = &zero
+		state.Remaining = &zero
 		if info.Track != nil {
 			length := info.Track.Duration.Milliseconds()
 			remaining := info.Remain().Milliseconds()
