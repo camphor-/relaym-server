@@ -70,7 +70,7 @@ func (s *SessionUseCase) CreateSession(sessionName string, creatorID string) (*e
 		return nil, fmt.Errorf("FindByID userID=%s: %w", creatorID, err)
 	}
 
-	newSession, err := entity.NewSession(sessionName, creatorID)
+	newSession, err := entity.NewSession(sessionName, creatorID, false)
 	if err != nil {
 		return nil, fmt.Errorf("NewSession sessionName=%s: %w", sessionName, err)
 	}

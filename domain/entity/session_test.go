@@ -11,30 +11,33 @@ func TestNewSession(t *testing.T) {
 	t.Parallel()
 
 	session := &Session{
-		ID:          "ID",
-		Name:        "VeryGoodSession",
-		CreatorID:   "VeryCreativePersonID",
-		StateType:   Stop,
-		QueueHead:   0,
-		QueueTracks: nil,
+		ID:                     "ID",
+		Name:                   "VeryGoodSession",
+		CreatorID:              "VeryCreativePersonID",
+		StateType:              Stop,
+		QueueHead:              0,
+		QueueTracks:            nil,
+		AllowToControlByOthers: true,
 	}
 
 	tests := []struct {
-		name        string
-		sessionName string
-		creatorID   string
-		want        *Session
+		name                   string
+		sessionName            string
+		creatorID              string
+		allowToCOntrolByOthers bool
+		want                   *Session
 	}{
 		{
-			name:        "正常系",
-			sessionName: "VeryGoodSession",
-			creatorID:   "VeryCreativePersonID",
-			want:        session,
+			name:                   "正常系",
+			sessionName:            "VeryGoodSession",
+			creatorID:              "VeryCreativePersonID",
+			allowToCOntrolByOthers: true,
+			want:                   session,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewSession(tt.sessionName, tt.creatorID)
+			got, err := NewSession(tt.sessionName, tt.creatorID, tt.allowToCOntrolByOthers)
 			if err != nil {
 				t.Fatal(err)
 			}
