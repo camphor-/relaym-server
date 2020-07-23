@@ -28,14 +28,15 @@ func TestSessionUseCase_CanConnectToPusher(t *testing.T) {
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
 				m.EXPECT().FindByID("not_found_session_id").Return(nil, entity.ErrSessionNotFound)
 			},
-			wantErr: true,
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {},
+			wantErr:             true,
 		},
 		{
 			name:      "StateがStopのセッションのとき正しくWebSocketのコネクションが確立される",
 			sessionID: "sessionID",
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
 				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
-					ID:          "sessionID1",
+					ID:          "sessionID",
 					Name:        "session_name",
 					CreatorID:   "creator_id",
 					QueueHead:   0,
@@ -75,7 +76,7 @@ func TestSessionUseCase_CanConnectToPusher(t *testing.T) {
 			sessionID: "sessionID",
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
 				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
-					ID:        "sessionID2",
+					ID:        "sessionID",
 					Name:      "session_name",
 					CreatorID: "creator_id",
 					QueueHead: 0,
@@ -121,10 +122,10 @@ func TestSessionUseCase_CanConnectToPusher(t *testing.T) {
 			mockSessionRepo := mock_repository.NewMockSession(ctrl)
 			tt.prepareMockSessionRepoFn(mockSessionRepo)
 			mockPlayer := mock_spotify.NewMockPlayer(ctrl)
-			tt.prepareMockSessionRepoFn(mockSessionRepo)
+			tt.prepareMockPlayerFn(mockPlayer)
 			syncCheckTimerManager := entity.NewSyncCheckTimerManager()
 			stUC := NewSessionTimerUseCase(nil, mockPlayer, nil, syncCheckTimerManager)
-			s := NewSessionUseCase(mockSessionRepo, nil, nil, nil, nil, nil, stUC)
+			s := NewSessionUseCase(mockSessionRepo, nil, mockPlayer, nil, nil, nil, stUC)
 
 			if err := s.CanConnectToPusher(context.Background(), tt.sessionID); (err != nil) != tt.wantErr {
 				t.Errorf("CanConnectToPusher() error = %v, wantErr %v", err, tt.wantErr)
