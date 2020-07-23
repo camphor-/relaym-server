@@ -141,18 +141,22 @@ func (s *SessionUseCase) GetSession(ctx context.Context, sessionID string) (*ent
 		return nil, nil, nil, fmt.Errorf("CurrentlyPlaying: %w", err)
 	}
 
-	if err := session.IsPlayingCorrectTrack(cpi); err != nil {
-		s.timerUC.deleteTimer(session.ID)
-		if interErr := s.timerUC.handleInterrupt(session); interErr != nil {
-			return nil, nil, nil, fmt.Errorf("check whether playing correct track: handle interrupt: %v: %w", interErr, err)
-		}
+	// timerが存在しない時はsyncCheckOffsetの時間なのでcpiのチェックは飛ばす
+	if _, isExist := s.timerUC.tm.GetTimer(sessionID); isExist {
+		if err := session.IsPlayingCorrectTrack(cpi); err != nil {
+			s.timerUC.deleteTimer(session.ID)
+			if interErr := s.timerUC.handleInterrupt(session); interErr != nil {
+				return nil, nil, nil, fmt.Errorf("check whether playing correct track: handle interrupt: %v: %w", interErr, err)
+			}
 
-		if updateErr := s.sessionRepo.Update(session); updateErr != nil {
-			return nil, nil, nil, fmt.Errorf("update session id=%s: %v: %w", session.ID, err, updateErr)
-		}
+			if updateErr := s.sessionRepo.Update(session); updateErr != nil {
+				return nil, nil, nil, fmt.Errorf("update session id=%s: %v: %w", session.ID, err, updateErr)
+			}
 
-		return entity.NewSessionWithUser(session, creator), tracks, cpi, nil
+			return entity.NewSessionWithUser(session, creator), tracks, cpi, nil
+		}
 	}
+
 	return entity.NewSessionWithUser(session, creator), tracks, cpi, nil
 }
 

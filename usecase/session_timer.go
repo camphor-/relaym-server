@@ -22,8 +22,8 @@ type SessionTimerUseCase struct {
 	pusher      event.Pusher
 }
 
-func NewSessionTimerUseCase(sessionRepo repository.Session, playerCli spotify.Player, pusher event.Pusher) *SessionTimerUseCase {
-	return &SessionTimerUseCase{tm: entity.NewSyncCheckTimerManager(), sessionRepo: sessionRepo, playerCli: playerCli, pusher: pusher}
+func NewSessionTimerUseCase(sessionRepo repository.Session, playerCli spotify.Player, pusher event.Pusher, tm *entity.SyncCheckTimerManager) *SessionTimerUseCase {
+	return &SessionTimerUseCase{tm: tm, sessionRepo: sessionRepo, playerCli: playerCli, pusher: pusher}
 }
 
 // startTrackEndTrigger は曲の終了やストップを検知してそれぞれの処理を実行します。 goroutineで実行されることを想定しています。
@@ -47,7 +47,7 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 		"message": "start timer", "sessionID": sessionID, "remainDuration": remainDuration.String(),
 	})
 
-	triggerAfterTrackEnd := s.tm.CreateTimer(sessionID, remainDuration+syncCheckOffset)
+	triggerAfterTrackEnd := s.tm.CreateTimer(sessionID, remainDuration)
 
 	for {
 		select {
@@ -78,6 +78,9 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 func (s *SessionTimerUseCase) handleTrackEnd(ctx context.Context, sessionID string) (triggerAfterTrackEnd *entity.SyncCheckTimer, nextTrack bool, returnErr error) {
 	logger := log.New()
 
+	s.tm.DeleteTimer(sessionID)
+	time.Sleep(syncCheckOffset)
+
 	sess, err := s.sessionRepo.FindByID(sessionID)
 	if err != nil {
 		return nil, false, fmt.Errorf("find session id=%s: %v", sessionID, err)
@@ -94,7 +97,6 @@ func (s *SessionTimerUseCase) handleTrackEnd(ctx context.Context, sessionID stri
 	}()
 
 	if sess.StateType == entity.Archived {
-		s.tm.DeleteTimer(sessionID)
 
 		s.pusher.Push(&event.PushMessage{
 			SessionID: sessionID,
@@ -121,7 +123,6 @@ func (s *SessionTimerUseCase) handleTrackEnd(ctx context.Context, sessionID stri
 	playingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
 	if err != nil {
 		if errors.Is(err, entity.ErrActiveDeviceNotFound) {
-			s.tm.DeleteTimer(sess.ID)
 			if interErr := s.handleInterrupt(sess); interErr != nil {
 				returnErr = fmt.Errorf("handle interrupt: %w", interErr)
 				return nil, false, returnErr
@@ -134,7 +135,6 @@ func (s *SessionTimerUseCase) handleTrackEnd(ctx context.Context, sessionID stri
 	}
 
 	if err := sess.IsPlayingCorrectTrack(playingInfo); err != nil {
-		s.tm.DeleteTimer(sess.ID)
 		if interErr := s.handleInterrupt(sess); interErr != nil {
 			returnErr = fmt.Errorf("check whether playing correct track: handle interrupt: %v: %w", interErr, err)
 			return nil, false, returnErr
@@ -147,7 +147,7 @@ func (s *SessionTimerUseCase) handleTrackEnd(ctx context.Context, sessionID stri
 		SessionID: sessionID,
 		Msg:       entity.NewEventNextTrack(sess.QueueHead),
 	})
-	triggerAfterTrackEnd = s.tm.CreateTimer(sessionID, playingInfo.Remain()+syncCheckOffset)
+	triggerAfterTrackEnd = s.tm.CreateTimer(sessionID, playingInfo.Remain())
 
 	logger.Infoj(map[string]interface{}{
 		"message": "restart timer", "sessionID": sessionID, "remainDuration": playingInfo.Remain().String(),

@@ -819,7 +819,8 @@ func newSessionStateHandlerForTest(
 	prepareMockUserRepoFn(mockUserRepo)
 	mockSessionRepo := mock_repository.NewMockSession(ctrl)
 	prepareMockSessionRepoFn(mockSessionRepo)
-	timerUC := usecase.NewSessionTimerUseCase(mockSessionRepo, mockPlayer, mockPusher)
+	syncCheckTimerManager := entity.NewSyncCheckTimerManager()
+	timerUC := usecase.NewSessionTimerUseCase(mockSessionRepo, mockPlayer, mockPusher, syncCheckTimerManager)
 	uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, nil, nil, mockPusher, timerUC)
 	stateUC := usecase.NewSessionStateUseCase(mockSessionRepo, mockPlayer, mockPusher, timerUC)
 	return &SessionHandler{uc: uc, stateUC: stateUC}

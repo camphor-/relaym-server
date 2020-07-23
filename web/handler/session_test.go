@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -505,6 +506,7 @@ func TestSessionHandler_GetSession(t *testing.T) {
 		prepareMockTrackCliFn    func(m *mock_spotify.MockTrackClient)
 		prepareMockUserRepoFn    func(m *mock_repository.MockUser)
 		prepareMockSessionRepoFn func(m *mock_repository.MockSession)
+		addToTimerSessionID      string
 		want                     *sessionRes
 		wantErr                  bool
 		wantCode                 int
@@ -670,6 +672,7 @@ func TestSessionHandler_GetSession(t *testing.T) {
 					},
 				}).Return(nil)
 			},
+			addToTimerSessionID: "play_sessionID",
 			want: &sessionRes{
 				ID:   "play_sessionID",
 				Name: "sessionName",
@@ -711,7 +714,7 @@ func TestSessionHandler_GetSession(t *testing.T) {
 			// モックの準備
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
-			h := newSessionHandlerForTest(t, ctrl, tt.prepareMockPlayerFn, tt.prepareMockTrackCliFn, tt.prepareMockPusherFn, tt.prepareMockUserRepoFn, tt.prepareMockSessionRepoFn)
+			h := newSessionHandlerForTest(t, ctrl, tt.prepareMockPlayerFn, tt.prepareMockTrackCliFn, tt.prepareMockPusherFn, tt.prepareMockUserRepoFn, tt.prepareMockSessionRepoFn, tt.addToTimerSessionID)
 			err := h.GetSession(c)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetSession() error = %v, wantErr %v", err, tt.wantErr)
@@ -836,7 +839,8 @@ func newSessionHandlerForTest(
 	prepareMockTrackFun func(m *mock_spotify.MockTrackClient),
 	prepareMockPusherFn func(m *mock_event.MockPusher),
 	prepareMockUserRepoFn func(m *mock_repository.MockUser),
-	prepareMockSessionRepoFn func(m *mock_repository.MockSession)) *SessionHandler {
+	prepareMockSessionRepoFn func(m *mock_repository.MockSession),
+	sessionID string) *SessionHandler {
 	t.Helper()
 
 	mockPlayer := mock_spotify.NewMockPlayer(ctrl)
@@ -849,7 +853,11 @@ func newSessionHandlerForTest(
 	prepareMockUserRepoFn(mockUserRepo)
 	mockSessionRepo := mock_repository.NewMockSession(ctrl)
 	prepareMockSessionRepoFn(mockSessionRepo)
-	timerUC := usecase.NewSessionTimerUseCase(mockSessionRepo, mockPlayer, mockPusher)
+	syncCheckTimerManager := entity.NewSyncCheckTimerManager()
+	if sessionID != "" {
+		syncCheckTimerManager.CreateTimer(sessionID, 5*time.Minute)
+	}
+	timerUC := usecase.NewSessionTimerUseCase(mockSessionRepo, mockPlayer, mockPusher, syncCheckTimerManager)
 	uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, mockTrackCli, nil, mockPusher, timerUC)
 	return &SessionHandler{uc: uc}
 }
