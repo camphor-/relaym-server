@@ -51,7 +51,8 @@ X-CSRF-Token: relaym
 
 ```json
 {
-  "name" : "CAMPHOR- HOUSE"
+  "name" : "CAMPHOR- HOUSE",
+  "allow_to_control_by_others": true
 }
 ```
 
@@ -61,6 +62,7 @@ X-CSRF-Token: relaym
 {
   "id": "xxxxxxxxxxxxxxxxxxxxxxx",
   "name": "CAMPHOR- HOUSE",
+  "allow_to_control_by_others": true,
   "creator": {
     "id": "p1ass",
     "display_name": "p1ass"
