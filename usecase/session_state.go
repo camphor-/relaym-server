@@ -9,7 +9,6 @@ import (
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/event"
 	"github.com/camphor-/relaym-server/domain/repository"
-	"github.com/camphor-/relaym-server/domain/service"
 	"github.com/camphor-/relaym-server/domain/spotify"
 )
 
@@ -60,31 +59,16 @@ func (s *SessionStateUseCase) ChangeSessionState(ctx context.Context, sessionID 
 
 // playORResume はセッションのstateを STOP, PAUSE → PLAY に変更して曲の再生を始めます。
 func (s *SessionStateUseCase) playORResume(ctx context.Context, sess *entity.Session) error {
-	// active device not foundになった場合、スマホ側でSpotifyアプリを強制的に開かせてactiveにするので、正常処理をする。
-	// その処理を切り替えるフラグとして使う。
-	var returnErr error
-
-	userID, _ := service.GetUserIDFromContext(ctx)
-
-	err := s.playerCli.SetRepeatMode(ctx, false, sess.DeviceID)
-	if errors.Is(err, entity.ErrActiveDeviceNotFound) && sess.IsCreator(userID) {
-		returnErr = err
-	} else if err != nil {
+	if err := s.playerCli.SetRepeatMode(ctx, false, sess.DeviceID); err != nil {
 		return fmt.Errorf("call set repeat off api: %w", err)
 	}
 
-	err = s.playerCli.SetShuffleMode(ctx, false, sess.DeviceID)
-	if errors.Is(err, entity.ErrActiveDeviceNotFound) && sess.IsCreator(userID) {
-		returnErr = err
-	} else if err != nil {
+	if err := s.playerCli.SetShuffleMode(ctx, false, sess.DeviceID); err != nil {
 		return fmt.Errorf("call set repeat off api: %w", err)
 	}
 
 	if sess.IsResume(entity.Play) {
-		err := s.playerCli.Play(ctx, sess.DeviceID)
-		if errors.Is(err, entity.ErrActiveDeviceNotFound) && sess.IsCreator(userID) {
-			returnErr = err
-		} else if err != nil {
+		if err := s.playerCli.Play(ctx, sess.DeviceID); err != nil {
 			return fmt.Errorf("call play api: %w", err)
 		}
 	} else {
@@ -103,16 +87,12 @@ func (s *SessionStateUseCase) playORResume(ctx context.Context, sess *entity.Ses
 
 	go s.timerUC.startTrackEndTrigger(ctx, sess.ID)
 
-	// nilじゃない場合にイベントを送ってしまうと、client側が GET /sessions/:id を叩いてしまい、
-	// 即座に INTERRUPT が発火されてしまって困るので条件分岐する。
-	if returnErr == nil {
-		s.pusher.Push(&event.PushMessage{
-			SessionID: sess.ID,
-			Msg:       entity.EventPlay,
-		})
-	}
+	s.pusher.Push(&event.PushMessage{
+		SessionID: sess.ID,
+		Msg:       entity.EventPlay,
+	})
 
-	return returnErr
+	return nil
 }
 
 func (s *SessionStateUseCase) stopToPlay(ctx context.Context, sess *entity.Session) error {
