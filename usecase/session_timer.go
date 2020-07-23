@@ -172,8 +172,6 @@ func (s *SessionTimerUseCase) handleInterrupt(sess *entity.Session) error {
 	logger := log.New()
 	logger.Debugj(map[string]interface{}{"message": "interrupt detected", "sessionID": sess.ID})
 
-	s.tm.StopTimer(sess.ID)
-
 	sess.MoveToStop()
 
 	s.pusher.Push(&event.PushMessage{
