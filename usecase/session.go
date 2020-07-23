@@ -142,6 +142,7 @@ func (s *SessionUseCase) GetSession(ctx context.Context, sessionID string) (*ent
 	}
 
 	if err := session.IsPlayingCorrectTrack(cpi); err != nil {
+		s.timerUC.deleteTimer(session.ID)
 		if interErr := s.timerUC.handleInterrupt(session); interErr != nil {
 			return nil, nil, nil, fmt.Errorf("check whether playing correct track: handle interrupt: %v: %w", interErr, err)
 		}
