@@ -191,5 +191,5 @@ func (s *SessionTimerUseCase) stopTimer(sessionID string) {
 }
 
 func (s *SessionTimerUseCase) deleteTimer(sessionID string) {
-	s.tm.StopTimer(sessionID)
+	s.tm.DeleteTimer(sessionID)
 }
