@@ -58,7 +58,7 @@ func (c *Client) ReadLoop() {
 	for {
 		_, _, err := c.ws.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure, websocket.CloseNoStatusReceived) {
 				logger.Errorj(map[string]interface{}{"message": "readMessage: unexpected error", "error": err.Error()})
 			}
 			break
