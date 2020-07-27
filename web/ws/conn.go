@@ -87,7 +87,7 @@ func (c *Client) PushLoop() {
 					logger.Infoj(map[string]interface{}{
 						"message":   "failed to write close message",
 						"sessionID": c.sessionID,
-						"error":     err,
+						"error":     err.Error(),
 					})
 					return
 				}
@@ -97,7 +97,7 @@ func (c *Client) PushLoop() {
 				logger.Warnj(map[string]interface{}{
 					"message":   "failed to WriteJSON",
 					"sessionID": c.sessionID,
-					"error":     err,
+					"error":     err.Error(),
 				})
 				return
 			}
@@ -107,7 +107,7 @@ func (c *Client) PushLoop() {
 				logger.Warnj(map[string]interface{}{
 					"message":   "failed to ping",
 					"sessionID": c.sessionID,
-					"error":     err,
+					"error":     err.Error(),
 				})
 				return
 			}
