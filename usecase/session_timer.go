@@ -37,7 +37,7 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 		logger.Errorj(map[string]interface{}{
 			"message":   "startTrackEndTrigger: failed to get currently playing info",
 			"sessionID": sessionID,
-			"error":     err,
+			"error":     err.Error(),
 		})
 		return
 	}
