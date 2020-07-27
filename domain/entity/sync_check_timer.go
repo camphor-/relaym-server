@@ -79,6 +79,7 @@ func (m *SyncCheckTimerManager) StopTimer(sessionID string) {
 		}
 		close(timer.stopCh)
 		delete(m.timers, sessionID)
+		return
 	}
 
 	logger.Debugj(map[string]interface{}{"message": "timer not existed", "sessionID": sessionID})
@@ -98,6 +99,7 @@ func (m *SyncCheckTimerManager) DeleteTimer(sessionID string) {
 	if timer, ok := m.timers[sessionID]; ok {
 		close(timer.stopCh)
 		delete(m.timers, sessionID)
+		return
 	}
 
 	logger.Debugj(map[string]interface{}{"message": "timer not existed", "sessionID": sessionID})
