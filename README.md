@@ -1,6 +1,8 @@
 # Relaym Server
 RelaymのサーバーサイドAPIを管理するリポジトリです。
 
+[![codecov](https://codecov.io/gh/camphor-/relaym-server/branch/master/graph/badge.svg)](https://codecov.io/gh/camphor-/relaym-server)
+
 API仕様は[こちら](docs/api.md)
 
 ## 開発に参加するには？
