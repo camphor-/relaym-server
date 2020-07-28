@@ -22,7 +22,7 @@ test:
 
 .PHONY:test-with-coverage
 test-with-coverage:
-	$(ENV_TEST) $(ENV_SECRET_EXAMPLE) go test -v ./... -count=1 -coverprofile=profile.out
+	$(ENV_TEST) $(ENV_SECRET_EXAMPLE) go test -v ./... -count=1 -covermode=atomic -coverprofile=profile.out
 
 .PHONY: integration-test
 integration-test:
