@@ -17,7 +17,7 @@ func TestClient_GetTracksFromURI(t *testing.T) {
 	tests := []struct {
 		name          string
 		uris          []string
-		wantTrackName string // idsで全て同じidを
+		wantTrackName string // urisで同じuriを指定し、同じTrackが返されることを想定
 		wantErr       bool
 	}{
 		{
