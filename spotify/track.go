@@ -49,14 +49,19 @@ func (c *Client) GetTracksFromURI(ctx context.Context, trackURIs []string) ([]*e
 	// GetTracksは一度につき50曲までしか取得できない
 	countForLoop := int(math.Ceil(float64(len(ids)) / 50.0))
 	for i := 0; i < countForLoop; i++ {
-		idsForAPI := ids[countForLoop*50 : (countForLoop+1)*50]
+		var idsForAPI []spotify.ID
+		if i == (countForLoop - 1) {
+			idsForAPI = ids[i*50:]
+		} else {
+			idsForAPI = ids[i*50 : (i+1)*50]
+		}
 		resultTracks, err := cli.GetTracks(idsForAPI...)
 		if err != nil {
 			return nil, fmt.Errorf("get track uris=%s: %w", trackURIs, err)
 		}
 
 		for j, rt := range resultTracks {
-			idx := i + j
+			idx := i*50 + j
 			tracks[idx] = c.toTrack(rt)
 		}
 
