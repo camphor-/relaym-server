@@ -220,7 +220,7 @@ func TestClient_SkipAllTracks(t *testing.T) {
 			}
 			ctx := context.Background()
 			ctx = service.SetTokenToContext(ctx, token)
-			if err := c.SkipAllTracks(ctx, "", "spotify:track:hoge"); err.Error() != tt.wantErr {
+			if err := c.SkipAllTracks(ctx, "", "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"); err.Error() != tt.wantErr {
 				t.Errorf("SkipAllTracks() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
