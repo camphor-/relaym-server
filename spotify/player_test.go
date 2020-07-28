@@ -187,7 +187,7 @@ func TestClient_SetRepeatMode(t *testing.T) {
 			}
 			ctx := context.Background()
 			ctx = service.SetTokenToContext(ctx, token)
-			if err := c.SetRepeatMode(ctx, tt.on); (err != nil) != tt.wantErr {
+			if err := c.SetRepeatMode(ctx, tt.on, ""); (err != nil) != tt.wantErr {
 				t.Errorf("SetRepeatMode() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -220,7 +220,7 @@ func TestClient_SkipAllTracks(t *testing.T) {
 			}
 			ctx := context.Background()
 			ctx = service.SetTokenToContext(ctx, token)
-			if err := c.SkipAllTracks(ctx); err.Error() != tt.wantErr {
+			if err := c.SkipAllTracks(ctx, "", "spotify:track:hoge"); err.Error() != tt.wantErr {
 				t.Errorf("SkipAllTracks() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
