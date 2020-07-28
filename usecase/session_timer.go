@@ -13,7 +13,7 @@ import (
 	"github.com/camphor-/relaym-server/log"
 )
 
-var syncCheckOffset = 5 * time.Second
+var waitTimeBeforeHandleTrackEnd = 7 * time.Second
 
 type SessionTimerUseCase struct {
 	tm          *entity.SyncCheckTimerManager
@@ -31,7 +31,7 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 	logger := log.New()
 	logger.Debugj(map[string]interface{}{"message": "start track end trigger", "sessionID": sessionID})
 
-	time.Sleep(7 * time.Second) // 曲の再生が始まるのを待つ
+	time.Sleep(5 * time.Second) // 曲の再生が始まるのを待つ
 	playingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
 	if err != nil {
 		logger.Errorj(map[string]interface{}{
@@ -41,7 +41,10 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 		})
 		return
 	}
-	remainDuration := playingInfo.Remain()
+
+	// ぴったしのタイマーをセットすると、Spotifyでは次の曲の再生が始まってるのにRelaym側では次の曲に進んでおらず、
+	// INTERRUPTになってしまう
+	remainDuration := playingInfo.Remain() - 2*time.Second
 
 	logger.Infoj(map[string]interface{}{
 		"message": "start timer", "sessionID": sessionID, "remainDuration": remainDuration.String(),
@@ -79,7 +82,7 @@ func (s *SessionTimerUseCase) handleTrackEnd(ctx context.Context, sessionID stri
 	logger := log.New()
 
 	s.tm.DeleteTimer(sessionID)
-	time.Sleep(syncCheckOffset)
+	time.Sleep(waitTimeBeforeHandleTrackEnd)
 
 	sess, err := s.sessionRepo.FindByID(sessionID)
 	if err != nil {
