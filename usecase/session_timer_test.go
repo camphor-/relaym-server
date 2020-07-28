@@ -459,6 +459,12 @@ func TestSessionTimerUseCase_handleTrackEnd(t *testing.T) {
 			mockSessionRepo := mock_repository.NewMockSession(ctrl)
 			tt.prepareMockSessionRepoFn(mockSessionRepo)
 
+			tmpWaitTimeBeforeHandleTrackEnd := waitTimeBeforeHandleTrackEnd
+			waitTimeBeforeHandleTrackEnd = 0
+			defer func() {
+				waitTimeBeforeHandleTrackEnd = tmpWaitTimeBeforeHandleTrackEnd
+			}()
+
 			syncCheckTimerManager := entity.NewSyncCheckTimerManager()
 
 			s := NewSessionTimerUseCase(mockSessionRepo, mockPlayer, mockPusher, syncCheckTimerManager)
