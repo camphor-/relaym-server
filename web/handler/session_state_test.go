@@ -609,6 +609,7 @@ func TestSessionHandler_State_STOP(t *testing.T) {
 		{
 			name:                "StateType=ARCHIVED: 手動でアーカイブを解除して202",
 			sessionID:           "sessionID",
+			userID:              "creator_id",
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {},
 			prepareMockPusherFn: func(m *mock_event.MockPusher) {
 				m.EXPECT().Push(&event.PushMessage{SessionID: "sessionID", Msg: entity.EventUnarchive})
@@ -646,13 +647,27 @@ func TestSessionHandler_State_STOP(t *testing.T) {
 			wantCode: http.StatusAccepted,
 		},
 		{
-			name:                  "StateType=PLAY: 不正なstateの変更なので400",
+			name:                  "セッション作成者以外の操作のときは400",
 			sessionID:             "sessionID",
+			userID:                "non_creator_id",
 			prepareMockPlayerFn:   func(m *mock_spotify.MockPlayer) {},
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{StateType: entity.Play}, nil)
+				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{StateType: entity.Pause, CreatorID: "creator_id"}, nil)
+			},
+			wantErr:  true,
+			wantCode: http.StatusBadRequest,
+		},
+		{
+			name:                  "StateType=PLAY: 不正なstateの変更なので400",
+			sessionID:             "sessionID",
+			userID:                "creator_id",
+			prepareMockPlayerFn:   func(m *mock_spotify.MockPlayer) {},
+			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{StateType: entity.Play, CreatorID: "creator_id"}, nil)
 			},
 			wantErr:  true,
 			wantCode: http.StatusBadRequest,
@@ -660,11 +675,12 @@ func TestSessionHandler_State_STOP(t *testing.T) {
 		{
 			name:                  "StateType=PAUSE: 不正なstateの変更なので400",
 			sessionID:             "sessionID",
+			userID:                "creator_id",
 			prepareMockPlayerFn:   func(m *mock_spotify.MockPlayer) {},
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{StateType: entity.Pause}, nil)
+				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{StateType: entity.Pause, CreatorID: "creator_id"}, nil)
 			},
 			wantErr:  true,
 			wantCode: http.StatusBadRequest,
@@ -672,11 +688,12 @@ func TestSessionHandler_State_STOP(t *testing.T) {
 		{
 			name:                  "StateType=STOP: なにもせずに202",
 			sessionID:             "sessionID",
+			userID:                "creator_id",
 			prepareMockPlayerFn:   func(m *mock_spotify.MockPlayer) {},
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{StateType: entity.Stop}, nil)
+				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{StateType: entity.Stop, CreatorID: "creator_id"}, nil)
 			},
 			wantErr:  false,
 			wantCode: http.StatusAccepted,
@@ -727,6 +744,7 @@ func TestSessionHandler_State_ARCHIVED(t *testing.T) {
 		{
 			name:      "StateType=PLAY: Spotifyでの再生を一時停止した後、正しくアーカイブされて202",
 			sessionID: "sessionID",
+			userID:    "creator_id",
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
 				m.EXPECT().Pause(gomock.Any(), "device_id").Return(nil)
 			},
@@ -768,6 +786,7 @@ func TestSessionHandler_State_ARCHIVED(t *testing.T) {
 		{
 			name:                "StateType=PAUSE: 正しくアーカイブされて202",
 			sessionID:           "sessionID",
+			userID:              "creator_id",
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {},
 			prepareMockPusherFn: func(m *mock_event.MockPusher) {
 				m.EXPECT().Push(&event.PushMessage{SessionID: "sessionID", Msg: entity.EventArchived})
@@ -807,6 +826,7 @@ func TestSessionHandler_State_ARCHIVED(t *testing.T) {
 		{
 			name:                "StateType=STOP: 正しくアーカイブされて202",
 			sessionID:           "sessionID",
+			userID:              "creator_id",
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {},
 			prepareMockPusherFn: func(m *mock_event.MockPusher) {
 				m.EXPECT().Push(&event.PushMessage{SessionID: "sessionID", Msg: entity.EventArchived})
@@ -846,6 +866,7 @@ func TestSessionHandler_State_ARCHIVED(t *testing.T) {
 		{
 			name:                  "StateType=ARCHIVED: 既にアーカイブされているので何もせずに202",
 			sessionID:             "sessionID",
+			userID:                "creator_id",
 			prepareMockPlayerFn:   func(m *mock_spotify.MockPlayer) {},
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
@@ -866,6 +887,31 @@ func TestSessionHandler_State_ARCHIVED(t *testing.T) {
 			},
 			wantErr:  false,
 			wantCode: http.StatusAccepted,
+		},
+		{
+			name:                  "セッション作成者以外のときは400",
+			sessionID:             "sessionID",
+			userID:                "non_creator_id",
+			prepareMockPlayerFn:   func(m *mock_spotify.MockPlayer) {},
+			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+					ID:        "sessionID",
+					Name:      "session_name",
+					CreatorID: "creator_id",
+					QueueHead: 0,
+					DeviceID:  "device_id",
+					StateType: entity.Archived,
+					QueueTracks: []*entity.QueueTrack{
+						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
+					},
+					AllowToControlByOthers: true,
+				}, nil)
+			},
+			wantErr:  true,
+			wantCode: http.StatusBadRequest,
 		},
 	}
 	for _, tt := range tests {
