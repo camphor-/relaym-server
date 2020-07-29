@@ -51,7 +51,8 @@ X-CSRF-Token: relaym
 
 ```json
 {
-  "name" : "CAMPHOR- HOUSE"
+  "name" : "CAMPHOR- HOUSE",
+  "allow_to_control_by_others": true
 }
 ```
 
@@ -61,6 +62,7 @@ X-CSRF-Token: relaym
 {
   "id": "xxxxxxxxxxxxxxxxxxxxxxx",
   "name": "CAMPHOR- HOUSE",
+  "allow_to_control_by_others": true,
   "creator": {
     "id": "p1ass",
     "display_name": "p1ass"
@@ -243,7 +245,8 @@ X-CSRF-Token: relaym
 | ---- | -------- | -------- |
 | 400 | invalid state     | 不正なstate |
 | 400 | queue track not found | キューが存在しないので操作を開始できない |
-| 400 | requested state is not allowed | 許可されていないstateへの変更(許可されているstateの変更は[PRD](prd.md)を参照) | 
+| 400 | requested state is not allowed | 許可されていないstateへの変更(許可されているstateの変更は[PRD](prd.md)を参照) |
+| 400 | session is not allowed to control by others | 作成者以外によるstateの操作が許可されていない | 
 | 400 | next queue track not found | 再生が終了してStopになったが次のキューが無いので再生を開始できない |   
 | 403 | active device not found | アクティブなデバイスが存在しないので操作ができない |
 | 404 | session not found | 指定されたidのセッションが存在しない |

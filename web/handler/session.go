@@ -28,7 +28,8 @@ func NewSessionHandler(uc *usecase.SessionUseCase, stateUC *usecase.SessionState
 func (h *SessionHandler) PostSession(c echo.Context) error {
 	logger := log.New()
 	type reqJSON struct {
-		Name string `json:"name"`
+		Name                   string `json:"name"`
+		AllowToControlByOthers bool   `json:"allow_to_control_by_others"`
 	}
 	req := new(reqJSON)
 	if err := c.Bind(req); err != nil {
@@ -43,7 +44,7 @@ func (h *SessionHandler) PostSession(c echo.Context) error {
 
 	ctx := c.Request().Context()
 	userID, _ := service.GetUserIDFromContext(ctx)
-	session, err := h.uc.CreateSession(sessionName, userID)
+	session, err := h.uc.CreateSession(sessionName, userID, req.AllowToControlByOthers)
 	if err != nil {
 		logger.Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -129,6 +130,8 @@ func (h *SessionHandler) State(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusBadRequest, entity.ErrNextQueueTrackNotFound.Error())
 		case errors.Is(err, entity.ErrChangeSessionStateNotPermit):
 			return echo.NewHTTPError(http.StatusBadRequest, entity.ErrChangeSessionStateNotPermit.Error())
+		case errors.Is(err, entity.ErrSessionNotAllowToControlOthers):
+			return echo.NewHTTPError(http.StatusBadRequest, entity.ErrSessionNotAllowToControlOthers.Error())
 		case errors.Is(err, entity.ErrSessionNotFound):
 			logger.Debug(err)
 			return echo.NewHTTPError(http.StatusNotFound, entity.ErrSessionNotFound.Error())
@@ -223,8 +226,9 @@ func (h *SessionHandler) toSessionRes(session *entity.SessionWithUser, info *ent
 	}
 
 	return &sessionRes{
-		ID:   session.ID,
-		Name: session.Name,
+		ID:                     session.ID,
+		Name:                   session.Name,
+		AllowToControlByOthers: session.AllowToControlByOthers,
 		Creator: creatorJSON{
 			ID:          session.Creator.ID,
 			DisplayName: session.Creator.DisplayName,
@@ -241,11 +245,12 @@ func (h *SessionHandler) toSessionRes(session *entity.SessionWithUser, info *ent
 }
 
 type sessionRes struct {
-	ID       string       `json:"id"`
-	Name     string       `json:"name"`
-	Creator  creatorJSON  `json:"creator"`
-	Playback playbackJSON `json:"playback"`
-	Queue    queueJSON    `json:"queue"`
+	ID                     string       `json:"id"`
+	Name                   string       `json:"name"`
+	AllowToControlByOthers bool         `json:"allow_to_control_by_others"`
+	Creator                creatorJSON  `json:"creator"`
+	Playback               playbackJSON `json:"playback"`
+	Queue                  queueJSON    `json:"queue"`
 }
 
 type creatorJSON struct {

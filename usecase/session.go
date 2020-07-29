@@ -64,13 +64,13 @@ func (s *SessionUseCase) EnqueueTrack(ctx context.Context, sessionID string, tra
 }
 
 // CreateSession は与えられたセッション名のセッションを作成します。
-func (s *SessionUseCase) CreateSession(sessionName string, creatorID string) (*entity.SessionWithUser, error) {
+func (s *SessionUseCase) CreateSession(sessionName string, creatorID string, allowToControlByOthers bool) (*entity.SessionWithUser, error) {
 	creator, err := s.userRepo.FindByID(creatorID)
 	if err != nil {
 		return nil, fmt.Errorf("FindByID userID=%s: %w", creatorID, err)
 	}
 
-	newSession, err := entity.NewSession(sessionName, creatorID)
+	newSession, err := entity.NewSession(sessionName, creatorID, allowToControlByOthers)
 	if err != nil {
 		return nil, fmt.Errorf("NewSession sessionName=%s: %w", sessionName, err)
 	}

@@ -11,14 +11,15 @@ import (
 
 // Session はセッションを表します。
 type Session struct {
-	ID          string
-	Name        string
-	CreatorID   string
-	DeviceID    string
-	StateType   StateType
-	QueueHead   int
-	QueueTracks []*QueueTrack
-	ExpiredAt   time.Time
+	ID                     string
+	Name                   string
+	CreatorID              string
+	DeviceID               string
+	StateType              StateType
+	QueueHead              int
+	QueueTracks            []*QueueTrack
+	ExpiredAt              time.Time
+	AllowToControlByOthers bool
 }
 
 type SessionWithUser struct {
@@ -27,30 +28,23 @@ type SessionWithUser struct {
 }
 
 // NewSession はSessionのポインタを生成する関数です。
-func NewSession(name string, creatorID string) (*Session, error) {
+func NewSession(name string, creatorID string, allowToControlByOthers bool) (*Session, error) {
 	return &Session{
-		ID:          uuid.New().String(),
-		Name:        name,
-		CreatorID:   creatorID,
-		DeviceID:    "",
-		StateType:   Stop,
-		QueueHead:   0,
-		QueueTracks: nil,
+		ID:                     uuid.New().String(),
+		Name:                   name,
+		CreatorID:              creatorID,
+		DeviceID:               "",
+		StateType:              Stop,
+		QueueHead:              0,
+		QueueTracks:            nil,
+		AllowToControlByOthers: allowToControlByOthers,
 	}, nil
 }
 
 // NewSessionWithUser はSession(ポインタ)からSessionWithUser(ポインタ)を生成します
 func NewSessionWithUser(session *Session, creator *User) *SessionWithUser {
 	return &SessionWithUser{
-		Session: &Session{
-			ID:          session.ID,
-			Name:        session.Name,
-			CreatorID:   creator.ID,
-			DeviceID:    "",
-			StateType:   session.StateType,
-			QueueHead:   session.QueueHead,
-			QueueTracks: session.QueueTracks,
-		},
+		Session: session,
 		Creator: creator,
 	}
 }

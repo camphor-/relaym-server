@@ -16,6 +16,8 @@ var (
 	ErrSessionAllTracksFinished = errors.New("all tracks has already finished")
 	// ErrSessionPlayingDifferentTrack はキュー先頭の曲と異なる曲が再生されているエラーを表します。
 	ErrSessionPlayingDifferentTrack = errors.New("session is playing different track from queue")
+	// ErrSessionNotAllowToControlOthers は作成者以外のユーザの操作が許可されていないのに操作しようとしたときのエラーを表します。
+	ErrSessionNotAllowToControlOthers = errors.New("session is not allowed to control by others")
 
 	// ErrUserIsNotSessionCreator はユーザがセッションの作成者でないときのエラーを表します。
 	ErrUserIsNotSessionCreator = errors.New("user is not session's creator")

@@ -9,6 +9,7 @@ import (
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/event"
 	"github.com/camphor-/relaym-server/domain/repository"
+	"github.com/camphor-/relaym-server/domain/service"
 	"github.com/camphor-/relaym-server/domain/spotify"
 )
 
@@ -34,6 +35,11 @@ func (s *SessionStateUseCase) ChangeSessionState(ctx context.Context, sessionID 
 
 	if !session.IsValidNextStateFromAPI(st) {
 		return fmt.Errorf("state type from %s to %s: %w", session.StateType, st, entity.ErrChangeSessionStateNotPermit)
+	}
+
+	userID, _ := service.GetUserIDFromContext(ctx)
+	if !session.AllowToControlByOthers && !session.IsCreator(userID) {
+		return fmt.Errorf("not allowd to control state: %w", entity.ErrSessionNotAllowToControlOthers)
 	}
 
 	switch st {
