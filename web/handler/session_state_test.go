@@ -33,12 +33,84 @@ func TestSessionHandler_State(t *testing.T) {
 			name:                     "存在しないstateのとき400",
 			sessionID:                "sessionID",
 			body:                     `{"state": "INVALID"}`,
+			userID:                   "userID",
 			prepareMockPlayerFn:      func(m *mock_spotify.MockPlayer) {},
 			prepareMockPusherFn:      func(m *mock_event.MockPusher) {},
 			prepareMockUserRepoFn:    func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {},
 			wantErr:                  true,
 			wantCode:                 http.StatusBadRequest,
+		},
+		{
+			name:                  "作成者以外のリクエストで、他人による操作が許可されていないときは400",
+			sessionID:             "sessionID",
+			body:                  `{"state": "PLAY"}`,
+			userID:                "userID",
+			prepareMockPlayerFn:   func(m *mock_spotify.MockPlayer) {},
+			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+					ID:        "sessionID",
+					Name:      "session_name",
+					CreatorID: "creator_id",
+					QueueHead: 0,
+					DeviceID:  "device_id",
+					StateType: entity.Pause,
+					QueueTracks: []*entity.QueueTrack{
+						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
+					},
+					AllowToControlByOthers: false,
+				}, nil)
+			},
+			wantErr:  true,
+			wantCode: http.StatusBadRequest,
+		},
+		{
+			name:      "作成者以外のリクエストでも他人による操作が許可されているときは202",
+			sessionID: "sessionID",
+			body:      `{"state": "PLAY"}`,
+			userID:    "nonCreatorID",
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().SetRepeatMode(gomock.Any(), false, "device_id").Return(nil)
+				m.EXPECT().SetShuffleMode(gomock.Any(), false, "device_id").Return(nil)
+				m.EXPECT().Play(gomock.Any(), "device_id").Return(nil)
+			},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockPusherFn: func(m *mock_event.MockPusher) {
+				m.EXPECT().Push(&event.PushMessage{SessionID: "sessionID", Msg: entity.EventPlay})
+			},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+					ID:        "sessionID",
+					Name:      "session_name",
+					CreatorID: "creator_id",
+					QueueHead: 0,
+					DeviceID:  "device_id",
+					StateType: entity.Pause,
+					QueueTracks: []*entity.QueueTrack{
+						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
+					},
+					AllowToControlByOthers: true,
+				}, nil)
+				m.EXPECT().Update(&entity.Session{
+					ID:        "sessionID",
+					Name:      "session_name",
+					CreatorID: "creator_id",
+					QueueHead: 0,
+					DeviceID:  "device_id",
+					StateType: entity.Play,
+					QueueTracks: []*entity.QueueTrack{
+						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
+					},
+					AllowToControlByOthers: true,
+				}).Return(nil)
+			},
+			wantErr:  false,
+			wantCode: http.StatusAccepted,
 		},
 	}
 	for _, tt := range tests {
@@ -109,6 +181,7 @@ func TestSessionHandler_State_PLAY(t *testing.T) {
 						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
 						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
 					},
+					AllowToControlByOthers: true,
 				}, nil)
 				m.EXPECT().Update(&entity.Session{
 					ID:        "sessionID",
@@ -121,6 +194,7 @@ func TestSessionHandler_State_PLAY(t *testing.T) {
 						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
 						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
 					},
+					AllowToControlByOthers: true,
 				}).Return(nil)
 			},
 			wantErr:  false,
@@ -147,6 +221,7 @@ func TestSessionHandler_State_PLAY(t *testing.T) {
 						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
 						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
 					},
+					AllowToControlByOthers: true,
 				}, nil)
 			},
 			wantErr:  true,
@@ -184,6 +259,7 @@ func TestSessionHandler_State_PLAY(t *testing.T) {
 						{Index: 2, URI: "spotify:track:3"},
 						{Index: 2, URI: "spotify:track:4"},
 					},
+					AllowToControlByOthers: true,
 				}, nil)
 				m.EXPECT().Update(&entity.Session{
 					ID:        "sessionID",
@@ -198,6 +274,7 @@ func TestSessionHandler_State_PLAY(t *testing.T) {
 						{Index: 2, URI: "spotify:track:3"},
 						{Index: 2, URI: "spotify:track:4"},
 					},
+					AllowToControlByOthers: true,
 				}).Return(nil)
 			},
 			wantErr:  false,
@@ -214,13 +291,14 @@ func TestSessionHandler_State_PLAY(t *testing.T) {
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
 				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
-					ID:          "sessionID",
-					Name:        "session_name",
-					CreatorID:   "creator_id",
-					QueueHead:   0,
-					DeviceID:    "device_id",
-					StateType:   entity.Stop,
-					QueueTracks: nil,
+					ID:                     "sessionID",
+					Name:                   "session_name",
+					CreatorID:              "creator_id",
+					QueueHead:              0,
+					DeviceID:               "device_id",
+					StateType:              entity.Stop,
+					QueueTracks:            nil,
+					AllowToControlByOthers: true,
 				}, nil)
 
 			},
@@ -247,6 +325,7 @@ func TestSessionHandler_State_PLAY(t *testing.T) {
 						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
 						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
 					},
+					AllowToControlByOthers: true,
 				}, nil)
 			},
 			wantErr:  true,
@@ -331,23 +410,26 @@ func TestSessionHandler_State_PAUSE(t *testing.T) {
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
 				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
-					ID:          "sessionID",
-					Name:        "session_name",
-					CreatorID:   "creator_id",
-					QueueHead:   0,
-					DeviceID:    "device_id",
-					StateType:   entity.Play,
-					QueueTracks: nil,
+					ID:                     "sessionID",
+					Name:                   "session_name",
+					CreatorID:              "creator_id",
+					QueueHead:              0,
+					DeviceID:               "device_id",
+					StateType:              entity.Play,
+					QueueTracks:            nil,
+					AllowToControlByOthers: true,
 				}, nil)
 				m.EXPECT().Update(&entity.Session{
-					ID:          "sessionID",
-					Name:        "session_name",
-					CreatorID:   "creator_id",
-					QueueHead:   0,
-					DeviceID:    "device_id",
-					StateType:   entity.Pause,
-					QueueTracks: nil,
+					ID:                     "sessionID",
+					Name:                   "session_name",
+					CreatorID:              "creator_id",
+					QueueHead:              0,
+					DeviceID:               "device_id",
+					StateType:              entity.Pause,
+					QueueTracks:            nil,
+					AllowToControlByOthers: true,
 				}).Return(nil)
+
 			},
 			wantErr:  false,
 			wantCode: http.StatusAccepted,
@@ -364,22 +446,24 @@ func TestSessionHandler_State_PAUSE(t *testing.T) {
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
 				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
-					ID:          "sessionID",
-					Name:        "session_name",
-					CreatorID:   "creator_id",
-					DeviceID:    "device_id",
-					QueueHead:   0,
-					StateType:   entity.Play,
-					QueueTracks: nil,
+					ID:                     "sessionID",
+					Name:                   "session_name",
+					CreatorID:              "creator_id",
+					DeviceID:               "device_id",
+					QueueHead:              0,
+					StateType:              entity.Play,
+					QueueTracks:            nil,
+					AllowToControlByOthers: true,
 				}, nil)
 				m.EXPECT().Update(&entity.Session{
-					ID:          "sessionID",
-					Name:        "session_name",
-					CreatorID:   "creator_id",
-					DeviceID:    "device_id",
-					QueueHead:   0,
-					StateType:   entity.Pause,
-					QueueTracks: nil,
+					ID:                     "sessionID",
+					Name:                   "session_name",
+					CreatorID:              "creator_id",
+					DeviceID:               "device_id",
+					QueueHead:              0,
+					StateType:              entity.Pause,
+					QueueTracks:            nil,
+					AllowToControlByOthers: true,
 				}).Return(nil)
 			},
 			wantErr:  false,
@@ -397,22 +481,24 @@ func TestSessionHandler_State_PAUSE(t *testing.T) {
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
 				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
-					ID:          "sessionID",
-					Name:        "session_name",
-					CreatorID:   "creator_id",
-					QueueHead:   0,
-					DeviceID:    "device_id",
-					StateType:   entity.Pause,
-					QueueTracks: nil,
+					ID:                     "sessionID",
+					Name:                   "session_name",
+					CreatorID:              "creator_id",
+					QueueHead:              0,
+					DeviceID:               "device_id",
+					StateType:              entity.Pause,
+					QueueTracks:            nil,
+					AllowToControlByOthers: true,
 				}, nil)
 				m.EXPECT().Update(&entity.Session{
-					ID:          "sessionID",
-					Name:        "session_name",
-					CreatorID:   "creator_id",
-					DeviceID:    "device_id",
-					QueueHead:   0,
-					StateType:   entity.Pause,
-					QueueTracks: nil,
+					ID:                     "sessionID",
+					Name:                   "session_name",
+					CreatorID:              "creator_id",
+					DeviceID:               "device_id",
+					QueueHead:              0,
+					StateType:              entity.Pause,
+					QueueTracks:            nil,
+					AllowToControlByOthers: true,
 				}).Return(nil)
 			},
 			wantErr:  false,
@@ -430,22 +516,24 @@ func TestSessionHandler_State_PAUSE(t *testing.T) {
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
 				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
-					ID:          "sessionID",
-					Name:        "session_name",
-					CreatorID:   "creator_id",
-					QueueHead:   0,
-					DeviceID:    "device_id",
-					StateType:   entity.Pause,
-					QueueTracks: nil,
+					ID:                     "sessionID",
+					Name:                   "session_name",
+					CreatorID:              "creator_id",
+					QueueHead:              0,
+					DeviceID:               "device_id",
+					StateType:              entity.Pause,
+					QueueTracks:            nil,
+					AllowToControlByOthers: true,
 				}, nil)
 				m.EXPECT().Update(&entity.Session{
-					ID:          "sessionID",
-					Name:        "session_name",
-					CreatorID:   "creator_id",
-					DeviceID:    "device_id",
-					QueueHead:   0,
-					StateType:   entity.Pause,
-					QueueTracks: nil,
+					ID:                     "sessionID",
+					Name:                   "session_name",
+					CreatorID:              "creator_id",
+					DeviceID:               "device_id",
+					QueueHead:              0,
+					StateType:              entity.Pause,
+					QueueTracks:            nil,
+					AllowToControlByOthers: true,
 				}).Return(nil)
 			},
 			wantErr:  false,
@@ -538,6 +626,7 @@ func TestSessionHandler_State_STOP(t *testing.T) {
 						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
 						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
 					},
+					AllowToControlByOthers: true,
 				}, nil)
 				m.EXPECT().UpdateWithExpiredAt(&entity.Session{
 					ID:        "sessionID",
@@ -550,6 +639,7 @@ func TestSessionHandler_State_STOP(t *testing.T) {
 						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
 						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
 					},
+					AllowToControlByOthers: true,
 				}, gomock.Any()).Return(nil)
 			},
 			wantErr:  false,
@@ -656,6 +746,7 @@ func TestSessionHandler_State_ARCHIVED(t *testing.T) {
 						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
 						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
 					},
+					AllowToControlByOthers: true,
 				}, nil)
 				m.EXPECT().Update(&entity.Session{
 					ID:        "sessionID",
@@ -668,6 +759,7 @@ func TestSessionHandler_State_ARCHIVED(t *testing.T) {
 						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
 						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
 					},
+					AllowToControlByOthers: true,
 				}).Return(nil)
 			},
 			wantErr:  false,
@@ -693,6 +785,7 @@ func TestSessionHandler_State_ARCHIVED(t *testing.T) {
 						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
 						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
 					},
+					AllowToControlByOthers: true,
 				}, nil)
 				m.EXPECT().Update(&entity.Session{
 					ID:        "sessionID",
@@ -705,6 +798,7 @@ func TestSessionHandler_State_ARCHIVED(t *testing.T) {
 						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
 						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
 					},
+					AllowToControlByOthers: true,
 				}).Return(nil)
 			},
 			wantErr:  false,
@@ -730,6 +824,7 @@ func TestSessionHandler_State_ARCHIVED(t *testing.T) {
 						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
 						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
 					},
+					AllowToControlByOthers: true,
 				}, nil)
 				m.EXPECT().Update(&entity.Session{
 					ID:        "sessionID",
@@ -742,6 +837,7 @@ func TestSessionHandler_State_ARCHIVED(t *testing.T) {
 						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
 						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
 					},
+					AllowToControlByOthers: true,
 				}).Return(nil)
 			},
 			wantErr:  false,
@@ -765,6 +861,7 @@ func TestSessionHandler_State_ARCHIVED(t *testing.T) {
 						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
 						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
 					},
+					AllowToControlByOthers: true,
 				}, nil)
 			},
 			wantErr:  false,

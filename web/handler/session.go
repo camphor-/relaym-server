@@ -130,6 +130,8 @@ func (h *SessionHandler) State(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusBadRequest, entity.ErrNextQueueTrackNotFound.Error())
 		case errors.Is(err, entity.ErrChangeSessionStateNotPermit):
 			return echo.NewHTTPError(http.StatusBadRequest, entity.ErrChangeSessionStateNotPermit.Error())
+		case errors.Is(err, entity.ErrSessionNotAllowToControlOthers):
+			return echo.NewHTTPError(http.StatusBadRequest, entity.ErrSessionNotAllowToControlOthers.Error())
 		case errors.Is(err, entity.ErrSessionNotFound):
 			logger.Debug(err)
 			return echo.NewHTTPError(http.StatusNotFound, entity.ErrSessionNotFound.Error())
