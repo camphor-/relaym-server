@@ -12,7 +12,7 @@ import (
 	"github.com/golang/mock/gomock"
 )
 
-func TestSessionTimerUseCase_handleTrackEnd(t *testing.T) {
+func TestSessionTimerUseCase_handleTrackEndTx(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -38,7 +38,7 @@ func TestSessionTimerUseCase_handleTrackEnd(t *testing.T) {
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "name",
 					CreatorID: "creatorID",
@@ -102,7 +102,7 @@ func TestSessionTimerUseCase_handleTrackEnd(t *testing.T) {
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "name",
 					CreatorID: "creatorID",
@@ -183,7 +183,7 @@ func TestSessionTimerUseCase_handleTrackEnd(t *testing.T) {
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "name",
 					CreatorID: "creatorID",
@@ -283,7 +283,7 @@ func TestSessionTimerUseCase_handleTrackEnd(t *testing.T) {
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "name",
 					CreatorID: "creatorID",
@@ -342,7 +342,7 @@ func TestSessionTimerUseCase_handleTrackEnd(t *testing.T) {
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "name",
 					CreatorID: "creatorID",
@@ -400,7 +400,7 @@ func TestSessionTimerUseCase_handleTrackEnd(t *testing.T) {
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "name",
 					CreatorID: "creatorID",
@@ -468,16 +468,21 @@ func TestSessionTimerUseCase_handleTrackEnd(t *testing.T) {
 			syncCheckTimerManager := entity.NewSyncCheckTimerManager()
 
 			s := NewSessionTimerUseCase(mockSessionRepo, mockPlayer, mockPusher, syncCheckTimerManager)
-			gotTriggerAfterTrackEnd, gotNextTrack, err := s.handleTrackEnd(context.Background(), tt.sessionID)
-			if (err != nil) != tt.wantErr {
+			gotTriggerAfterTrackEndResponseInterface, err := s.handleTrackEndTx(tt.sessionID)(context.Background())
+
+			gotHandleTrackEndResponse, ok := gotTriggerAfterTrackEndResponseInterface.(*handleTrackEndResponse)
+			if !ok {
+				t.Fatal("gotTriggerAfterTrackEndResponse should be *handleTrackEndResponse")
+			}
+			if (gotHandleTrackEndResponse.err != nil) != tt.wantErr {
 				t.Errorf("handleTrackEnd() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if (gotTriggerAfterTrackEnd != nil) != tt.wantTriggerAfterTrackEnd {
-				t.Errorf("handleTrackEnd() gotTriggerAfterTrackEnd = %v, want %v", gotTriggerAfterTrackEnd, tt.wantTriggerAfterTrackEnd)
+			if (gotHandleTrackEndResponse.triggerAfterTrackEnd != nil) != tt.wantTriggerAfterTrackEnd {
+				t.Errorf("handleTrackEnd() gotTriggerAfterTrackEnd = %v, want %v", gotHandleTrackEndResponse.triggerAfterTrackEnd, tt.wantTriggerAfterTrackEnd)
 			}
-			if gotNextTrack != tt.wantNextTrack {
-				t.Errorf("handleTrackEnd() gotNextTrack = %v, want %v", gotNextTrack, tt.wantNextTrack)
+			if gotHandleTrackEndResponse.nextTrack != tt.wantNextTrack {
+				t.Errorf("handleTrackEnd() gotNextTrack = %v, want %v", gotHandleTrackEndResponse.nextTrack, tt.wantNextTrack)
 			}
 		})
 	}

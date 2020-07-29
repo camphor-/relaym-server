@@ -99,6 +99,91 @@ func TestSessionRepository_FindByID(t *testing.T) {
 	}
 }
 
+func TestSessionRepository_FindByIDForUpdate(t *testing.T) {
+	dbMap, err := NewDB()
+	if err != nil {
+		t.Fatal(err)
+	}
+	dbMap.AddTableWithName(sessionDTO{}, "sessions")
+	dbMap.AddTableWithName(userDTO{}, "users")
+	dbMap.AddTableWithName(queueTrackDTO{}, "queue_tracks")
+	truncateTable(t, dbMap)
+	user := &userDTO{
+		ID:            "existing_user",
+		SpotifyUserID: "existing_user_spotify",
+		DisplayName:   "existing_user_display_name",
+	}
+	session := &sessionDTO{
+		ID:                     "existing_session_id",
+		Name:                   "existing_session_name",
+		CreatorID:              "existing_user",
+		QueueHead:              0,
+		StateType:              "PLAY",
+		DeviceID:               "device_id",
+		ExpiredAt:              time.Date(2020, time.December, 1, 12, 0, 0, 0, time.UTC),
+		AllowToControlByOthers: true,
+	}
+	queueTrack := &queueTrackDTO{
+		Index:     0,
+		URI:       "existing_uri",
+		SessionID: "existing_session_id",
+	}
+	if err := dbMap.Insert(user, session, queueTrack); err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name    string
+		id      string
+		want    *entity.Session
+		wantErr error
+	}{
+		{
+			name: "存在するsessionを正しく取得できる",
+			id:   "existing_session_id",
+			want: &entity.Session{
+				ID:        "existing_session_id",
+				Name:      "existing_session_name",
+				CreatorID: "existing_user",
+				DeviceID:  "device_id",
+				StateType: "PLAY",
+				QueueHead: 0,
+				QueueTracks: []*entity.QueueTrack{
+					{
+						Index:     0,
+						URI:       "existing_uri",
+						SessionID: "existing_session_id",
+					},
+				},
+				ExpiredAt:              time.Date(2020, time.December, 1, 12, 0, 0, 0, time.UTC),
+				AllowToControlByOthers: true,
+			},
+			wantErr: nil,
+		},
+		{
+			name:    "存在しないidの場合はErrSessionNotFound",
+			id:      "not_exist_session_id",
+			want:    nil,
+			wantErr: entity.ErrSessionNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &SessionRepository{dbMap: dbMap}
+			got, err := r.FindByIDForUpdate(context.TODO(), tt.id)
+			if !errors.Is(err, tt.wantErr) {
+				t.Errorf("SessionRepository.FindByID() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !cmp.Equal(got, tt.want) {
+				t.Errorf("SessionRepository.FindByID() diff=%v", cmp.Diff(tt.want, got))
+				return
+			}
+		})
+	}
+}
+
 func TestSessionRepository_StoreSession(t *testing.T) {
 	// Prepare
 	dbMap, err := NewDB()

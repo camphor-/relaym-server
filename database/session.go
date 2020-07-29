@@ -70,6 +70,44 @@ func (r *SessionRepository) FindByID(ctx context.Context, id string) (*entity.Se
 	}, nil
 }
 
+// FindByIDForUpdate は指定されたIDを持つsessionをDBから取得します
+func (r *SessionRepository) FindByIDForUpdate(ctx context.Context, id string) (*entity.Session, error) {
+	dao, ok := getTx(ctx)
+	if !ok {
+		dao = r.dbMap
+	}
+
+	var dto sessionDTO
+	if err := dao.SelectOne(&dto, "SELECT id, name, creator_id, queue_head, state_type, device_id, expired_at, allow_to_control_by_others FROM sessions WHERE id = ? FOR UPDATE", id); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("select session: %w", entity.ErrSessionNotFound)
+		}
+		return nil, fmt.Errorf("select session: %w", err)
+	}
+
+	queueTracks, errOnGetQueue := r.getQueueTracksBySessionID(id)
+	if errOnGetQueue != nil {
+		return nil, fmt.Errorf("get queue tracks: %w", errOnGetQueue)
+	}
+
+	stateType, err := entity.NewStateType(dto.StateType)
+	if err != nil {
+		return nil, fmt.Errorf("find session: %w", entity.ErrInvalidStateType)
+	}
+
+	return &entity.Session{
+		ID:                     dto.ID,
+		Name:                   dto.Name,
+		CreatorID:              dto.CreatorID,
+		DeviceID:               dto.DeviceID,
+		StateType:              stateType,
+		QueueHead:              dto.QueueHead,
+		QueueTracks:            queueTracks,
+		ExpiredAt:              dto.ExpiredAt,
+		AllowToControlByOthers: dto.AllowToControlByOthers,
+	}, nil
+}
+
 // FindCreatorTokenBySessionID はSessionIDからCreatorのTokenを取得します
 func (r *SessionRepository) FindCreatorTokenBySessionID(ctx context.Context, sessionID string) (*oauth2.Token, string, error) {
 	dao, ok := getTx(ctx)
@@ -226,12 +264,12 @@ func (r *SessionRepository) DoInTx(ctx context.Context, f func(ctx context.Conte
 	v, err := f(ctx)
 	if err != nil {
 		_ = tx.Rollback()
-		return nil, fmt.Errorf("rollback: %w", err)
+		return v, fmt.Errorf("rollback: %w", err)
 	}
 
 	if err := tx.Commit(); err != nil {
 		_ = tx.Rollback()
-		return nil, fmt.Errorf("failet to commit: rollback: %w", err)
+		return v, fmt.Errorf("failed to commit: rollback: %w", err)
 	}
 	return v, nil
 }
