@@ -10,7 +10,6 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	oauth2 "golang.org/x/oauth2"
 	reflect "reflect"
-	time "time"
 )
 
 // MockSession is a mock of Session interface
@@ -94,6 +93,7 @@ func (mr *MockSessionMockRecorder) Update(arg0, arg1 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockSession)(nil).Update), arg0, arg1)
 }
 
+<<<<<<< HEAD
 // UpdateWithExpiredAt mocks base method
 func (m *MockSession) UpdateWithExpiredAt(arg0 context.Context, arg1 *entity.Session, arg2 time.Time) error {
 	m.ctrl.T.Helper()
@@ -108,6 +108,8 @@ func (mr *MockSessionMockRecorder) UpdateWithExpiredAt(arg0, arg1, arg2 interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWithExpiredAt", reflect.TypeOf((*MockSession)(nil).UpdateWithExpiredAt), arg0, arg1, arg2)
 }
 
+=======
+>>>>>>> 6e5d418... fix: set new archived_at on entity
 // StoreQueueTrack mocks base method
 func (m *MockSession) StoreQueueTrack(arg0 context.Context, arg1 *entity.QueueTrackToStore) error {
 	m.ctrl.T.Helper()

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/event"
@@ -193,8 +192,9 @@ func (s *SessionStateUseCase) stop(ctx context.Context, session *entity.Session)
 func (s *SessionStateUseCase) archiveToStop(ctx context.Context, session *entity.Session) error {
 	session.MoveToStop()
 
-	threeDaysAfter := time.Now().AddDate(0, 0, 3).UTC()
-	if err := s.sessionRepo.UpdateWithExpiredAt(ctx, session, threeDaysAfter); err != nil {
+	session.UpdateExpiredAt()
+
+	if err := s.sessionRepo.Update(ctx, session); err != nil {
 		return fmt.Errorf("update session id=%s: %w", session.ID, err)
 	}
 

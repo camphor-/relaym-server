@@ -184,30 +184,6 @@ func (r *SessionRepository) Update(ctx context.Context, session *entity.Session)
 	return nil
 }
 
-// UpdateWithExpiredAt はセッションの情報を更新し、同時にExpiredAtを更新します。
-func (r *SessionRepository) UpdateWithExpiredAt(ctx context.Context, session *entity.Session, newExpiredAt time.Time) error {
-	dao, ok := getTx(ctx)
-	if !ok {
-		dao = r.dbMap
-	}
-
-	dto := &sessionDTO{
-		ID:                     session.ID,
-		Name:                   session.Name,
-		CreatorID:              session.CreatorID,
-		QueueHead:              session.QueueHead,
-		StateType:              session.StateType.String(),
-		DeviceID:               session.DeviceID,
-		ExpiredAt:              newExpiredAt,
-		AllowToControlByOthers: session.AllowToControlByOthers,
-	}
-
-	if _, err := dao.Update(dto); err != nil {
-		return fmt.Errorf("update session: %w", err)
-	}
-	return nil
-}
-
 // StoreQueueTrack はQueueTrackをDBに挿入します。
 func (r *SessionRepository) StoreQueueTrack(ctx context.Context, queueTrack *entity.QueueTrackToStore) error {
 	dao, ok := getTx(ctx)
