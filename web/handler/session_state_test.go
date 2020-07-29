@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/event"
@@ -13,6 +14,8 @@ import (
 	"github.com/camphor-/relaym-server/domain/mock_spotify"
 	"github.com/camphor-/relaym-server/usecase"
 	"github.com/golang/mock/gomock"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/labstack/echo/v4"
 )
 
@@ -628,19 +631,35 @@ func TestSessionHandler_State_STOP(t *testing.T) {
 					},
 					AllowToControlByOthers: true,
 				}, nil)
-				m.EXPECT().UpdateWithExpiredAt(gomock.Any(), &entity.Session{
-					ID:        "sessionID",
-					Name:      "session_name",
-					CreatorID: "creator_id",
-					QueueHead: 0,
-					DeviceID:  "device_id",
-					StateType: "STOP",
-					QueueTracks: []*entity.QueueTrack{
-						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
-						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
-					},
-					AllowToControlByOthers: true,
-				}, gomock.Any()).Return(nil)
+				m.EXPECT().Update(gomock.Any(), gomock.Any()).DoAndReturn(
+					func(sess *entity.Session) error {
+						twoDaysAfter := time.Now().AddDate(0, 0, 2).UTC()
+						fourDaysAfter := time.Now().AddDate(0, 0, 4).UTC()
+						sessionMustBeCall := &entity.Session{
+							ID:        "sessionID",
+							Name:      "session_name",
+							CreatorID: "creator_id",
+							QueueHead: 0,
+							DeviceID:  "device_id",
+							StateType: "STOP",
+							QueueTracks: []*entity.QueueTrack{
+								{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+								{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
+							},
+							AllowToControlByOthers: true,
+						}
+
+						if !fourDaysAfter.After(sess.ExpiredAt) || !twoDaysAfter.Before(sess.ExpiredAt) {
+							t.Errorf("Update(): unexpected ExpiredAt: got: %v", sess.ExpiredAt)
+						}
+
+						opts := []cmp.Option{cmpopts.IgnoreFields(entity.Session{}, "ExpiredAt")}
+						if !cmp.Equal(sessionMustBeCall, sess, opts...) {
+							t.Errorf("Update(): unexpected args: diff: %v", cmp.Diff(sessionMustBeCall, sess))
+						}
+
+						return nil
+					})
 			},
 			wantErr:  false,
 			wantCode: http.StatusAccepted,
