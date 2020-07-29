@@ -22,7 +22,7 @@ func TestSessionUseCase_CanConnectToPusher(t *testing.T) {
 			name:      "存在しないセッションのとき404",
 			sessionID: "not_found_session_id",
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID("not_found_session_id").Return(nil, entity.ErrSessionNotFound)
+				m.EXPECT().FindByID(gomock.Any(), "not_found_session_id").Return(nil, entity.ErrSessionNotFound)
 			},
 			wantErr: true,
 		},
@@ -30,7 +30,7 @@ func TestSessionUseCase_CanConnectToPusher(t *testing.T) {
 			name:      "StateがStopのセッションのとき正しくWebSocketのコネクションが確立される",
 			sessionID: "sessionID",
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:          "sessionID",
 					Name:        "session_name",
 					CreatorID:   "creator_id",
@@ -45,7 +45,7 @@ func TestSessionUseCase_CanConnectToPusher(t *testing.T) {
 			name:      "StateがPlayのセッションでタイマーが存在しないので、タイマーを作成した後、正しくWebSocketのコネクションが確立される",
 			sessionID: "sessionID",
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "session_name",
 					CreatorID: "creator_id",

@@ -35,7 +35,7 @@ func TestSessionTokenMiddleware_SetTokenToContext(t *testing.T) {
 			name:      "DBからアクセストークンの取得に失敗すると500",
 			sessionID: "sessionID",
 			prepareSessionRepo: func(r *mock_repository.MockSession) {
-				r.EXPECT().FindCreatorTokenBySessionID("sessionID").Return(nil, "", errors.New("unknown error"))
+				r.EXPECT().FindCreatorTokenBySessionID(gomock.Any(), "sessionID").Return(nil, "", errors.New("unknown error"))
 			},
 			prepareAuthRepo: func(r *mock_repository.MockAuth) {},
 			prepareAuthCli:  func(c *mock_spotify.MockAuth) {},
@@ -57,7 +57,7 @@ func TestSessionTokenMiddleware_SetTokenToContext(t *testing.T) {
 			name:      "DBから取得したアクセストークンが正しくContextにセットされる",
 			sessionID: "sessionID",
 			prepareSessionRepo: func(r *mock_repository.MockSession) {
-				r.EXPECT().FindCreatorTokenBySessionID("sessionID").Return(&oauth2.Token{
+				r.EXPECT().FindCreatorTokenBySessionID(gomock.Any(), "sessionID").Return(&oauth2.Token{
 					AccessToken:  "access_token",
 					TokenType:    "Bearer",
 					RefreshToken: "refresh_token",
@@ -97,7 +97,7 @@ func TestSessionTokenMiddleware_SetTokenToContext(t *testing.T) {
 			name:      "アクセストークンの有効期限が切れているときに更新処理が走って正しく新しいトークンが保存される",
 			sessionID: "sessionID",
 			prepareSessionRepo: func(r *mock_repository.MockSession) {
-				r.EXPECT().FindCreatorTokenBySessionID("sessionID").Return(&oauth2.Token{
+				r.EXPECT().FindCreatorTokenBySessionID(gomock.Any(), "sessionID").Return(&oauth2.Token{
 					AccessToken:  "access_token",
 					TokenType:    "Bearer",
 					RefreshToken: "refresh_token",

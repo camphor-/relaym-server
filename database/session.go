@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -32,9 +33,14 @@ func NewSessionRepository(dbMap *gorp.DbMap) *SessionRepository {
 }
 
 // FindByID は指定されたIDを持つsessionをDBから取得します
-func (r *SessionRepository) FindByID(id string) (*entity.Session, error) {
+func (r *SessionRepository) FindByID(ctx context.Context, id string) (*entity.Session, error) {
+	dao, ok := getTx(ctx)
+	if !ok {
+		dao = r.dbMap
+	}
+
 	var dto sessionDTO
-	if err := r.dbMap.SelectOne(&dto, "SELECT id, name, creator_id, queue_head, state_type, device_id, expired_at, allow_to_control_by_others FROM sessions WHERE id = ?", id); err != nil {
+	if err := dao.SelectOne(&dto, "SELECT id, name, creator_id, queue_head, state_type, device_id, expired_at, allow_to_control_by_others FROM sessions WHERE id = ?", id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("select session: %w", entity.ErrSessionNotFound)
 		}
@@ -65,10 +71,15 @@ func (r *SessionRepository) FindByID(id string) (*entity.Session, error) {
 }
 
 // FindCreatorTokenBySessionID はSessionIDからCreatorのTokenを取得します
-func (r *SessionRepository) FindCreatorTokenBySessionID(sessionID string) (*oauth2.Token, string, error) {
+func (r *SessionRepository) FindCreatorTokenBySessionID(ctx context.Context, sessionID string) (*oauth2.Token, string, error) {
+	dao, ok := getTx(ctx)
+	if !ok {
+		dao = r.dbMap
+	}
+
 	var dto spotifyAuthDTO
 
-	if err := r.dbMap.SelectOne(&dto, "SELECT sa.access_token, sa.refresh_token, sa.expiry, sessions.creator_id AS user_id FROM sessions INNER JOIN spotify_auth AS sa ON sa.user_id = sessions.creator_id WHERE sessions.id = ?", sessionID); err != nil {
+	if err := dao.SelectOne(&dto, "SELECT sa.access_token, sa.refresh_token, sa.expiry, sessions.creator_id AS user_id FROM sessions INNER JOIN spotify_auth AS sa ON sa.user_id = sessions.creator_id WHERE sessions.id = ?", sessionID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, "", fmt.Errorf("select session: %w", entity.ErrSessionNotFound)
 		}
@@ -84,7 +95,12 @@ func (r *SessionRepository) FindCreatorTokenBySessionID(sessionID string) (*oaut
 }
 
 // StoreSession はSessionをDBに挿入します。
-func (r *SessionRepository) StoreSession(session *entity.Session) error {
+func (r *SessionRepository) StoreSession(ctx context.Context, session *entity.Session) error {
+	dao, ok := getTx(ctx)
+	if !ok {
+		dao = r.dbMap
+	}
+
 	threeDaysAfter := time.Now().AddDate(0, 0, 3).UTC()
 	dto := &sessionDTO{
 		ID:                     session.ID,
@@ -97,7 +113,7 @@ func (r *SessionRepository) StoreSession(session *entity.Session) error {
 		AllowToControlByOthers: session.AllowToControlByOthers,
 	}
 
-	if err := r.dbMap.Insert(dto); err != nil {
+	if err := dao.Insert(dto); err != nil {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok && mysqlErr.Number == errorNumDuplicateEntry {
 			return fmt.Errorf("insert session: %w", entity.ErrSessionAlreadyExisted)
 		}
@@ -107,7 +123,12 @@ func (r *SessionRepository) StoreSession(session *entity.Session) error {
 }
 
 // Update はセッションの情報を更新します。
-func (r *SessionRepository) Update(session *entity.Session) error {
+func (r *SessionRepository) Update(ctx context.Context, session *entity.Session) error {
+	dao, ok := getTx(ctx)
+	if !ok {
+		dao = r.dbMap
+	}
+
 	dto := &sessionDTO{
 		ID:                     session.ID,
 		Name:                   session.Name,
@@ -119,14 +140,19 @@ func (r *SessionRepository) Update(session *entity.Session) error {
 		AllowToControlByOthers: session.AllowToControlByOthers,
 	}
 
-	if _, err := r.dbMap.Update(dto); err != nil {
+	if _, err := dao.Update(dto); err != nil {
 		return fmt.Errorf("update session: %w", err)
 	}
 	return nil
 }
 
 // UpdateWithExpiredAt はセッションの情報を更新し、同時にExpiredAtを更新します。
-func (r *SessionRepository) UpdateWithExpiredAt(session *entity.Session, newExpiredAt time.Time) error {
+func (r *SessionRepository) UpdateWithExpiredAt(ctx context.Context, session *entity.Session, newExpiredAt time.Time) error {
+	dao, ok := getTx(ctx)
+	if !ok {
+		dao = r.dbMap
+	}
+
 	dto := &sessionDTO{
 		ID:                     session.ID,
 		Name:                   session.Name,
@@ -138,15 +164,20 @@ func (r *SessionRepository) UpdateWithExpiredAt(session *entity.Session, newExpi
 		AllowToControlByOthers: session.AllowToControlByOthers,
 	}
 
-	if _, err := r.dbMap.Update(dto); err != nil {
+	if _, err := dao.Update(dto); err != nil {
 		return fmt.Errorf("update session: %w", err)
 	}
 	return nil
 }
 
 // StoreQueueTrack はQueueTrackをDBに挿入します。
-func (r *SessionRepository) StoreQueueTrack(queueTrack *entity.QueueTrackToStore) error {
-	if _, err := r.dbMap.Exec("INSERT INTO queue_tracks(`index`, uri, session_id) SELECT COALESCE(MAX(`index`),-1)+1, ?, ? from queue_tracks as qt WHERE session_id = ?;", queueTrack.URI, queueTrack.SessionID, queueTrack.SessionID); err != nil {
+func (r *SessionRepository) StoreQueueTrack(ctx context.Context, queueTrack *entity.QueueTrackToStore) error {
+	dao, ok := getTx(ctx)
+	if !ok {
+		dao = r.dbMap
+	}
+
+	if _, err := dao.Exec("INSERT INTO queue_tracks(`index`, uri, session_id) SELECT COALESCE(MAX(`index`),-1)+1, ?, ? from queue_tracks as qt WHERE session_id = ?;", queueTrack.URI, queueTrack.SessionID, queueTrack.SessionID); err != nil {
 		return fmt.Errorf("insert queue_tracks: %w", err)
 	}
 	return nil
@@ -182,6 +213,27 @@ func (r *SessionRepository) toQueueTracks(resultQueueTracks []queueTrackDTO) []*
 	}
 
 	return queueTracks
+}
+
+// DoInTx はトランザクションの中でデータベースにアクセスするためのラッパー関数です。
+func (r *SessionRepository) DoInTx(ctx context.Context, f func(ctx context.Context) (interface{}, error)) (interface{}, error) {
+	tx, err := r.dbMap.Begin()
+	if err != nil {
+		return nil, fmt.Errorf("begin transaction: %w", err)
+	}
+
+	ctx = context.WithValue(ctx, &txKey, tx)
+	v, err := f(ctx)
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, fmt.Errorf("rollback: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		_ = tx.Rollback()
+		return nil, fmt.Errorf("failet to commit: rollback: %w", err)
+	}
+	return v, nil
 }
 
 type sessionDTO struct {
