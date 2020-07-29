@@ -84,13 +84,22 @@ func (s *SessionTimerUseCase) handleTrackEnd(ctx context.Context, sessionID stri
 
 	triggerAfterTrackEndResponse, err := s.sessionRepo.DoInTx(ctx, s.handleTrackEndTx(sessionID))
 	if v, ok := triggerAfterTrackEndResponse.(*handleTrackEndResponse); ok {
-		return v.triggerAfterTrackEnd, v.nextTrack, err
+		// これはトランザクションが失敗してRollbackしたとき
+		if err != nil {
+			return nil, false, fmt.Errorf("handle track end in transaction: %w", err)
+		}
+		return v.triggerAfterTrackEnd, v.nextTrack, v.err
+	}
+	// これはトランザクションが失敗してRollbackしたとき
+	if err != nil {
+		return nil, false, fmt.Errorf("handle track end in transaction: %w", err)
 	}
 	return nil, false, nil
-
 }
 
-func (s *SessionTimerUseCase) handleTrackEndTx(sessionID string) func(ctx context.Context) (_ interface{}, returnErr error) {
+// handleTrackEndTx はINTERRUPTになってerrorを帰す場合もトランザクションをコミットして欲しいので、
+// アプリケーションエラーはhandleTrackEndResponseのフィールドで返すようにしてerrorの返り値はnilにしている
+func (s *SessionTimerUseCase) handleTrackEndTx(sessionID string) func(ctx context.Context) (interface{}, error) {
 	logger := log.New()
 	return func(ctx context.Context) (_ interface{}, returnErr error) {
 		sess, err := s.sessionRepo.FindByIDForUpdate(ctx, sessionID)
@@ -115,19 +124,30 @@ func (s *SessionTimerUseCase) handleTrackEndTx(sessionID string) func(ctx contex
 				Msg:       entity.EventArchived,
 			})
 
-			return &handleTrackEndResponse{triggerAfterTrackEnd: nil, nextTrack: false}, nil
+			return &handleTrackEndResponse{
+				triggerAfterTrackEnd: nil,
+				nextTrack:            false,
+				err:                  nil,
+			}, nil
 		}
 
 		if err := sess.GoNextTrack(); err != nil && errors.Is(err, entity.ErrSessionAllTracksFinished) {
 			s.handleAllTrackFinish(sess)
-			return &handleTrackEndResponse{triggerAfterTrackEnd: nil, nextTrack: false}, nil
+			return &handleTrackEndResponse{
+				triggerAfterTrackEnd: nil,
+				nextTrack:            false,
+				err:                  nil,
+			}, nil
 		}
 
 		track := sess.TrackURIShouldBeAddedWhenHandleTrackEnd()
 		if track != "" {
 			if err := s.playerCli.Enqueue(ctx, track, sess.DeviceID); err != nil {
-				returnErr = fmt.Errorf("call add queue api trackURI=%s: %w", track, err)
-				return &handleTrackEndResponse{triggerAfterTrackEnd: nil, nextTrack: false}, returnErr
+				return &handleTrackEndResponse{
+					triggerAfterTrackEnd: nil,
+					nextTrack:            false,
+					err:                  fmt.Errorf("call add queue api trackURI=%s: %w", track, err),
+				}, nil
 			}
 		}
 
@@ -137,16 +157,18 @@ func (s *SessionTimerUseCase) handleTrackEndTx(sessionID string) func(ctx contex
 		if err != nil {
 			if errors.Is(err, entity.ErrActiveDeviceNotFound) {
 				s.handleInterrupt(sess)
-				return &handleTrackEndResponse{triggerAfterTrackEnd: nil, nextTrack: false}, err
+				return &handleTrackEndResponse{
+					triggerAfterTrackEnd: nil,
+					nextTrack:            false,
+					err:                  err,
+				}, nil
 			}
-			returnErr = fmt.Errorf("get currently playing info id=%s: %v", sessionID, err)
-			return &handleTrackEndResponse{triggerAfterTrackEnd: nil, nextTrack: false}, returnErr
+			return &handleTrackEndResponse{triggerAfterTrackEnd: nil, nextTrack: false, err: fmt.Errorf("get currently playing info id=%s: %v", sessionID, err)}, nil
 		}
 
 		if err := sess.IsPlayingCorrectTrack(playingInfo); err != nil {
 			s.handleInterrupt(sess)
-			returnErr = fmt.Errorf("check whether playing correct track: %w", err)
-			return &handleTrackEndResponse{triggerAfterTrackEnd: nil, nextTrack: false}, returnErr
+			return &handleTrackEndResponse{triggerAfterTrackEnd: nil, nextTrack: false, err: fmt.Errorf("check whether playing correct track: %w", err)}, nil
 		}
 
 		s.pusher.Push(&event.PushMessage{
@@ -159,7 +181,7 @@ func (s *SessionTimerUseCase) handleTrackEndTx(sessionID string) func(ctx contex
 			"message": "restart timer", "sessionID": sessionID, "remainDuration": playingInfo.Remain().String(),
 		})
 
-		return &handleTrackEndResponse{triggerAfterTrackEnd: triggerAfterTrackEnd, nextTrack: true}, nil
+		return &handleTrackEndResponse{triggerAfterTrackEnd: triggerAfterTrackEnd, nextTrack: true, err: nil}, nil
 	}
 }
 
@@ -202,4 +224,5 @@ func (s *SessionTimerUseCase) deleteTimer(sessionID string) {
 type handleTrackEndResponse struct {
 	triggerAfterTrackEnd *entity.SyncCheckTimer
 	nextTrack            bool
+	err                  error
 }

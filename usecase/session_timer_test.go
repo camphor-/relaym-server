@@ -469,19 +469,20 @@ func TestSessionTimerUseCase_handleTrackEndTx(t *testing.T) {
 
 			s := NewSessionTimerUseCase(mockSessionRepo, mockPlayer, mockPusher, syncCheckTimerManager)
 			gotTriggerAfterTrackEndResponseInterface, err := s.handleTrackEndTx(tt.sessionID)(context.Background())
-			if (err != nil) != tt.wantErr {
-				t.Errorf("handleTrackEnd() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			gothandleTrackEndResponse, ok := gotTriggerAfterTrackEndResponseInterface.(*handleTrackEndResponse)
+
+			gotHandleTrackEndResponse, ok := gotTriggerAfterTrackEndResponseInterface.(*handleTrackEndResponse)
 			if !ok {
 				t.Fatal("gotTriggerAfterTrackEndResponse should be *handleTrackEndResponse")
 			}
-			if (gothandleTrackEndResponse.triggerAfterTrackEnd != nil) != tt.wantTriggerAfterTrackEnd {
-				t.Errorf("handleTrackEnd() gotTriggerAfterTrackEnd = %v, want %v", gothandleTrackEndResponse.triggerAfterTrackEnd, tt.wantTriggerAfterTrackEnd)
+			if (gotHandleTrackEndResponse.err != nil) != tt.wantErr {
+				t.Errorf("handleTrackEnd() error = %v, wantErr %v", err, tt.wantErr)
+				return
 			}
-			if gothandleTrackEndResponse.nextTrack != tt.wantNextTrack {
-				t.Errorf("handleTrackEnd() gotNextTrack = %v, want %v", gothandleTrackEndResponse.nextTrack, tt.wantNextTrack)
+			if (gotHandleTrackEndResponse.triggerAfterTrackEnd != nil) != tt.wantTriggerAfterTrackEnd {
+				t.Errorf("handleTrackEnd() gotTriggerAfterTrackEnd = %v, want %v", gotHandleTrackEndResponse.triggerAfterTrackEnd, tt.wantTriggerAfterTrackEnd)
+			}
+			if gotHandleTrackEndResponse.nextTrack != tt.wantNextTrack {
+				t.Errorf("handleTrackEnd() gotNextTrack = %v, want %v", gotHandleTrackEndResponse.nextTrack, tt.wantNextTrack)
 			}
 		})
 	}
