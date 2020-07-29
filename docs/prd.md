@@ -136,8 +136,8 @@ https://coolors.co/dc4a5e-14213d-707070-eeeeee-ffffff
 - PLAY → PAUSE
 - PAUSE → PLAY
 - PAUSE → STOP
-- PLAY | PAUSE | STOP → ARCHIVED
-- ARCHIVED → STOP
+- PLAY | PAUSE | STOP → ARCHIVED (session作成者のみ可能)
+- ARCHIVED → STOP (session作成者のみ可能)
 
 
 ### 曲の再生
