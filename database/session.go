@@ -269,7 +269,7 @@ func (r *SessionRepository) DoInTx(ctx context.Context, f func(ctx context.Conte
 
 	if err := tx.Commit(); err != nil {
 		_ = tx.Rollback()
-		return v, fmt.Errorf("failet to commit: rollback: %w", err)
+		return v, fmt.Errorf("failed to commit: rollback: %w", err)
 	}
 	return v, nil
 }
