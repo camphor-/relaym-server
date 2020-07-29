@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -632,7 +633,7 @@ func TestSessionHandler_State_STOP(t *testing.T) {
 					AllowToControlByOthers: true,
 				}, nil)
 				m.EXPECT().Update(gomock.Any(), gomock.Any()).DoAndReturn(
-					func(sess *entity.Session) error {
+					func(ctx context.Context, sess *entity.Session) error {
 						twoDaysAfter := time.Now().AddDate(0, 0, 2).UTC()
 						fourDaysAfter := time.Now().AddDate(0, 0, 4).UTC()
 						sessionMustBeCall := &entity.Session{
