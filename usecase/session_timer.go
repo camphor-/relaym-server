@@ -13,7 +13,7 @@ import (
 	"github.com/camphor-/relaym-server/log"
 )
 
-var syncCheckOffset = 5 * time.Second
+var waitTimeBeforeHandleTrackEnd = 7 * time.Second
 
 type SessionTimerUseCase struct {
 	tm          *entity.SyncCheckTimerManager
@@ -31,17 +31,20 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 	logger := log.New()
 	logger.Debugj(map[string]interface{}{"message": "start track end trigger", "sessionID": sessionID})
 
-	time.Sleep(7 * time.Second) // 曲の再生が始まるのを待つ
+	time.Sleep(5 * time.Second) // 曲の再生が始まるのを待つ
 	playingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
 	if err != nil {
 		logger.Errorj(map[string]interface{}{
 			"message":   "startTrackEndTrigger: failed to get currently playing info",
 			"sessionID": sessionID,
-			"error":     err,
+			"error":     err.Error(),
 		})
 		return
 	}
-	remainDuration := playingInfo.Remain()
+
+	// ぴったしのタイマーをセットすると、Spotifyでは次の曲の再生が始まってるのにRelaym側では次の曲に進んでおらず、
+	// INTERRUPTになってしまう
+	remainDuration := playingInfo.Remain() - 2*time.Second
 
 	logger.Infoj(map[string]interface{}{
 		"message": "start timer", "sessionID": sessionID, "remainDuration": remainDuration.String(),
@@ -79,7 +82,7 @@ func (s *SessionTimerUseCase) handleTrackEnd(ctx context.Context, sessionID stri
 	logger := log.New()
 
 	s.tm.DeleteTimer(sessionID)
-	time.Sleep(syncCheckOffset)
+	time.Sleep(waitTimeBeforeHandleTrackEnd)
 
 	sess, err := s.sessionRepo.FindByID(sessionID)
 	if err != nil {
@@ -123,24 +126,16 @@ func (s *SessionTimerUseCase) handleTrackEnd(ctx context.Context, sessionID stri
 	playingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
 	if err != nil {
 		if errors.Is(err, entity.ErrActiveDeviceNotFound) {
-			if interErr := s.handleInterrupt(sess); interErr != nil {
-				returnErr = fmt.Errorf("handle interrupt: %w", interErr)
-				return nil, false, returnErr
-			}
-			returnErr = err
-			return nil, false, returnErr
+			s.handleInterrupt(sess)
+			return nil, false, err
 		}
 		returnErr = fmt.Errorf("get currently playing info id=%s: %v", sessionID, err)
 		return nil, false, returnErr
 	}
 
 	if err := sess.IsPlayingCorrectTrack(playingInfo); err != nil {
-		if interErr := s.handleInterrupt(sess); interErr != nil {
-			returnErr = fmt.Errorf("check whether playing correct track: handle interrupt: %v: %w", interErr, err)
-			return nil, false, returnErr
-		}
-		returnErr = fmt.Errorf("check whether playing correct track: %w", err)
-		return nil, false, returnErr
+		s.handleInterrupt(sess)
+		return nil, false, fmt.Errorf("check whether playing correct track: %w", err)
 	}
 
 	s.pusher.Push(&event.PushMessage{
@@ -168,7 +163,7 @@ func (s *SessionTimerUseCase) handleAllTrackFinish(sess *entity.Session) {
 }
 
 // handleInterrupt はSpotifyとの同期が取れていないときの処理を行います。
-func (s *SessionTimerUseCase) handleInterrupt(sess *entity.Session) error {
+func (s *SessionTimerUseCase) handleInterrupt(sess *entity.Session) {
 	logger := log.New()
 	logger.Debugj(map[string]interface{}{"message": "interrupt detected", "sessionID": sess.ID})
 
@@ -178,7 +173,6 @@ func (s *SessionTimerUseCase) handleInterrupt(sess *entity.Session) error {
 		SessionID: sess.ID,
 		Msg:       entity.EventInterrupt,
 	})
-	return nil
 }
 
 func (s *SessionTimerUseCase) existsTimer(sessionID string) bool {
@@ -191,5 +185,5 @@ func (s *SessionTimerUseCase) stopTimer(sessionID string) {
 }
 
 func (s *SessionTimerUseCase) deleteTimer(sessionID string) {
-	s.tm.StopTimer(sessionID)
+	s.tm.DeleteTimer(sessionID)
 }

@@ -3,6 +3,7 @@ package spotify
 import (
 	"context"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -43,14 +44,27 @@ func (c *Client) GetTracksFromURI(ctx context.Context, trackURIs []string) ([]*e
 		ids[i] = spotify.ID(id)
 	}
 
-	resultTracks, err := cli.GetTracks(ids...)
-	if err != nil {
-		return nil, fmt.Errorf("get track uris=%s: %w", trackURIs, err)
-	}
+	tracks := make([]*entity.Track, len(trackURIs))
 
-	tracks := make([]*entity.Track, len(resultTracks))
-	for i, rt := range resultTracks {
-		tracks[i] = c.toTrack(rt)
+	// GetTracksは一度につき50曲までしか取得できない
+	countForLoop := int(math.Ceil(float64(len(ids)) / 50.0))
+	for i := 0; i < countForLoop; i++ {
+		var idsForAPI []spotify.ID
+		if i == (countForLoop - 1) {
+			idsForAPI = ids[i*50:]
+		} else {
+			idsForAPI = ids[i*50 : (i+1)*50]
+		}
+		resultTracks, err := cli.GetTracks(idsForAPI...)
+		if err != nil {
+			return nil, fmt.Errorf("get track uris=%s: %w", trackURIs, err)
+		}
+
+		for j, rt := range resultTracks {
+			idx := i*50 + j
+			tracks[idx] = c.toTrack(rt)
+		}
+
 	}
 
 	return tracks, nil

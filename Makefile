@@ -20,6 +20,10 @@ serve:
 test:
 	$(ENV_TEST) $(ENV_SECRET_EXAMPLE) go test -v ./... -count=1
 
+.PHONY:test-with-coverage
+test-with-coverage:
+	$(ENV_TEST) $(ENV_SECRET_EXAMPLE) go test -v ./... -count=1 -covermode=atomic -coverprofile=profile.out
+
 .PHONY: integration-test
 integration-test:
 	$(ENV_TEST) $(ENV_SECRET) go test -v ./... -tags integration -count=1

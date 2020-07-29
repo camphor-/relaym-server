@@ -58,7 +58,7 @@ func (c *Client) ReadLoop() {
 	for {
 		_, _, err := c.ws.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure, websocket.CloseNoStatusReceived) {
 				logger.Errorj(map[string]interface{}{"message": "readMessage: unexpected error", "error": err.Error()})
 			}
 			break
@@ -87,7 +87,7 @@ func (c *Client) PushLoop() {
 					logger.Infoj(map[string]interface{}{
 						"message":   "failed to write close message",
 						"sessionID": c.sessionID,
-						"error":     err,
+						"error":     err.Error(),
 					})
 					return
 				}
@@ -97,7 +97,7 @@ func (c *Client) PushLoop() {
 				logger.Warnj(map[string]interface{}{
 					"message":   "failed to WriteJSON",
 					"sessionID": c.sessionID,
-					"error":     err,
+					"error":     err.Error(),
 				})
 				return
 			}
@@ -107,7 +107,7 @@ func (c *Client) PushLoop() {
 				logger.Warnj(map[string]interface{}{
 					"message":   "failed to ping",
 					"sessionID": c.sessionID,
-					"error":     err,
+					"error":     err.Error(),
 				})
 				return
 			}
