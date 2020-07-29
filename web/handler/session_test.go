@@ -52,7 +52,7 @@ func TestSessionHandler_SetDevice(t *testing.T) {
 			sessionID: "session_id",
 			body:      `{"device_id": "device_id"}`,
 			prepareMockRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID("session_id").Return(nil, entity.ErrSessionNotFound)
+				m.EXPECT().FindByID(gomock.Any(), "session_id").Return(nil, entity.ErrSessionNotFound)
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			wantErr:               true,
@@ -64,7 +64,7 @@ func TestSessionHandler_SetDevice(t *testing.T) {
 			sessionID: "session_id",
 			body:      `{"device_id": "device_id"}`,
 			prepareMockRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID("session_id").Return(&entity.Session{
+				m.EXPECT().FindByID(gomock.Any(), "session_id").Return(&entity.Session{
 					ID:          "session_id",
 					Name:        "name",
 					CreatorID:   "creator_id",
@@ -73,7 +73,7 @@ func TestSessionHandler_SetDevice(t *testing.T) {
 					QueueHead:   0,
 					QueueTracks: nil,
 				}, nil)
-				m.EXPECT().Update(&entity.Session{
+				m.EXPECT().Update(gomock.Any(), &entity.Session{
 					ID:          "session_id",
 					Name:        "name",
 					CreatorID:   "creator_id",
@@ -169,7 +169,7 @@ func TestSessionHandler_PostSession(t *testing.T) {
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {},
 			prepareMockPusherFn: func(m *mock_event.MockPusher) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().StoreSession(gomock.Any()).Return(nil)
+				m.EXPECT().StoreSession(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {
 				m.EXPECT().FindByID("creatorID").Return(user, nil)
@@ -297,8 +297,8 @@ func TestSessionHandler_Enqueue(t *testing.T) {
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID("sessionHadManyTracksID").Return(sessionHadManyTracks, nil)
-				m.EXPECT().StoreQueueTrack(&entity.QueueTrackToStore{
+				m.EXPECT().FindByID(gomock.Any(), "sessionHadManyTracksID").Return(sessionHadManyTracks, nil)
+				m.EXPECT().StoreQueueTrack(gomock.Any(), &entity.QueueTrackToStore{
 					URI:       "spotify:track:valid_uri",
 					SessionID: "sessionHadManyTracksID",
 				}).Return(nil)
@@ -321,8 +321,8 @@ func TestSessionHandler_Enqueue(t *testing.T) {
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID("sessionID").Return(session, nil)
-				m.EXPECT().StoreQueueTrack(&entity.QueueTrackToStore{
+				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(session, nil)
+				m.EXPECT().StoreQueueTrack(gomock.Any(), &entity.QueueTrackToStore{
 					URI:       "spotify:track:valid_uri",
 					SessionID: "sessionID",
 				}).Return(nil)
@@ -349,7 +349,7 @@ func TestSessionHandler_Enqueue(t *testing.T) {
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID("invalidSessionID").Return(nil, entity.ErrSessionNotFound)
+				m.EXPECT().FindByID(gomock.Any(), "invalidSessionID").Return(nil, entity.ErrSessionNotFound)
 			},
 			wantErr:  true,
 			wantCode: http.StatusNotFound,
@@ -526,7 +526,7 @@ func TestSessionHandler_GetSession(t *testing.T) {
 				m.EXPECT().FindByID("creatorID").Return(user, nil)
 			},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID("sessionID").Return(session, nil)
+				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(session, nil)
 			},
 			want:     sessionResponse,
 			wantErr:  false,
@@ -543,7 +543,7 @@ func TestSessionHandler_GetSession(t *testing.T) {
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {
 			},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID("non_exist_sessionID").Return(nil, entity.ErrSessionNotFound)
+				m.EXPECT().FindByID(gomock.Any(), "non_exist_sessionID").Return(nil, entity.ErrSessionNotFound)
 			},
 			want:     nil,
 			wantErr:  true,
@@ -563,7 +563,7 @@ func TestSessionHandler_GetSession(t *testing.T) {
 				m.EXPECT().FindByID("creatorID").Return(user, nil)
 			},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID("play_sessionID").Return(&entity.Session{
+				m.EXPECT().FindByID(gomock.Any(), "play_sessionID").Return(&entity.Session{
 					ID:        "play_sessionID",
 					Name:      "sessionName",
 					CreatorID: "creatorID",
@@ -642,7 +642,7 @@ func TestSessionHandler_GetSession(t *testing.T) {
 				m.EXPECT().FindByID("creatorID").Return(user, nil)
 			},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID("play_sessionID").Return(&entity.Session{
+				m.EXPECT().FindByID(gomock.Any(), "play_sessionID").Return(&entity.Session{
 					ID:        "play_sessionID",
 					Name:      "sessionName",
 					CreatorID: "creatorID",
@@ -657,7 +657,7 @@ func TestSessionHandler_GetSession(t *testing.T) {
 						},
 					},
 				}, nil)
-				m.EXPECT().Update(&entity.Session{
+				m.EXPECT().Update(gomock.Any(), &entity.Session{
 					ID:        "play_sessionID",
 					Name:      "sessionName",
 					CreatorID: "creatorID",

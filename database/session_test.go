@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -85,7 +86,7 @@ func TestSessionRepository_FindByID(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &SessionRepository{dbMap: dbMap}
-			got, err := r.FindByID(tt.id)
+			got, err := r.FindByID(context.TODO(), tt.id)
 			if !errors.Is(err, tt.wantErr) {
 				t.Errorf("SessionRepository.FindByID() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -165,7 +166,7 @@ func TestSessionRepository_StoreSession(t *testing.T) {
 			r := &SessionRepository{
 				dbMap: dbMap,
 			}
-			if err := r.StoreSession(tt.session); !errors.Is(err, tt.wantErr) {
+			if err := r.StoreSession(context.TODO(), tt.session); !errors.Is(err, tt.wantErr) {
 				t.Errorf("SessionRepository.StoreSessions() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -248,13 +249,13 @@ func TestSessionRepository_Update(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := NewSessionRepository(dbMap)
-			if err := r.Update(tt.session); (err != nil) != tt.wantErr {
+			if err := r.Update(context.TODO(), tt.session); (err != nil) != tt.wantErr {
 				t.Errorf("Update() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
 			if !tt.wantErr {
-				got, err := r.FindByID(tt.session.ID)
+				got, err := r.FindByID(context.TODO(), tt.session.ID)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -340,7 +341,7 @@ func TestSessionRepository_StoreQueueTrack(t *testing.T) {
 			r := &SessionRepository{
 				dbMap: dbMap,
 			}
-			if err := r.StoreQueueTrack(tt.queueTrack); !errors.Is(err, tt.wantErr) {
+			if err := r.StoreQueueTrack(context.TODO(), tt.queueTrack); !errors.Is(err, tt.wantErr) {
 				t.Errorf("SessionRepository.StoreQueueTracks() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
@@ -553,7 +554,7 @@ func TestSessionRepository_FindCreatorTokenBySessionID(t *testing.T) {
 			r := &SessionRepository{
 				dbMap: dbMap,
 			}
-			token, creatorID, err := r.FindCreatorTokenBySessionID(tt.sessionID)
+			token, creatorID, err := r.FindCreatorTokenBySessionID(context.TODO(), tt.sessionID)
 
 			if !errors.Is(err, tt.wantErr) {
 				t.Errorf("SessionRepository.FindCreatorTokenBySessionID() error = %v, wantErr %v", err, tt.wantErr)
@@ -645,7 +646,7 @@ func TestSessionRepository_ArchiveSessionsForBatch(t *testing.T) {
 				return
 			}
 
-			session, err := r.FindByID(tt.session.ID)
+			session, err := r.FindByID(context.TODO(), tt.session.ID)
 			if err != nil {
 				t.Errorf("SessionRepository.ArchiveSessionsForBatch() error = %v", err)
 				return
@@ -713,7 +714,7 @@ func TestSessionRepository_UpdateWithExpiredAt(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := NewSessionRepository(dbMap)
-			if err := r.UpdateWithExpiredAt(tt.session, tt.newExpiredAt); (err != nil) != tt.wantErr {
+			if err := r.UpdateWithExpiredAt(context.TODO(), tt.session, tt.newExpiredAt); (err != nil) != tt.wantErr {
 				t.Errorf("UpdateWithExpiredAt() error = %v, wantErr %v", err, tt.wantErr)
 			}
 

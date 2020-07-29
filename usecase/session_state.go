@@ -28,7 +28,7 @@ func NewSessionStateUseCase(sessionRepo repository.Session, playerCli spotify.Pl
 
 // ChangeSessionState は与えられたセッションのstateを操作します。
 func (s *SessionStateUseCase) ChangeSessionState(ctx context.Context, sessionID string, st entity.StateType) error {
-	session, err := s.sessionRepo.FindByID(sessionID)
+	session, err := s.sessionRepo.FindByID(ctx, sessionID)
 	if err != nil {
 		return fmt.Errorf("find session id=%s: %w", sessionID, err)
 	}
@@ -56,7 +56,7 @@ func (s *SessionStateUseCase) ChangeSessionState(ctx context.Context, sessionID 
 			return fmt.Errorf("archive sessionID=%s: %w", sessionID, err)
 		}
 	case entity.Stop:
-		if err := s.stop(session); err != nil {
+		if err := s.stop(ctx, session); err != nil {
 			return fmt.Errorf("unarchive sessionID=%s: %w", sessionID, err)
 		}
 	}
@@ -87,7 +87,7 @@ func (s *SessionStateUseCase) playORResume(ctx context.Context, sess *entity.Ses
 		return fmt.Errorf("move to play id=%s: %w", sess.ID, err)
 	}
 
-	if err := s.sessionRepo.Update(sess); err != nil {
+	if err := s.sessionRepo.Update(ctx, sess); err != nil {
 		return fmt.Errorf("update session id=%s: %w", sess.ID, err)
 	}
 
@@ -136,7 +136,7 @@ func (s *SessionStateUseCase) pause(ctx context.Context, sess *entity.Session) e
 		return fmt.Errorf("move to pause id=%s: %w", sess.ID, err)
 	}
 
-	if err := s.sessionRepo.Update(sess); err != nil {
+	if err := s.sessionRepo.Update(ctx, sess); err != nil {
 		return fmt.Errorf("update session id=%s: %w", sess.ID, err)
 	}
 
@@ -163,7 +163,7 @@ func (s *SessionStateUseCase) archive(ctx context.Context, session *entity.Sessi
 
 	session.MoveToArchived()
 
-	if err := s.sessionRepo.Update(session); err != nil {
+	if err := s.sessionRepo.Update(ctx, session); err != nil {
 		return fmt.Errorf("update session id=%s: %w", session.ID, err)
 	}
 
@@ -176,12 +176,12 @@ func (s *SessionStateUseCase) archive(ctx context.Context, session *entity.Sessi
 }
 
 // stop はセッションのstateをSTOPに変更します。
-func (s *SessionStateUseCase) stop(session *entity.Session) error {
+func (s *SessionStateUseCase) stop(ctx context.Context, session *entity.Session) error {
 	switch session.StateType {
 	case entity.Stop:
 		return nil
 	case entity.Archived:
-		if err := s.archiveToStop(session); err != nil {
+		if err := s.archiveToStop(ctx, session); err != nil {
 			return fmt.Errorf("call archiveToCall: %w", err)
 		}
 		return nil
@@ -190,11 +190,11 @@ func (s *SessionStateUseCase) stop(session *entity.Session) error {
 	}
 }
 
-func (s *SessionStateUseCase) archiveToStop(session *entity.Session) error {
+func (s *SessionStateUseCase) archiveToStop(ctx context.Context, session *entity.Session) error {
 	session.MoveToStop()
 
 	threeDaysAfter := time.Now().AddDate(0, 0, 3).UTC()
-	if err := s.sessionRepo.UpdateWithExpiredAt(session, threeDaysAfter); err != nil {
+	if err := s.sessionRepo.UpdateWithExpiredAt(ctx, session, threeDaysAfter); err != nil {
 		return fmt.Errorf("update session id=%s: %w", session.ID, err)
 	}
 

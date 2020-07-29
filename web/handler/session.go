@@ -44,7 +44,7 @@ func (h *SessionHandler) PostSession(c echo.Context) error {
 
 	ctx := c.Request().Context()
 	userID, _ := service.GetUserIDFromContext(ctx)
-	session, err := h.uc.CreateSession(sessionName, userID, req.AllowToControlByOthers)
+	session, err := h.uc.CreateSession(ctx, sessionName, userID, req.AllowToControlByOthers)
 	if err != nil {
 		logger.Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)

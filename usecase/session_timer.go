@@ -84,13 +84,13 @@ func (s *SessionTimerUseCase) handleTrackEnd(ctx context.Context, sessionID stri
 	s.tm.DeleteTimer(sessionID)
 	time.Sleep(waitTimeBeforeHandleTrackEnd)
 
-	sess, err := s.sessionRepo.FindByID(sessionID)
+	sess, err := s.sessionRepo.FindByID(ctx, sessionID)
 	if err != nil {
 		return nil, false, fmt.Errorf("find session id=%s: %v", sessionID, err)
 	}
 
 	defer func() {
-		if err := s.sessionRepo.Update(sess); err != nil {
+		if err := s.sessionRepo.Update(ctx, sess); err != nil {
 			if returnErr != nil {
 				returnErr = fmt.Errorf("update session id=%s: %v: %w", sess.ID, err, returnErr)
 			} else {

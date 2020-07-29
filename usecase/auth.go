@@ -141,7 +141,7 @@ func (u *AuthUseCase) RefreshAccessToken(userID string, token *oauth2.Token) (*o
 
 // GetTokenAndCreatorIDBySessionID は指定されたidからsessionの持つcreatorのtokenを返します
 func (u *AuthUseCase) GetTokenAndCreatorIDBySessionID(sessionID string) (*oauth2.Token, string, error) {
-	token, creatorID, err := u.sessionRepo.FindCreatorTokenBySessionID(sessionID)
+	token, creatorID, err := u.sessionRepo.FindCreatorTokenBySessionID(context.Background(), sessionID)
 	if err != nil {
 		return nil, "", fmt.Errorf("FindCreatorTokenBySessionID: sessionID=%s: %w", sessionID, err)
 	}

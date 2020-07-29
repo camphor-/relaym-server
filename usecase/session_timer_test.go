@@ -38,7 +38,7 @@ func TestSessionTimerUseCase_handleTrackEnd(t *testing.T) {
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "name",
 					CreatorID: "creatorID",
@@ -50,7 +50,7 @@ func TestSessionTimerUseCase_handleTrackEnd(t *testing.T) {
 						{},
 					},
 				}, nil)
-				m.EXPECT().Update(&entity.Session{
+				m.EXPECT().Update(gomock.Any(), &entity.Session{
 					ID:        "sessionID",
 					Name:      "name",
 					CreatorID: "creatorID",
@@ -102,7 +102,7 @@ func TestSessionTimerUseCase_handleTrackEnd(t *testing.T) {
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "name",
 					CreatorID: "creatorID",
@@ -122,7 +122,7 @@ func TestSessionTimerUseCase_handleTrackEnd(t *testing.T) {
 						},
 					},
 				}, nil)
-				m.EXPECT().Update(&entity.Session{
+				m.EXPECT().Update(gomock.Any(), &entity.Session{
 					ID:        "sessionID",
 					Name:      "name",
 					CreatorID: "creatorID",
@@ -183,7 +183,7 @@ func TestSessionTimerUseCase_handleTrackEnd(t *testing.T) {
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "name",
 					CreatorID: "creatorID",
@@ -213,7 +213,7 @@ func TestSessionTimerUseCase_handleTrackEnd(t *testing.T) {
 						},
 					},
 				}, nil)
-				m.EXPECT().Update(&entity.Session{
+				m.EXPECT().Update(gomock.Any(), &entity.Session{
 					ID:        "sessionID",
 					Name:      "name",
 					CreatorID: "creatorID",
@@ -283,7 +283,7 @@ func TestSessionTimerUseCase_handleTrackEnd(t *testing.T) {
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "name",
 					CreatorID: "creatorID",
@@ -303,7 +303,7 @@ func TestSessionTimerUseCase_handleTrackEnd(t *testing.T) {
 						},
 					},
 				}, nil)
-				m.EXPECT().Update(&entity.Session{
+				m.EXPECT().Update(gomock.Any(), &entity.Session{
 					ID:        "sessionID",
 					Name:      "name",
 					CreatorID: "creatorID",
@@ -342,7 +342,7 @@ func TestSessionTimerUseCase_handleTrackEnd(t *testing.T) {
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "name",
 					CreatorID: "creatorID",
@@ -362,7 +362,7 @@ func TestSessionTimerUseCase_handleTrackEnd(t *testing.T) {
 						},
 					},
 				}, nil)
-				m.EXPECT().Update(&entity.Session{
+				m.EXPECT().Update(gomock.Any(), &entity.Session{
 					ID:        "sessionID",
 					Name:      "name",
 					CreatorID: "creatorID",
@@ -400,7 +400,7 @@ func TestSessionTimerUseCase_handleTrackEnd(t *testing.T) {
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID("sessionID").Return(&entity.Session{
+				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "name",
 					CreatorID: "creatorID",
@@ -420,7 +420,7 @@ func TestSessionTimerUseCase_handleTrackEnd(t *testing.T) {
 						},
 					},
 				}, nil)
-				m.EXPECT().Update(&entity.Session{
+				m.EXPECT().Update(gomock.Any(), &entity.Session{
 					ID:        "sessionID",
 					Name:      "name",
 					CreatorID: "creatorID",

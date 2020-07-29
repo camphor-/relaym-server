@@ -5,6 +5,7 @@
 package mock_repository
 
 import (
+	context "context"
 	entity "github.com/camphor-/relaym-server/domain/entity"
 	gomock "github.com/golang/mock/gomock"
 	oauth2 "golang.org/x/oauth2"
@@ -36,80 +37,80 @@ func (m *MockSession) EXPECT() *MockSessionMockRecorder {
 }
 
 // FindByID mocks base method
-func (m *MockSession) FindByID(id string) (*entity.Session, error) {
+func (m *MockSession) FindByID(ctx context.Context, id string) (*entity.Session, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindByID", id)
+	ret := m.ctrl.Call(m, "FindByID", ctx, id)
 	ret0, _ := ret[0].(*entity.Session)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FindByID indicates an expected call of FindByID
-func (mr *MockSessionMockRecorder) FindByID(id interface{}) *gomock.Call {
+func (mr *MockSessionMockRecorder) FindByID(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockSession)(nil).FindByID), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockSession)(nil).FindByID), ctx, id)
 }
 
 // StoreSession mocks base method
-func (m *MockSession) StoreSession(arg0 *entity.Session) error {
+func (m *MockSession) StoreSession(arg0 context.Context, arg1 *entity.Session) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "StoreSession", arg0)
+	ret := m.ctrl.Call(m, "StoreSession", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // StoreSession indicates an expected call of StoreSession
-func (mr *MockSessionMockRecorder) StoreSession(arg0 interface{}) *gomock.Call {
+func (mr *MockSessionMockRecorder) StoreSession(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreSession", reflect.TypeOf((*MockSession)(nil).StoreSession), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreSession", reflect.TypeOf((*MockSession)(nil).StoreSession), arg0, arg1)
 }
 
 // Update mocks base method
-func (m *MockSession) Update(arg0 *entity.Session) error {
+func (m *MockSession) Update(arg0 context.Context, arg1 *entity.Session) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", arg0)
+	ret := m.ctrl.Call(m, "Update", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Update indicates an expected call of Update
-func (mr *MockSessionMockRecorder) Update(arg0 interface{}) *gomock.Call {
+func (mr *MockSessionMockRecorder) Update(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockSession)(nil).Update), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockSession)(nil).Update), arg0, arg1)
 }
 
 // UpdateWithExpiredAt mocks base method
-func (m *MockSession) UpdateWithExpiredAt(arg0 *entity.Session, arg1 time.Time) error {
+func (m *MockSession) UpdateWithExpiredAt(arg0 context.Context, arg1 *entity.Session, arg2 time.Time) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateWithExpiredAt", arg0, arg1)
+	ret := m.ctrl.Call(m, "UpdateWithExpiredAt", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateWithExpiredAt indicates an expected call of UpdateWithExpiredAt
-func (mr *MockSessionMockRecorder) UpdateWithExpiredAt(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockSessionMockRecorder) UpdateWithExpiredAt(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWithExpiredAt", reflect.TypeOf((*MockSession)(nil).UpdateWithExpiredAt), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWithExpiredAt", reflect.TypeOf((*MockSession)(nil).UpdateWithExpiredAt), arg0, arg1, arg2)
 }
 
 // StoreQueueTrack mocks base method
-func (m *MockSession) StoreQueueTrack(arg0 *entity.QueueTrackToStore) error {
+func (m *MockSession) StoreQueueTrack(arg0 context.Context, arg1 *entity.QueueTrackToStore) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "StoreQueueTrack", arg0)
+	ret := m.ctrl.Call(m, "StoreQueueTrack", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // StoreQueueTrack indicates an expected call of StoreQueueTrack
-func (mr *MockSessionMockRecorder) StoreQueueTrack(arg0 interface{}) *gomock.Call {
+func (mr *MockSessionMockRecorder) StoreQueueTrack(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreQueueTrack", reflect.TypeOf((*MockSession)(nil).StoreQueueTrack), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreQueueTrack", reflect.TypeOf((*MockSession)(nil).StoreQueueTrack), arg0, arg1)
 }
 
 // FindCreatorTokenBySessionID mocks base method
-func (m *MockSession) FindCreatorTokenBySessionID(arg0 string) (*oauth2.Token, string, error) {
+func (m *MockSession) FindCreatorTokenBySessionID(arg0 context.Context, arg1 string) (*oauth2.Token, string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindCreatorTokenBySessionID", arg0)
+	ret := m.ctrl.Call(m, "FindCreatorTokenBySessionID", arg0, arg1)
 	ret0, _ := ret[0].(*oauth2.Token)
 	ret1, _ := ret[1].(string)
 	ret2, _ := ret[2].(error)
@@ -117,9 +118,9 @@ func (m *MockSession) FindCreatorTokenBySessionID(arg0 string) (*oauth2.Token, s
 }
 
 // FindCreatorTokenBySessionID indicates an expected call of FindCreatorTokenBySessionID
-func (mr *MockSessionMockRecorder) FindCreatorTokenBySessionID(arg0 interface{}) *gomock.Call {
+func (mr *MockSessionMockRecorder) FindCreatorTokenBySessionID(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindCreatorTokenBySessionID", reflect.TypeOf((*MockSession)(nil).FindCreatorTokenBySessionID), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindCreatorTokenBySessionID", reflect.TypeOf((*MockSession)(nil).FindCreatorTokenBySessionID), arg0, arg1)
 }
 
 // ArchiveSessionsForBatch mocks base method
@@ -134,4 +135,19 @@ func (m *MockSession) ArchiveSessionsForBatch() error {
 func (mr *MockSessionMockRecorder) ArchiveSessionsForBatch() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ArchiveSessionsForBatch", reflect.TypeOf((*MockSession)(nil).ArchiveSessionsForBatch))
+}
+
+// DoInTx mocks base method
+func (m *MockSession) DoInTx(ctx context.Context, f func(context.Context) (interface{}, error)) (interface{}, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DoInTx", ctx, f)
+	ret0, _ := ret[0].(interface{})
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DoInTx indicates an expected call of DoInTx
+func (mr *MockSessionMockRecorder) DoInTx(ctx, f interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DoInTx", reflect.TypeOf((*MockSession)(nil).DoInTx), ctx, f)
 }
