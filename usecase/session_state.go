@@ -148,6 +148,7 @@ func (s *SessionStateUseCase) pause(ctx context.Context, sess *entity.Session) e
 }
 
 // archive はセッションのstateをARCHIVEDに変更します。
+// sessionの作成者からのみ呼び出しが可能です
 func (s *SessionStateUseCase) archive(ctx context.Context, session *entity.Session) error {
 	userID, _ := service.GetUserIDFromContext(ctx)
 	if !session.IsCreator(userID) {
@@ -180,12 +181,8 @@ func (s *SessionStateUseCase) archive(ctx context.Context, session *entity.Sessi
 }
 
 // stop はセッションのstateをSTOPに変更します。
+// sessionの作成者からのみ呼び出しが可能です
 func (s *SessionStateUseCase) stop(ctx context.Context, session *entity.Session) error {
-	userID, _ := service.GetUserIDFromContext(ctx)
-	if !session.IsCreator(userID) {
-		return fmt.Errorf("user is not creator: %w", entity.ErrSessionNotAllowToControlOthers)
-	}
-
 	switch session.StateType {
 	case entity.Stop:
 		return nil
@@ -200,6 +197,11 @@ func (s *SessionStateUseCase) stop(ctx context.Context, session *entity.Session)
 }
 
 func (s *SessionStateUseCase) archiveToStop(ctx context.Context, session *entity.Session) error {
+	userID, _ := service.GetUserIDFromContext(ctx)
+	if !session.IsCreator(userID) {
+		return fmt.Errorf("user is not creator: %w", entity.ErrSessionNotAllowToControlOthers)
+	}
+
 	session.MoveToStop()
 
 	session.UpdateExpiredAt()
