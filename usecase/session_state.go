@@ -149,6 +149,11 @@ func (s *SessionStateUseCase) pause(ctx context.Context, sess *entity.Session) e
 
 // archive はセッションのstateをARCHIVEDに変更します。
 func (s *SessionStateUseCase) archive(ctx context.Context, session *entity.Session) error {
+	userID, _ := service.GetUserIDFromContext(ctx)
+	if !session.IsCreator(userID) {
+		return fmt.Errorf("user is not creator: %w", entity.ErrSessionNotAllowToControlOthers)
+	}
+
 	switch session.StateType {
 	case entity.Play:
 		if err := s.playerCli.Pause(ctx, session.DeviceID); err != nil && !errors.Is(err, entity.ErrActiveDeviceNotFound) {
@@ -176,6 +181,11 @@ func (s *SessionStateUseCase) archive(ctx context.Context, session *entity.Sessi
 
 // stop はセッションのstateをSTOPに変更します。
 func (s *SessionStateUseCase) stop(ctx context.Context, session *entity.Session) error {
+	userID, _ := service.GetUserIDFromContext(ctx)
+	if !session.IsCreator(userID) {
+		return fmt.Errorf("user is not creator: %w", entity.ErrSessionNotAllowToControlOthers)
+	}
+
 	switch session.StateType {
 	case entity.Stop:
 		return nil
