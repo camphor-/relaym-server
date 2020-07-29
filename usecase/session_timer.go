@@ -78,78 +78,89 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 }
 
 // handleTrackEnd はある一曲の再生が終わったときの処理を行います。
-func (s *SessionTimerUseCase) handleTrackEnd(ctx context.Context, sessionID string) (triggerAfterTrackEnd *entity.SyncCheckTimer, nextTrack bool, returnErr error) {
-	logger := log.New()
-
+func (s *SessionTimerUseCase) handleTrackEnd(ctx context.Context, sessionID string) (*entity.SyncCheckTimer, bool, error) {
 	s.tm.DeleteTimer(sessionID)
 	time.Sleep(waitTimeBeforeHandleTrackEnd)
 
-	sess, err := s.sessionRepo.FindByID(ctx, sessionID)
-	if err != nil {
-		return nil, false, fmt.Errorf("find session id=%s: %v", sessionID, err)
+	triggerAfterTrackEndResponse, err := s.sessionRepo.DoInTx(ctx, s.handleTrackEndTx(sessionID))
+	if v, ok := triggerAfterTrackEndResponse.(*handleTrackEndResponse); ok {
+		return v.triggerAfterTrackEnd, v.nextTrack, err
 	}
+	return nil, false, nil
 
-	defer func() {
-		if err := s.sessionRepo.Update(ctx, sess); err != nil {
-			if returnErr != nil {
-				returnErr = fmt.Errorf("update session id=%s: %v: %w", sess.ID, err, returnErr)
-			} else {
-				returnErr = fmt.Errorf("update session id=%s: %w", sess.ID, err)
+}
+
+func (s *SessionTimerUseCase) handleTrackEndTx(sessionID string) func(ctx context.Context) (_ interface{}, returnErr error) {
+	logger := log.New()
+	return func(ctx context.Context) (_ interface{}, returnErr error) {
+		sess, err := s.sessionRepo.FindByIDForUpdate(ctx, sessionID)
+		if err != nil {
+			return &handleTrackEndResponse{triggerAfterTrackEnd: nil, nextTrack: false}, fmt.Errorf("find session id=%s: %v", sessionID, err)
+		}
+
+		defer func() {
+			if err := s.sessionRepo.Update(ctx, sess); err != nil {
+				if returnErr != nil {
+					returnErr = fmt.Errorf("update session id=%s: %v: %w", sess.ID, err, returnErr)
+				} else {
+					returnErr = fmt.Errorf("update session id=%s: %w", sess.ID, err)
+				}
+			}
+		}()
+
+		if sess.StateType == entity.Archived {
+
+			s.pusher.Push(&event.PushMessage{
+				SessionID: sessionID,
+				Msg:       entity.EventArchived,
+			})
+
+			return &handleTrackEndResponse{triggerAfterTrackEnd: nil, nextTrack: false}, nil
+		}
+
+		if err := sess.GoNextTrack(); err != nil && errors.Is(err, entity.ErrSessionAllTracksFinished) {
+			s.handleAllTrackFinish(sess)
+			return &handleTrackEndResponse{triggerAfterTrackEnd: nil, nextTrack: false}, nil
+		}
+
+		track := sess.TrackURIShouldBeAddedWhenHandleTrackEnd()
+		if track != "" {
+			if err := s.playerCli.Enqueue(ctx, track, sess.DeviceID); err != nil {
+				returnErr = fmt.Errorf("call add queue api trackURI=%s: %w", track, err)
+				return &handleTrackEndResponse{triggerAfterTrackEnd: nil, nextTrack: false}, returnErr
 			}
 		}
-	}()
 
-	if sess.StateType == entity.Archived {
+		logger.Debugj(map[string]interface{}{"message": "next track", "sessionID": sessionID, "queueHead": sess.QueueHead})
+
+		playingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
+		if err != nil {
+			if errors.Is(err, entity.ErrActiveDeviceNotFound) {
+				s.handleInterrupt(sess)
+				return &handleTrackEndResponse{triggerAfterTrackEnd: nil, nextTrack: false}, err
+			}
+			returnErr = fmt.Errorf("get currently playing info id=%s: %v", sessionID, err)
+			return &handleTrackEndResponse{triggerAfterTrackEnd: nil, nextTrack: false}, returnErr
+		}
+
+		if err := sess.IsPlayingCorrectTrack(playingInfo); err != nil {
+			s.handleInterrupt(sess)
+			returnErr = fmt.Errorf("check whether playing correct track: %w", err)
+			return &handleTrackEndResponse{triggerAfterTrackEnd: nil, nextTrack: false}, returnErr
+		}
 
 		s.pusher.Push(&event.PushMessage{
 			SessionID: sessionID,
-			Msg:       entity.EventArchived,
+			Msg:       entity.NewEventNextTrack(sess.QueueHead),
+		})
+		triggerAfterTrackEnd := s.tm.CreateTimer(sessionID, playingInfo.Remain())
+
+		logger.Infoj(map[string]interface{}{
+			"message": "restart timer", "sessionID": sessionID, "remainDuration": playingInfo.Remain().String(),
 		})
 
-		return nil, false, nil
+		return &handleTrackEndResponse{triggerAfterTrackEnd: triggerAfterTrackEnd, nextTrack: true}, nil
 	}
-
-	if err := sess.GoNextTrack(); err != nil && errors.Is(err, entity.ErrSessionAllTracksFinished) {
-		s.handleAllTrackFinish(sess)
-		return nil, false, nil
-	}
-
-	track := sess.TrackURIShouldBeAddedWhenHandleTrackEnd()
-	if track != "" {
-		if err := s.playerCli.Enqueue(ctx, track, sess.DeviceID); err != nil {
-			return nil, false, fmt.Errorf("call add queue api trackURI=%s: %w", track, err)
-		}
-	}
-
-	logger.Debugj(map[string]interface{}{"message": "next track", "sessionID": sessionID, "queueHead": sess.QueueHead})
-
-	playingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
-	if err != nil {
-		if errors.Is(err, entity.ErrActiveDeviceNotFound) {
-			s.handleInterrupt(sess)
-			return nil, false, err
-		}
-		returnErr = fmt.Errorf("get currently playing info id=%s: %v", sessionID, err)
-		return nil, false, returnErr
-	}
-
-	if err := sess.IsPlayingCorrectTrack(playingInfo); err != nil {
-		s.handleInterrupt(sess)
-		return nil, false, fmt.Errorf("check whether playing correct track: %w", err)
-	}
-
-	s.pusher.Push(&event.PushMessage{
-		SessionID: sessionID,
-		Msg:       entity.NewEventNextTrack(sess.QueueHead),
-	})
-	triggerAfterTrackEnd = s.tm.CreateTimer(sessionID, playingInfo.Remain())
-
-	logger.Infoj(map[string]interface{}{
-		"message": "restart timer", "sessionID": sessionID, "remainDuration": playingInfo.Remain().String(),
-	})
-
-	return triggerAfterTrackEnd, true, nil
-
 }
 
 // handleAllTrackFinish はキューの全ての曲の再生が終わったときの処理を行います。
@@ -186,4 +197,9 @@ func (s *SessionTimerUseCase) stopTimer(sessionID string) {
 
 func (s *SessionTimerUseCase) deleteTimer(sessionID string) {
 	s.tm.DeleteTimer(sessionID)
+}
+
+type handleTrackEndResponse struct {
+	triggerAfterTrackEnd *entity.SyncCheckTimer
+	nextTrack            bool
 }

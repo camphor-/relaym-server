@@ -13,6 +13,7 @@ import (
 // Session はsessionを管理するためのリポジトリです。
 type Session interface {
 	FindByID(ctx context.Context, id string) (*entity.Session, error)
+	FindByIDForUpdate(ctx context.Context, id string) (*entity.Session, error)
 	StoreSession(context.Context, *entity.Session) error
 	Update(context.Context, *entity.Session) error
 	UpdateWithExpiredAt(context.Context, *entity.Session, time.Time) error

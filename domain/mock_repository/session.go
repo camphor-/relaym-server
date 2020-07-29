@@ -51,6 +51,21 @@ func (mr *MockSessionMockRecorder) FindByID(ctx, id interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockSession)(nil).FindByID), ctx, id)
 }
 
+// FindByIDForUpdate mocks base method
+func (m *MockSession) FindByIDForUpdate(ctx context.Context, id string) (*entity.Session, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindByIDForUpdate", ctx, id)
+	ret0, _ := ret[0].(*entity.Session)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindByIDForUpdate indicates an expected call of FindByIDForUpdate
+func (mr *MockSessionMockRecorder) FindByIDForUpdate(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByIDForUpdate", reflect.TypeOf((*MockSession)(nil).FindByIDForUpdate), ctx, id)
+}
+
 // StoreSession mocks base method
 func (m *MockSession) StoreSession(arg0 context.Context, arg1 *entity.Session) error {
 	m.ctrl.T.Helper()
