@@ -49,6 +49,12 @@ func NewSessionWithUser(session *Session, creator *User) *SessionWithUser {
 	}
 }
 
+// UpdateExpiredAt はexpired_atを現在の時刻から3日後に設定します
+func (s *Session) UpdateExpiredAt() {
+	threeDaysAfter := time.Now().AddDate(0, 0, 3).UTC()
+	s.ExpiredAt = threeDaysAfter
+}
+
 // MoveToPlay はセッションのStateTypeをPlayに状態遷移します。
 func (s *Session) MoveToPlay() error {
 	if err := s.canMoveFromStopToPlay(); s.StateType == Stop && err != nil {
