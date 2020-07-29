@@ -181,7 +181,6 @@ func (s *SessionStateUseCase) archive(ctx context.Context, session *entity.Sessi
 }
 
 // stop はセッションのstateをSTOPに変更します。
-// sessionの作成者からのみ呼び出しが可能です
 func (s *SessionStateUseCase) stop(ctx context.Context, session *entity.Session) error {
 	switch session.StateType {
 	case entity.Stop:
@@ -196,6 +195,7 @@ func (s *SessionStateUseCase) stop(ctx context.Context, session *entity.Session)
 	}
 }
 
+// sessionの作成者からのみ呼び出しが可能です
 func (s *SessionStateUseCase) archiveToStop(ctx context.Context, session *entity.Session) error {
 	userID, _ := service.GetUserIDFromContext(ctx)
 	if !session.IsCreator(userID) {
