@@ -240,7 +240,9 @@ func (s *SessionUseCase) nextTrackInStop(ctx context.Context, session *entity.Se
 		return nil
 	}
 
-	session.MoveToPause()
+	if err := session.MoveToPause(); err != nil {
+		return fmt.Errorf("move to pause id=%s: %w", session.ID, err)
+	}
 
 	if err := s.playerCli.SkipCurrentTrack(ctx, session.DeviceID); err != nil {
 		return fmt.Errorf("SkipCurrentTrack: %w", err)
