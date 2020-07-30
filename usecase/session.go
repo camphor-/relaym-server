@@ -213,6 +213,10 @@ func (s *SessionUseCase) nextTrackInPause(ctx context.Context, session *entity.S
 
 	if err := session.GoNextTrack(); err != nil && errors.Is(err, entity.ErrSessionAllTracksFinished) {
 		s.timerUC.handleAllTrackFinish(session)
+		if err := s.sessionRepo.Update(ctx, session); err != nil {
+			return fmt.Errorf("update session id=%s: %w", session.ID, err)
+		}
+		return nil
 	}
 
 	// Skipだけだと次の曲の再生が始まってしまう
@@ -240,28 +244,16 @@ func (s *SessionUseCase) nextTrackInStop(ctx context.Context, session *entity.Se
 		return nil
 	}
 
-	if err := session.MoveToPause(); err != nil {
-		return fmt.Errorf("move to pause id=%s: %w", session.ID, err)
-	}
-
-	if err := s.playerCli.SkipCurrentTrack(ctx, session.DeviceID); err != nil {
-		return fmt.Errorf("SkipCurrentTrack: %w", err)
-	}
-
-	// Skipだけだと次の曲の再生が始まってしまう
-	if err := s.playerCli.Pause(ctx, session.DeviceID); err != nil {
-		return fmt.Errorf("call pause api: %w", err)
+	if err := session.GoNextTrack(); err != nil && errors.Is(err, entity.ErrSessionAllTracksFinished) {
+		s.timerUC.handleAllTrackFinish(session)
+		if err := s.sessionRepo.Update(ctx, session); err != nil {
+			return fmt.Errorf("update session id=%s: %w", session.ID, err)
+		}
+		return nil
 	}
 
 	if err := s.sessionRepo.Update(ctx, session); err != nil {
 		return fmt.Errorf("update session id=%s: %w", session.ID, err)
-	}
-
-	track := session.TrackURIShouldBeAddedWhenHandleTrackEnd()
-	if track != "" {
-		if err := s.playerCli.Enqueue(ctx, track, session.DeviceID); err != nil {
-			return fmt.Errorf("enqueue error session id=%s: %w", session.ID, err)
-		}
 	}
 
 	return nil
