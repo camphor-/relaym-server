@@ -262,6 +262,7 @@ func (s *SessionUseCase) nextTrackInStop(ctx context.Context, session *entity.Se
 		}
 	}
 
+	return nil
 }
 
 // GetActiveDevices はログインしているユーザがSpotifyを起動している端末を取得します。
