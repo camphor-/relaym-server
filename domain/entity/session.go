@@ -67,7 +67,7 @@ func (s *Session) MoveToPlay() error {
 
 // MoveToPause はセッションのStateTypeをPauseに状態遷移します。
 func (s *Session) MoveToPause() error {
-	if s.StateType == Play || s.StateType == Pause {
+	if s.StateType == Play || s.StateType == Pause || s.StateType == Stop {
 		s.StateType = Pause
 		return nil
 	}
