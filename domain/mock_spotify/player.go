@@ -146,3 +146,17 @@ func (mr *MockPlayerMockRecorder) SkipAllTracks(ctx, deviceID, trackURI interfac
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SkipAllTracks", reflect.TypeOf((*MockPlayer)(nil).SkipAllTracks), ctx, deviceID, trackURI)
 }
+
+// SkipCurrentTrack mocks base method
+func (m *MockPlayer) SkipCurrentTrack(ctx context.Context, deviceID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SkipCurrentTrack", ctx, deviceID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SkipCurrentTrack indicates an expected call of SkipCurrentTrack
+func (mr *MockPlayerMockRecorder) SkipCurrentTrack(ctx, deviceID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SkipCurrentTrack", reflect.TypeOf((*MockPlayer)(nil).SkipCurrentTrack), ctx, deviceID)
+}
