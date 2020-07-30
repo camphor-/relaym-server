@@ -240,7 +240,7 @@ func (s *SessionUseCase) nextTrackInPause(ctx context.Context, session *entity.S
 
 // nextTrackInStop はsessionのstateがSTOPの時のnextTrackの処理を行います
 func (s *SessionUseCase) nextTrackInStop(ctx context.Context, session *entity.Session) error {
-	if len(session.QueueTracks) <= session.QueueHead {
+	if session.IsNextTrackExistWhenStateIsStop() {
 		return nil
 	}
 
