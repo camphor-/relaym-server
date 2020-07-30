@@ -71,6 +71,8 @@ func NewServer(authUC *usecase.AuthUseCase, userUC *usecase.UserUseCase, session
 	sessionWithCreatorToken.PUT("/devices", sessionHandler.SetDevice)
 	sessionWithCreatorToken.POST("/queue", sessionHandler.Enqueue)
 	sessionWithCreatorToken.PUT("/state", sessionHandler.State)
+	//TODO: PUTに戻す
+	sessionWithCreatorToken.GET("/next", sessionHandler.NextTrack)
 	sessionWithCreatorToken.GET("/ws", wsHandler.WebSocket)
 	return e
 }
