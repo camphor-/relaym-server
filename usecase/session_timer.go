@@ -57,9 +57,25 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 		case <-triggerAfterTrackEnd.StopCh():
 			logger.Infoj(map[string]interface{}{"message": "stop timer", "sessionID": sessionID})
 			return
+		case <-triggerAfterTrackEnd.NextCh():
+			logger.Debugj(map[string]interface{}{"message": "call to move next track", "sessionID": sessionID})
+			timer, nextTrack, err := s.handleTrackEnd(ctx, sessionID, false)
+			if err != nil {
+				if errors.Is(err, entity.ErrSessionPlayingDifferentTrack) {
+					logger.Infoj(map[string]interface{}{"message": "handleTrackEnd detects interrupt", "sessionID": sessionID, "error": err.Error()})
+					return
+				}
+				logger.Errorj(map[string]interface{}{"message": "handleTrackEnd with error", "sessionID": sessionID, "error": err.Error()})
+				return
+			}
+			if !nextTrack {
+				logger.Infoj(map[string]interface{}{"message": "no next track", "sessionID": sessionID})
+				return
+			}
+			triggerAfterTrackEnd = timer
 		case <-triggerAfterTrackEnd.ExpireCh():
 			logger.Debugj(map[string]interface{}{"message": "trigger expired", "sessionID": sessionID})
-			timer, nextTrack, err := s.handleTrackEnd(ctx, sessionID)
+			timer, nextTrack, err := s.handleTrackEnd(ctx, sessionID, true)
 			if err != nil {
 				if errors.Is(err, entity.ErrSessionPlayingDifferentTrack) {
 					logger.Infoj(map[string]interface{}{"message": "handleTrackEnd detects interrupt", "sessionID": sessionID, "error": err.Error()})
@@ -78,9 +94,11 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 }
 
 // handleTrackEnd はある一曲の再生が終わったときの処理を行います。
-func (s *SessionTimerUseCase) handleTrackEnd(ctx context.Context, sessionID string) (*entity.SyncCheckTimer, bool, error) {
+func (s *SessionTimerUseCase) handleTrackEnd(ctx context.Context, sessionID string, doSleep bool) (*entity.SyncCheckTimer, bool, error) {
 	s.tm.DeleteTimer(sessionID)
-	time.Sleep(waitTimeBeforeHandleTrackEnd)
+	if doSleep {
+		time.Sleep(waitTimeBeforeHandleTrackEnd)
+	}
 
 	triggerAfterTrackEndResponse, err := s.sessionRepo.DoInTx(ctx, s.handleTrackEndTx(sessionID))
 	if v, ok := triggerAfterTrackEndResponse.(*handleTrackEndResponse); ok {
@@ -117,6 +135,7 @@ func (s *SessionTimerUseCase) handleTrackEndTx(sessionID string) func(ctx contex
 			}
 		}()
 
+		// 曲の再生中にArchivedになった場合
 		if sess.StateType == entity.Archived {
 
 			s.pusher.Push(&event.PushMessage{
