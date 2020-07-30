@@ -12,7 +12,7 @@ import (
 type SyncCheckTimer struct {
 	timer  *time.Timer
 	stopCh chan struct{}
-	nextCh chan string
+	nextCh chan struct{}
 }
 
 // ExpireCh は指定設定された秒数経過したことを送るチャネルを返します。
@@ -26,7 +26,7 @@ func (s *SyncCheckTimer) StopCh() <-chan struct{} {
 }
 
 // NextCh は次の曲への遷移の指示を送るチャネルを返します。
-func (s *SyncCheckTimer) NextCh() <-chan string {
+func (s *SyncCheckTimer) NextCh() <-chan struct{} {
 	return s.nextCh
 }
 
@@ -34,7 +34,7 @@ func newSyncCheckTimer(d time.Duration) *SyncCheckTimer {
 	return &SyncCheckTimer{
 		timer:  time.NewTimer(d),
 		stopCh: make(chan struct{}, 2),
-		nextCh: make(chan string, 1),
+		nextCh: make(chan struct{}, 1),
 	}
 }
 
@@ -132,7 +132,7 @@ func (m *SyncCheckTimerManager) ExpireTimer(sessionID string) {
 	logger.Debugj(map[string]interface{}{"message": "stop timer", "sessionID": sessionID})
 
 	if timer, ok := m.timers[sessionID]; ok {
-		timer.nextCh <- "next track"
+		timer.nextCh <- struct{}{}
 		return
 	}
 
