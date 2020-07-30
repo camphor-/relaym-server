@@ -43,9 +43,10 @@ func (c *Client) toDevice(device spotify.PlayerDevice) *entity.Device {
 	}
 }
 
-// skipAllTracks はユーザーのSpotifyに積まれている「次に再生される曲」「再生待ち」を全てskipします。
+// SkipCurrentTrack はユーザーが現在再生している曲を1曲skipします。
+// APIが非同期で処理がされるため、リクエストが返ってきてもskipが完了しているとは限りません。
 // プレミアム会員必須
-func (c *Client) SkipAllTracks(ctx context.Context, deviceID string, trackURI string) error {
+func (c *Client) SkipCurrentTrack(ctx context.Context, deviceID string) error {
 	token, ok := service.GetTokenFromContext(ctx)
 	if !ok {
 		return errors.New("token not found")
@@ -58,9 +59,32 @@ func (c *Client) SkipAllTracks(ctx context.Context, deviceID string, trackURI st
 		opt = &spotify.PlayOptions{DeviceID: &spotifyID}
 	}
 
+	err := cli.NextOpt(opt)
+	if convErr := c.convertPlayerError(err); convErr != nil {
+		return fmt.Errorf("spotify api: next: %w", convErr)
+	}
+
+	return nil
+}
+
+// SkipAllTracks はユーザーのSpotifyに積まれている「次に再生される曲」「再生待ち」を全てskipします。
+// プレミアム会員必須
+func (c *Client) SkipAllTracks(ctx context.Context, deviceID string, trackURI string) error {
+	token, ok := service.GetTokenFromContext(ctx)
+	if !ok {
+		return errors.New("token not found")
+	}
+	cli := c.auth.NewClient(token)
+
 	// PlayWithTracksで「再生待ち」を0曲にする
 	if err := c.PlayWithTracks(ctx, deviceID, []string{trackURI}); err != nil {
 		return fmt.Errorf("call play api with tracks %v: %w", trackURI, err)
+	}
+
+	opt := &spotify.PlayOptions{DeviceID: nil}
+	if deviceID != "" {
+		spotifyID := spotify.ID(deviceID)
+		opt = &spotify.PlayOptions{DeviceID: &spotifyID}
 	}
 
 	skipOnceTime := 3
@@ -212,7 +236,7 @@ func (c *Client) SetRepeatMode(ctx context.Context, on bool, deviceID string) er
 }
 
 // SetShuffleMode はシャッフルモードの設定を変更するAPIです。
-// APIが非同期で処理がされるため、リクエストが返ってきてもリピートモードの設定が完了しているとは限りません。
+// APIが非同期で処理がされるため、リクエストが返ってきてもシャッフルモードの設定が完了しているとは限りません。
 // 設定が反映されたか確認するには CurrentlyPlaying() を叩く必要があります。
 // プレミアム会員必須
 func (c *Client) SetShuffleMode(ctx context.Context, on bool, deviceID string) error {

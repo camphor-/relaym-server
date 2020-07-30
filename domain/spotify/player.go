@@ -18,4 +18,5 @@ type Player interface {
 	SetRepeatMode(ctx context.Context, on bool, deviceID string) error
 	SetShuffleMode(ctx context.Context, on bool, deviceID string) error
 	SkipAllTracks(ctx context.Context, deviceID string, trackURI string) error
+	SkipCurrentTrack(ctx context.Context, deviceID string) error
 }
