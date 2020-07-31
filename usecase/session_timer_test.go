@@ -467,7 +467,7 @@ func TestSessionTimerUseCase_handleTrackEndTx(t *testing.T) {
 
 			syncCheckTimerManager := entity.NewSyncCheckTimerManager()
 
-			s := NewSessionTimerUseCase(mockSessionRepo, mockPlayer, mockPusher, syncCheckTimerManager)
+			s := NewSessionTimerUseCase(mockSessionRepo, mockPlayer, mockPusher, syncCheckTimerManager, nil)
 			gotTriggerAfterTrackEndResponseInterface, err := s.handleNextTrackTx(tt.sessionID)(context.Background())
 
 			gotHandleTrackEndResponse, ok := gotTriggerAfterTrackEndResponseInterface.(*handleTrackEndResponse)

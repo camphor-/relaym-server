@@ -45,10 +45,11 @@ func main() {
 	sessionRepo := database.NewSessionRepository(dbMap)
 
 	syncCheckTimerManager := entity.NewSyncCheckTimerManager()
+	interruptChanManager := entity.NewInterruptChanManager()
 
 	userUC := usecase.NewUserUseCase(spotifyCli, userRepo)
 	authUC := usecase.NewAuthUseCase(spotifyCli, spotifyCli, authRepo, userRepo, sessionRepo)
-	sessionTimerUC := usecase.NewSessionTimerUseCase(sessionRepo, spotifyCli, hub, syncCheckTimerManager)
+	sessionTimerUC := usecase.NewSessionTimerUseCase(sessionRepo, spotifyCli, hub, syncCheckTimerManager, interruptChanManager)
 	sessionUC := usecase.NewSessionUseCase(sessionRepo, userRepo, spotifyCli, spotifyCli, spotifyCli, hub, sessionTimerUC)
 	sessionStateUC := usecase.NewSessionStateUseCase(sessionRepo, spotifyCli, hub, sessionTimerUC)
 	trackUC := usecase.NewTrackUseCase(spotifyCli)
