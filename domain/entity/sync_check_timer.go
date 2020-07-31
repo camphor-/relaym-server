@@ -31,6 +31,8 @@ func (s *SyncCheckTimer) NextCh() <-chan struct{} {
 	return s.nextCh
 }
 
+// newSyncCheckTimer はSyncCheckTimerを作成します
+// この段階ではtimerには空のtimerがセットされており、SetTimerを使用して正しいtimerのセットを行う必要があります
 func newSyncCheckTimer() *SyncCheckTimer {
 	timer := time.NewTimer(0)
 	//Expiredしたtimerを作成する
@@ -45,6 +47,7 @@ func newSyncCheckTimer() *SyncCheckTimer {
 	}
 }
 
+// SetTimerはSyncCheckTimerにTimerをセットします
 func (s *SyncCheckTimer) SetTimer(d time.Duration) {
 	s.timer = time.NewTimer(d)
 }
@@ -134,19 +137,19 @@ func (m *SyncCheckTimerManager) GetTimer(sessionID string) (*SyncCheckTimer, boo
 	return nil, false
 }
 
-// ExpireTimer は与えられたセッションのタイマーをExpiredさせます。
-func (m *SyncCheckTimerManager) ExpireTimer(sessionID string) error {
+// CallNextCh は与えられたセッションのタイマーのNextChに通知を送ります
+func (m *SyncCheckTimerManager) CallNextCh(sessionID string) error {
 	logger := log.New()
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	logger.Debugj(map[string]interface{}{"message": "stop timer", "sessionID": sessionID})
+	logger.Debugj(map[string]interface{}{"message": "call next ch", "sessionID": sessionID})
 
 	if timer, ok := m.timers[sessionID]; ok {
 		timer.nextCh <- struct{}{}
 		return nil
 	}
 
-	logger.Debugj(map[string]interface{}{"message": "timer not existed", "sessionID": sessionID})
+	logger.Debugj(map[string]interface{}{"message": "timer not existed on CallNextCh", "sessionID": sessionID})
 	return fmt.Errorf("timer not existed")
 }
