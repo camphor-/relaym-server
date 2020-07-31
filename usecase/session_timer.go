@@ -85,7 +85,6 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 
 		case <-triggerAfterTrackEnd.ExpireCh():
 			logger.Debugj(map[string]interface{}{"message": "trigger expired", "sessionID": sessionID})
-			waitPlayTimer.Stop()
 			timer, nextTrack, err := s.handleTrackEnd(ctx, sessionID)
 			if err != nil {
 				if errors.Is(err, entity.ErrSessionPlayingDifferentTrack) {
