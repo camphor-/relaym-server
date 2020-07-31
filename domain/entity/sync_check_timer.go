@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -124,7 +125,7 @@ func (m *SyncCheckTimerManager) GetTimer(sessionID string) (*SyncCheckTimer, boo
 }
 
 // ExpireTimer は与えられたセッションのタイマーをExpiredさせます。
-func (m *SyncCheckTimerManager) ExpireTimer(sessionID string) {
+func (m *SyncCheckTimerManager) ExpireTimer(sessionID string) error {
 	logger := log.New()
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -133,8 +134,9 @@ func (m *SyncCheckTimerManager) ExpireTimer(sessionID string) {
 
 	if timer, ok := m.timers[sessionID]; ok {
 		timer.nextCh <- struct{}{}
-		return
+		return nil
 	}
 
 	logger.Debugj(map[string]interface{}{"message": "timer not existed", "sessionID": sessionID})
+	return fmt.Errorf("timer not existed")
 }
