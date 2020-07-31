@@ -31,12 +31,23 @@ func (s *SyncCheckTimer) NextCh() <-chan struct{} {
 	return s.nextCh
 }
 
-func newSyncCheckTimer(d time.Duration) *SyncCheckTimer {
+func newSyncCheckTimer() *SyncCheckTimer {
+	timer := time.NewTimer(0)
+	//Expiredしたtimerを作成する
+	if !timer.Stop() {
+		<-timer.C
+	}
+
 	return &SyncCheckTimer{
-		timer:  time.NewTimer(d),
 		stopCh: make(chan struct{}, 2),
 		nextCh: make(chan struct{}, 1),
+		timer:  timer,
 	}
+}
+
+func (s *SyncCheckTimer) SetTimer(d time.Duration) {
+	s.timer = time.NewTimer(d)
+	return
 }
 
 // SyncCheckTimerManager はSpotifyとの同期チェック用のタイマーを一括して管理する構造体です。
@@ -54,7 +65,7 @@ func NewSyncCheckTimerManager() *SyncCheckTimerManager {
 
 // CreateTimer は与えられたセッションの同期チェック用のタイマーを作成します。
 // 既存のタイマーが存在する場合はstopしてから新しいタイマーを作成します。
-func (m *SyncCheckTimerManager) CreateTimer(sessionID string, d time.Duration) *SyncCheckTimer {
+func (m *SyncCheckTimerManager) CreateTimer(sessionID string) *SyncCheckTimer {
 	logger := log.New()
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -68,7 +79,7 @@ func (m *SyncCheckTimerManager) CreateTimer(sessionID string, d time.Duration) *
 		existing.timer.Stop()
 		close(existing.stopCh)
 	}
-	timer := newSyncCheckTimer(d)
+	timer := newSyncCheckTimer()
 	m.timers[sessionID] = timer
 	return timer
 }
