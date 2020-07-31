@@ -469,7 +469,7 @@ func TestSessionTimerUseCase_handleTrackEndTx(t *testing.T) {
 			icm := entity.NewInterruptChanManager()
 
 			s := NewSessionTimerUseCase(mockSessionRepo, mockPlayer, mockPusher, syncCheckTimerManager, icm)
-			gotTriggerAfterTrackEndResponseInterface, err := s.handleNextTrackTx(tt.sessionID)(context.Background())
+			gotTriggerAfterTrackEndResponseInterface, err := s.handleTrackEndTx(tt.sessionID)(context.Background())
 
 			gotHandleTrackEndResponse, ok := gotTriggerAfterTrackEndResponseInterface.(*handleTrackEndResponse)
 			if !ok {

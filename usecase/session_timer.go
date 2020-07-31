@@ -113,7 +113,7 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 func (s *SessionTimerUseCase) handleSkipTrack(ctx context.Context, sessionID string) (*entity.SyncCheckTimer, bool, error) {
 	s.tm.DeleteTimer(sessionID)
 
-	triggerAfterTrackEndResponse, err := s.sessionRepo.DoInTx(ctx, s.handleNextTrackTx(sessionID))
+	triggerAfterTrackEndResponse, err := s.sessionRepo.DoInTx(ctx, s.handleSkipTrackTx(sessionID))
 	if v, ok := triggerAfterTrackEndResponse.(*handleTrackEndResponse); ok {
 		// これはトランザクションが失敗してRollbackしたとき
 		if err != nil {
@@ -133,7 +133,7 @@ func (s *SessionTimerUseCase) handleTrackEnd(ctx context.Context, sessionID stri
 	s.tm.DeleteTimer(sessionID)
 	time.Sleep(waitTimeBeforeHandleTrackEnd)
 
-	triggerAfterTrackEndResponse, err := s.sessionRepo.DoInTx(ctx, s.handleNextTrackTx(sessionID))
+	triggerAfterTrackEndResponse, err := s.sessionRepo.DoInTx(ctx, s.handleTrackEndTx(sessionID))
 	if v, ok := triggerAfterTrackEndResponse.(*handleTrackEndResponse); ok {
 		// これはトランザクションが失敗してRollbackしたとき
 		if err != nil {
@@ -148,9 +148,9 @@ func (s *SessionTimerUseCase) handleTrackEnd(ctx context.Context, sessionID stri
 	return nil, false, nil
 }
 
-// handleNextTrackTx はINTERRUPTになってerrorを帰す場合もトランザクションをコミットして欲しいので、
+// handleTrackEndTx はINTERRUPTになってerrorを帰す場合もトランザクションをコミットして欲しいので、
 // アプリケーションエラーはhandleTrackEndResponseのフィールドで返すようにしてerrorの返り値はnilにしている
-func (s *SessionTimerUseCase) handleNextTrackTx(sessionID string) func(ctx context.Context) (interface{}, error) {
+func (s *SessionTimerUseCase) handleTrackEndTx(sessionID string) func(ctx context.Context) (interface{}, error) {
 	return func(ctx context.Context) (_ interface{}, returnErr error) {
 		sess, err := s.sessionRepo.FindByIDForUpdate(ctx, sessionID)
 		if err != nil {
