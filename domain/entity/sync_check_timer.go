@@ -47,7 +47,6 @@ func newSyncCheckTimer() *SyncCheckTimer {
 
 func (s *SyncCheckTimer) SetTimer(d time.Duration) {
 	s.timer = time.NewTimer(d)
-	return
 }
 
 // SyncCheckTimerManager はSpotifyとの同期チェック用のタイマーを一括して管理する構造体です。
