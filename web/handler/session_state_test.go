@@ -983,8 +983,7 @@ func newSessionStateHandlerForTest(
 	mockSessionRepo := mock_repository.NewMockSession(ctrl)
 	prepareMockSessionRepoFn(mockSessionRepo)
 	syncCheckTimerManager := entity.NewSyncCheckTimerManager()
-	icm := entity.NewInterruptChanManager()
-	timerUC := usecase.NewSessionTimerUseCase(mockSessionRepo, mockPlayer, mockPusher, syncCheckTimerManager, icm)
+	timerUC := usecase.NewSessionTimerUseCase(mockSessionRepo, mockPlayer, mockPusher, syncCheckTimerManager)
 	uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, nil, nil, mockPusher, timerUC)
 	stateUC := usecase.NewSessionStateUseCase(mockSessionRepo, mockPlayer, mockPusher, timerUC)
 	return &SessionHandler{uc: uc, stateUC: stateUC}

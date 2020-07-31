@@ -68,8 +68,7 @@ func TestSessionUseCase_CanConnectToPusher(t *testing.T) {
 			mockSessionRepo := mock_repository.NewMockSession(ctrl)
 			tt.prepareMockSessionRepoFn(mockSessionRepo)
 			syncCheckTimerManager := entity.NewSyncCheckTimerManager()
-			icm := entity.NewInterruptChanManager()
-			stUC := NewSessionTimerUseCase(nil, &FakePlayer{}, nil, syncCheckTimerManager, icm)
+			stUC := NewSessionTimerUseCase(nil, &FakePlayer{}, nil, syncCheckTimerManager)
 			s := NewSessionUseCase(mockSessionRepo, nil, &FakePlayer{}, nil, nil, nil, stUC)
 
 			if err := s.CanConnectToPusher(context.Background(), tt.sessionID); (err != nil) != tt.wantErr {

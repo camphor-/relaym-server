@@ -16,15 +16,14 @@ import (
 var waitTimeBeforeHandleTrackEnd = 7 * time.Second
 
 type SessionTimerUseCase struct {
-	tm                   *entity.SyncCheckTimerManager
-	interruptChanManager *entity.InterruptChanManager
-	sessionRepo          repository.Session
-	playerCli            spotify.Player
-	pusher               event.Pusher
+	tm          *entity.SyncCheckTimerManager
+	sessionRepo repository.Session
+	playerCli   spotify.Player
+	pusher      event.Pusher
 }
 
-func NewSessionTimerUseCase(sessionRepo repository.Session, playerCli spotify.Player, pusher event.Pusher, tm *entity.SyncCheckTimerManager, icm *entity.InterruptChanManager) *SessionTimerUseCase {
-	return &SessionTimerUseCase{tm: tm, interruptChanManager: icm, sessionRepo: sessionRepo, playerCli: playerCli, pusher: pusher}
+func NewSessionTimerUseCase(sessionRepo repository.Session, playerCli spotify.Player, pusher event.Pusher, tm *entity.SyncCheckTimerManager) *SessionTimerUseCase {
+	return &SessionTimerUseCase{tm: tm, sessionRepo: sessionRepo, playerCli: playerCli, pusher: pusher}
 }
 
 // startTrackEndTrigger は曲の終了やストップを検知してそれぞれの処理を実行します。 goroutineで実行されることを想定しています。

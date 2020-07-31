@@ -923,12 +923,11 @@ func newSessionHandlerForTest(
 	mockSessionRepo := mock_repository.NewMockSession(ctrl)
 	prepareMockSessionRepoFn(mockSessionRepo)
 	syncCheckTimerManager := entity.NewSyncCheckTimerManager()
-	icm := entity.NewInterruptChanManager()
 	if sessionID != "" {
 		timer := syncCheckTimerManager.CreateTimer(sessionID)
 		timer.SetTimer(5 * time.Minute)
 	}
-	timerUC := usecase.NewSessionTimerUseCase(mockSessionRepo, mockPlayer, mockPusher, syncCheckTimerManager, icm)
+	timerUC := usecase.NewSessionTimerUseCase(mockSessionRepo, mockPlayer, mockPusher, syncCheckTimerManager)
 	uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, mockTrackCli, nil, mockPusher, timerUC)
 	return &SessionHandler{uc: uc}
 }
