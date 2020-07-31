@@ -201,52 +201,11 @@ func (s *SessionUseCase) NextTrack(ctx context.Context, sessionID string) error 
 
 // nextTrackInPlay はsessionのstateがPLAYの時のnextTrackの処理を行います
 func (s *SessionUseCase) nextTrackInPlay(ctx context.Context, session *entity.Session) error {
-	if _, ok := s.timerUC.tm.GetTimer(session.ID); !ok {
-		// Playかつtimerが存在していない場合はstartTrackEndTriggerの開始直後の可能性があるので
-		// InterruptChanを通してstartTrackEndTriggerの中断を試みる
-		if err := s.timerUC.interruptChanManager.InterruptChan(session.ID); err != nil {
-			return fmt.Errorf("interrupt chan session id=%s: %w", session.ID, err)
-		}
-
-		if err := s.playerCli.SkipCurrentTrack(ctx, session.DeviceID); err != nil {
-			return fmt.Errorf("SkipCurrentTrack: %w", err)
-		}
-
-		if err := session.GoNextTrack(); err != nil && errors.Is(err, entity.ErrSessionAllTracksFinished) {
-			s.timerUC.handleAllTrackFinish(session)
-			if err := s.sessionRepo.Update(ctx, session); err != nil {
-				return fmt.Errorf("update session id=%s: %w", session.ID, err)
-			}
-			return nil
-		}
-
-		if err := s.sessionRepo.Update(ctx, session); err != nil {
-			return fmt.Errorf("update session id=%s: %w", session.ID, err)
-		}
-
-		track := session.TrackURIShouldBeAddedWhenHandleTrackEnd()
-		if track != "" {
-			if err := s.playerCli.Enqueue(ctx, track, session.DeviceID); err != nil {
-				return fmt.Errorf("enqueue error session id=%s: %w", session.ID, err)
-			}
-		}
-
-		go s.timerUC.startTrackEndTrigger(ctx, session.ID)
-
-		s.pusher.Push(&event.PushMessage{
-			SessionID: session.ID,
-			Msg:       entity.NewEventNextTrack(session.QueueHead),
-		})
-
-		return nil
-	}
-
 	if err := s.playerCli.SkipCurrentTrack(ctx, session.DeviceID); err != nil {
 		return fmt.Errorf("SkipCurrentTrack: %w", err)
 	}
 
 	// sessionのtimerをExpiredさせることでstartTrackEndTrigger中のhandleSkipTrackが呼び出される
-	// TODO: err消す
 	if err := s.timerUC.tm.ExpireTimer(session.ID); err != nil {
 		return fmt.Errorf("ExpiredTimer: %w", err)
 	}

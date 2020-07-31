@@ -35,46 +35,40 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 	// 曲の再生を待つ
 	waitPlayTimer := time.NewTimer(5 * time.Second)
 
-	// sleep中にstartTrackEndTriggerのinterruptを受け取る
-	interruptCheckChan := s.interruptChanManager.CreateInterruptCheckChan(sessionID)
-
-	select {
-	case <-interruptCheckChan.InterruptCh():
-		// startTrackEndTriggerを中断
-		logger.Debugj(map[string]interface{}{"message": "interrupt on wait 5 seconds for start track on spotify", "sessionID": sessionID})
-		s.interruptChanManager.DeleteChan(sessionID)
-		return
-	case <-waitPlayTimer.C:
-		logger.Debugj(map[string]interface{}{"message": "finish wait 5 seconds for start track on spotify", "sessionID": sessionID})
-	}
-
-	playingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
-	if err != nil {
-		logger.Errorj(map[string]interface{}{
-			"message":   "startTrackEndTrigger: failed to get currently playing info",
-			"sessionID": sessionID,
-			"error":     err.Error(),
-		})
-		return
-	}
-
-	// ぴったしのタイマーをセットすると、Spotifyでは次の曲の再生が始まってるのにRelaym側では次の曲に進んでおらず、
-	// INTERRUPTになってしまう
-	remainDuration := playingInfo.Remain() - 2*time.Second
-
-	logger.Infoj(map[string]interface{}{
-		"message": "start timer", "sessionID": sessionID, "remainDuration": remainDuration.String(),
-	})
-
-	triggerAfterTrackEnd := s.tm.CreateTimer(sessionID, remainDuration)
-
+	triggerAfterTrackEnd := s.tm.CreateTimer(sessionID)
 	for {
 		select {
+		case <-waitPlayTimer.C:
+			playingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
+			if err != nil {
+				logger.Errorj(map[string]interface{}{
+					"message":   "startTrackEndTrigger: failed to get currently playing info",
+					"sessionID": sessionID,
+					"error":     err.Error(),
+				})
+				return
+			}
+
+			// ぴったしのタイマーをセットすると、Spotifyでは次の曲の再生が始まってるのにRelaym側では次の曲に進んでおらず、
+			// INTERRUPTになってしまう
+			remainDuration := playingInfo.Remain() - 2*time.Second
+
+			logger.Infoj(map[string]interface{}{
+				"message": "start timer", "sessionID": sessionID, "remainDuration": remainDuration.String(),
+			})
+
+			triggerAfterTrackEnd.SetTimer(remainDuration)
+
 		case <-triggerAfterTrackEnd.StopCh():
+			if !waitPlayTimer.Stop() {
+				<-waitPlayTimer.C
+			}
 			logger.Infoj(map[string]interface{}{"message": "stop timer", "sessionID": sessionID})
 			return
+
 		case <-triggerAfterTrackEnd.NextCh():
 			logger.Debugj(map[string]interface{}{"message": "call to move next track", "sessionID": sessionID})
+			waitPlayTimer.Stop()
 			timer, nextTrack, err := s.handleSkipTrack(ctx, sessionID)
 			if err != nil {
 				if errors.Is(err, entity.ErrSessionPlayingDifferentTrack) {
@@ -89,8 +83,10 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 				return
 			}
 			triggerAfterTrackEnd = timer
+
 		case <-triggerAfterTrackEnd.ExpireCh():
 			logger.Debugj(map[string]interface{}{"message": "trigger expired", "sessionID": sessionID})
+			waitPlayTimer.Stop()
 			timer, nextTrack, err := s.handleTrackEnd(ctx, sessionID)
 			if err != nil {
 				if errors.Is(err, entity.ErrSessionPlayingDifferentTrack) {
@@ -250,7 +246,10 @@ func (s *SessionTimerUseCase) UpdateForHandleNextTrackTx(ctx context.Context, se
 		SessionID: sess.ID,
 		Msg:       entity.NewEventNextTrack(sess.QueueHead),
 	})
-	triggerAfterTrackEnd := s.tm.CreateTimer(sess.ID, playingInfo.Remain())
+
+	triggerAfterTrackEnd := s.tm.CreateTimer(sess.ID)
+
+	triggerAfterTrackEnd.SetTimer(playingInfo.Remain())
 
 	logger.Infoj(map[string]interface{}{
 		"message": "restart timer", "sessionID": sess.ID, "remainDuration": playingInfo.Remain().String(),
