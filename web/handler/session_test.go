@@ -858,7 +858,7 @@ func newSessionHandlerForTest(
 	if sessionID != "" {
 		syncCheckTimerManager.CreateTimer(sessionID, 5*time.Minute)
 	}
-	timerUC := usecase.NewSessionTimerUseCase(mockSessionRepo, mockPlayer, mockPusher, syncCheckTimerManager)
+	timerUC := usecase.NewSessionTimerUseCase(mockSessionRepo, mockPlayer, mockPusher, syncCheckTimerManager, nil)
 	uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, mockTrackCli, nil, mockPusher, timerUC)
 	return &SessionHandler{uc: uc}
 }
