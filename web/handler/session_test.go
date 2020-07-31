@@ -828,73 +828,73 @@ func TestUserHandler_GetActiveDevices(t *testing.T) {
 	}
 }
 
-func TestUserHandler_NextTrack(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name                     string
-		sessionID                string
-		userID                   string
-		prepareMockPlayerCliFn   func(m *mock_spotify.MockPlayer)
-		prepareMockSessionRepoFn func(m *mock_repository.MockSession)
-		prepareMockUserRepoFn    func(m *mock_repository.MockUser)
-		prepareMockTrackCli      func(m *mock_spotify.MockTrackClient)
-		prepareMockPusherFn      func(m *mock_event.MockPusher)
-		wantErr                  bool
-		wantCode                 int
-	}{
-		{
-			name:      "Playかつ次の曲が存在する時に次の曲にPlayのまま遷移, 202",
-			sessionID: "sessionID",
-			userID:    "userID",
-			wantErr:   false,
-			wantCode:  http.StatusAccepted,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodPut, "/", nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
-			c.SetPath("/sessions/:id/devices")
-			c.SetParamNames("id")
-			c.SetParamValues(tt.sessionID)
-			c = setToContext(c, tt.userID, nil)
-
-			// モックの準備
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-			mockPC := mock_spotify.NewMockPlayer(ctrl)
-			tt.prepareMockPlayerCliFn(mockPC)
-			mockP := mock_event.NewMockPusher(ctrl)
-			tt.prepareMockPusherFn(mockP)
-			mockSR := mock_repository.NewMockSession(ctrl)
-			tt.prepareMockSessionRepoFn(mockSR)
-			mockTC := mock_spotify.NewMockTrackClient(ctrl)
-			tt.prepareMockTrackCli(mockTC)
-			mockUR := mock_repository.NewMockUser(ctrl)
-			tt.prepareMockUserRepoFn(mockUR)
-			syncCheckTimerManager := entity.NewSyncCheckTimerManager()
-			icm := entity.NewInterruptChanManager()
-			timerUC := usecase.NewSessionTimerUseCase(mockSR, mockPC, mockP, syncCheckTimerManager, icm)
-
-			uc := usecase.NewSessionUseCase(mockSR, mockUR, mockPC, mockTC, nil, mockP, timerUC)
-			h := &SessionHandler{uc: uc}
-
-			err := h.GetActiveDevices(c)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("NextTrack() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			// ステータスコードのチェック
-			if er, ok := err.(*echo.HTTPError); (ok && er.Code != tt.wantCode) || (!ok && rec.Code != tt.wantCode) {
-				t.Errorf("NextTrack() code = %d, want = %d", rec.Code, tt.wantCode)
-			}
-
-		})
-	}
-}
+//func TestUserHandler_NextTrack(t *testing.T) {
+//	t.Parallel()
+//
+//	tests := []struct {
+//		name                     string
+//		sessionID                string
+//		userID                   string
+//		prepareMockPlayerCliFn   func(m *mock_spotify.MockPlayer)
+//		prepareMockSessionRepoFn func(m *mock_repository.MockSession)
+//		prepareMockUserRepoFn    func(m *mock_repository.MockUser)
+//		prepareMockTrackCli      func(m *mock_spotify.MockTrackClient)
+//		prepareMockPusherFn      func(m *mock_event.MockPusher)
+//		wantErr                  bool
+//		wantCode                 int
+//	}{
+//		{
+//			name:      "Playかつ次の曲が存在する時に次の曲にPlayのまま遷移, 202",
+//			sessionID: "sessionID",
+//			userID:    "userID",
+//			wantErr:   false,
+//			wantCode:  http.StatusAccepted,
+//		},
+//	}
+//
+//	for _, tt := range tests {
+//		t.Run(tt.name, func(t *testing.T) {
+//			e := echo.New()
+//			req := httptest.NewRequest(http.MethodPut, "/", nil)
+//			rec := httptest.NewRecorder()
+//			c := e.NewContext(req, rec)
+//			c.SetPath("/sessions/:id/devices")
+//			c.SetParamNames("id")
+//			c.SetParamValues(tt.sessionID)
+//			c = setToContext(c, tt.userID, nil)
+//
+//			// モックの準備
+//			ctrl := gomock.NewController(t)
+//			defer ctrl.Finish()
+//			mockPC := mock_spotify.NewMockPlayer(ctrl)
+//			tt.prepareMockPlayerCliFn(mockPC)
+//			mockP := mock_event.NewMockPusher(ctrl)
+//			tt.prepareMockPusherFn(mockP)
+//			mockSR := mock_repository.NewMockSession(ctrl)
+//			tt.prepareMockSessionRepoFn(mockSR)
+//			mockTC := mock_spotify.NewMockTrackClient(ctrl)
+//			tt.prepareMockTrackCli(mockTC)
+//			mockUR := mock_repository.NewMockUser(ctrl)
+//			tt.prepareMockUserRepoFn(mockUR)
+//			syncCheckTimerManager := entity.NewSyncCheckTimerManager()
+//			icm := entity.NewInterruptChanManager()
+//			timerUC := usecase.NewSessionTimerUseCase(mockSR, mockPC, mockP, syncCheckTimerManager, icm)
+//
+//			uc := usecase.NewSessionUseCase(mockSR, mockUR, mockPC, mockTC, nil, mockP, timerUC)
+//			h := &SessionHandler{uc: uc}
+//
+//			err := h.GetActiveDevices(c)
+//			if (err != nil) != tt.wantErr {
+//				t.Errorf("NextTrack() error = %v, wantErr %v", err, tt.wantErr)
+//			}
+//			// ステータスコードのチェック
+//			if er, ok := err.(*echo.HTTPError); (ok && er.Code != tt.wantCode) || (!ok && rec.Code != tt.wantCode) {
+//				t.Errorf("NextTrack() code = %d, want = %d", rec.Code, tt.wantCode)
+//			}
+//
+//		})
+//	}
+//}
 
 func convToPointer(given int64) *int64 {
 	return &given
