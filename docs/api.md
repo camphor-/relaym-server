@@ -256,6 +256,36 @@ X-CSRF-Token: relaym
 
 [Spotify APIの不思議な挙動](sotify_api_problem.md)
 
+## PUT /sessions/:id/next
+
+### 概要
+
+指定したセッションを一曲進めます。
+
+### リクエスト
+
+空
+
+### レスポンス
+
+空
+
+| code  |   補足    |
+| ----- | -------- | 
+| 202   |          |
+
+非同期的にレスポンスを返すので、実際に状態が反映されたかWebSocketのメッセージか別のAPIリクエストを通して取得する必要があります。
+
+### エラー
+
+| code | message | 補足 |
+| ---- | -------- | -------- |
+| 400 | session is not allowed to control by others | 作成者以外によるstateの操作が許可されていない | 
+| 400 | requested state is not allowed | 許可されていないstateへの変更(許可されているstateの変更は[PRD](prd.md)を参照) |
+| 400 | next queue track not found | 次のキューが無いので次の曲に遷移できない |   
+| 403 | active device not found | アクティブなデバイスが存在しないので操作ができない |
+| 404 | session not found | 指定されたidのセッションが存在しない |
+
 ## POST /sessions/:id/queue
 
 ### 概要
