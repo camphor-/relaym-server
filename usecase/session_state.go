@@ -253,7 +253,7 @@ func (s *SessionStateUseCase) pause(ctx context.Context, sess *entity.Session) e
 		return fmt.Errorf("call pause api: %w", err)
 	}
 
-	s.timerUC.stopTimer(sess.ID)
+	s.timerUC.deleteTimer(sess.ID)
 
 	if err := sess.MoveToPause(); err != nil {
 		return fmt.Errorf("move to pause id=%s: %w", sess.ID, err)

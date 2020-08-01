@@ -11,9 +11,10 @@ import (
 // SyncCheckTimer はSpotifyとの同期チェック用のタイマーです。タイマーが止まったことを確認するためのstopチャネルがあります。
 // ref : http://okzk.hatenablog.com/entry/2015/12/01/001924
 type SyncCheckTimer struct {
-	timer  *time.Timer
-	stopCh chan struct{}
-	nextCh chan struct{}
+	timer          *time.Timer
+	isTimerExpired bool
+	stopCh         chan struct{}
+	nextCh         chan struct{}
 }
 
 // ExpireCh は指定設定された秒数経過したことを送るチャネルを返します。
@@ -31,6 +32,12 @@ func (s *SyncCheckTimer) NextCh() <-chan struct{} {
 	return s.nextCh
 }
 
+// MakeIsTimerExpiredTrue はisTimerExpiredをtrueに変更します
+// <- s.ExpireCh でtimerから値を受け取った際に呼び出してください
+func (s *SyncCheckTimer) MakeIsTimerExpiredTrue() {
+	s.isTimerExpired = true
+}
+
 // newSyncCheckTimer はSyncCheckTimerを作成します
 // この段階ではtimerには空のtimerがセットされており、SetTimerを使用して正しいtimerのセットを行う必要があります
 func newSyncCheckTimer() *SyncCheckTimer {
@@ -41,14 +48,16 @@ func newSyncCheckTimer() *SyncCheckTimer {
 	}
 
 	return &SyncCheckTimer{
-		stopCh: make(chan struct{}, 2),
-		nextCh: make(chan struct{}, 1),
-		timer:  timer,
+		stopCh:         make(chan struct{}, 2),
+		nextCh:         make(chan struct{}, 1),
+		isTimerExpired: true,
+		timer:          timer,
 	}
 }
 
 // SetTimerはSyncCheckTimerにTimerをセットします
 func (s *SyncCheckTimer) SetDuration(d time.Duration) {
+	s.isTimerExpired = false
 	s.timer.Reset(d)
 }
 
@@ -152,4 +161,18 @@ func (m *SyncCheckTimerManager) SendToNextCh(sessionID string) error {
 
 	logger.Debugj(map[string]interface{}{"message": "timer not existed on SendToNextCh", "sessionID": sessionID})
 	return fmt.Errorf("timer not existed")
+}
+
+//
+func (m *SyncCheckTimerManager) IsTimerExpired(sessionID string) (bool, error) {
+	logger := log.New()
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if existing, ok := m.timers[sessionID]; ok {
+		return existing.isTimerExpired, nil
+	}
+
+	logger.Debugj(map[string]interface{}{"message": "timer not existed on IsRemainDuration", "sessionID": sessionID})
+	return false, fmt.Errorf("timer not existed")
 }

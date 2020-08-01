@@ -145,8 +145,17 @@ func (s *SessionUseCase) GetSession(ctx context.Context, sessionID string) (*ent
 		return nil, nil, nil, fmt.Errorf("CurrentlyPlaying: %w", err)
 	}
 
-	// timerが存在しない時はsyncCheckOffsetの時間なのでcpiのチェックは飛ばす
-	if isExist := s.timerUC.existsTimer(sessionID); isExist {
+	if !s.timerUC.existsTimer(sessionID) {
+		// timerがexistしないのはsessionの作成後, PAUSE中
+		return entity.NewSessionWithUser(session, creator), tracks, cpi, nil
+	}
+
+	isExpired, err := s.timerUC.isTimerExpired(sessionID)
+	if !isExpired {
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("isTimerExpired: %w", err)
+		}
+
 		if err := session.IsPlayingCorrectTrack(cpi); err != nil {
 			logger.Debugj(map[string]interface{}{"message": "timer exists, but play different track", "sessionID": session.ID})
 
