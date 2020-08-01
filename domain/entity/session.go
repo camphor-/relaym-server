@@ -65,6 +65,7 @@ func (s *Session) MoveToPlay() error {
 	}
 
 	s.StateType = Play
+	s.SetProgressWhenPaused(0 * time.Second)
 	return nil
 }
 
@@ -80,11 +81,13 @@ func (s *Session) MoveToPause() error {
 // MoveToStop はセッションのStateTypeをStopに状態遷移します。
 func (s *Session) MoveToStop() {
 	s.StateType = Stop
+	s.SetProgressWhenPaused(0 * time.Second)
 }
 
 // MoveToArchived はセッションのStateTypeをArchivedに状態遷移します。
 func (s *Session) MoveToArchived() {
 	s.StateType = Archived
+	s.SetProgressWhenPaused(0 * time.Second)
 }
 
 // IsCreator は指定されたユーザがセッションの作成者かどうか返します。

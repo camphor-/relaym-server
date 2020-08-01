@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/event"
@@ -105,7 +104,6 @@ func (s *SessionStateUseCase) pauseToPlay(ctx context.Context, sess *entity.Sess
 	if err := s.playerCli.PlayWithTracksAndPosition(ctx, sess.DeviceID, []string{sess.HeadTrack().URI}, sess.ProgressWhenPaused); err != nil {
 		return fmt.Errorf("call play api: %w", err)
 	}
-	sess.SetProgressWhenPaused(0 * time.Second)
 	return nil
 }
 
