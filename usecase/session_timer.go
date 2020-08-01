@@ -151,7 +151,7 @@ func (s *SessionTimerUseCase) handleTrackEndTx(sessionID string) func(ctx contex
 			return &handleTrackEndResponse{triggerAfterTrackEnd: nil, nextTrack: false}, fmt.Errorf("find session id=%s: %v", sessionID, err)
 		}
 
-		return s.updateForHandleNextTrackTx(ctx, sess)
+		return s.nextTrackTx(ctx, sess)
 	}
 }
 
@@ -168,11 +168,11 @@ func (s *SessionTimerUseCase) handleSkipTrackTx(sessionID string) func(ctx conte
 		// このタイミングでskipの反映待ちをしている
 		time.Sleep(300 * time.Millisecond)
 
-		return s.updateForHandleNextTrackTx(ctx, sess)
+		return s.nextTrackTx(ctx, sess)
 	}
 }
 
-func (s *SessionTimerUseCase) updateForHandleNextTrackTx(ctx context.Context, sess *entity.Session) (_ interface{}, returnErr error) {
+func (s *SessionTimerUseCase) nextTrackTx(ctx context.Context, sess *entity.Session) (_ interface{}, returnErr error) {
 	logger := log.New()
 
 	defer func() {
