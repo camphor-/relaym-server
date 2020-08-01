@@ -86,7 +86,7 @@ func TestSyncCheckTimerManager_CreateTimer(t *testing.T) {
 	t.Parallel()
 
 	timer := newSyncCheckTimer()
-	timer.SetTimer(time.Second)
+	timer.SetDuration(time.Second)
 
 	tests := []struct {
 		name      string
@@ -131,7 +131,7 @@ func TestSyncCheckTimerManager_CreateTimer(t *testing.T) {
 			}
 			opts := []cmp.Option{cmp.AllowUnexported(SyncCheckTimer{}), cmpopts.IgnoreUnexported(time.Timer{})}
 			got := m.CreateTimer(tt.sessionID)
-			got.SetTimer(tt.d)
+			got.SetDuration(tt.d)
 			if !cmp.Equal(got, tt.want, opts...) {
 				t.Errorf("CreateTimer() diff=%v", cmp.Diff(tt.want, got, opts...))
 			}
@@ -143,9 +143,9 @@ func TestSyncCheckTimerManager_StopTimer(t *testing.T) {
 	t.Parallel()
 
 	timer := newSyncCheckTimer()
-	timer.SetTimer(time.Second)
+	timer.SetDuration(time.Second)
 	timerForNotFound := newSyncCheckTimer()
-	timer.SetTimer(time.Second)
+	timer.SetDuration(time.Second)
 
 	tests := []struct {
 		name      string

@@ -56,7 +56,7 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 				"message": "start timer", "sessionID": sessionID, "remainDuration": remainDuration.String(),
 			})
 
-			triggerAfterTrackEnd.SetTimer(remainDuration)
+			triggerAfterTrackEnd.SetDuration(remainDuration)
 
 		case <-triggerAfterTrackEnd.StopCh():
 			if !waitPlayTimer.Stop() {
@@ -247,7 +247,7 @@ func (s *SessionTimerUseCase) UpdateForHandleNextTrackTx(ctx context.Context, se
 
 	triggerAfterTrackEnd := s.tm.CreateTimer(sess.ID)
 
-	triggerAfterTrackEnd.SetTimer(playingInfo.Remain())
+	triggerAfterTrackEnd.SetDuration(playingInfo.Remain())
 
 	logger.Infoj(map[string]interface{}{
 		"message": "restart timer", "sessionID": sess.ID, "remainDuration": playingInfo.Remain().String(),

@@ -48,8 +48,8 @@ func newSyncCheckTimer() *SyncCheckTimer {
 }
 
 // SetTimerはSyncCheckTimerにTimerをセットします
-func (s *SyncCheckTimer) SetTimer(d time.Duration) {
-	s.timer = time.NewTimer(d)
+func (s *SyncCheckTimer) SetDuration(d time.Duration) {
+	s.timer.Reset(d)
 }
 
 // SyncCheckTimerManager はSpotifyとの同期チェック用のタイマーを一括して管理する構造体です。
