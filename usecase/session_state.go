@@ -63,7 +63,7 @@ func (s *SessionUseCase) nextTrackInPlay(ctx context.Context, session *entity.Se
 		return fmt.Errorf("SkipCurrentTrack: %w", err)
 	}
 
-	// sessionのtimerをExpiredさせることでstartTrackEndTrigger中のhandleSkipTrackが呼び出される
+	// NextChを通してstartTrackEndTriggerに次の曲への繊維を通知
 	if err := s.timerUC.tm.SendToNextCh(session.ID); err != nil {
 		return fmt.Errorf("ExpiredTimer: %w", err)
 	}
