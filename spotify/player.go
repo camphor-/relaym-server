@@ -135,7 +135,7 @@ func (c *Client) Play(ctx context.Context, deviceID string) error {
 	return nil
 }
 
-// PlayWithTracks は曲を指定して曲を再生し始めるか現在再生途中の曲の再生を再開するAPIです。deviceIDが空の場合はデフォルトのデバイスで再生されます。
+// PlayWithTracks は曲を指定して曲を再生し始めるAPIです。deviceIDが空の場合はデフォルトのデバイスで再生されます。
 // APIが非同期で処理がされるため、リクエストが返ってきても再生が開始しているとは限りません。
 // 設定が反映されたか確認するには CurrentlyPlaying() を叩く必要があります。
 // プレミアム会員必須
@@ -147,6 +147,30 @@ func (c *Client) PlayWithTracks(ctx context.Context, deviceID string, trackURIs 
 	cli := c.auth.NewClient(token)
 
 	opt := &spotify.PlayOptions{DeviceID: nil, URIs: c.toURIs(trackURIs)}
+	if deviceID != "" {
+		spotifyID := spotify.ID(deviceID)
+		opt = &spotify.PlayOptions{DeviceID: &spotifyID, URIs: c.toURIs(trackURIs)}
+	}
+
+	err := cli.PlayOpt(opt)
+	if convErr := c.convertPlayerError(err); convErr != nil {
+		return fmt.Errorf("spotify api: play or resume: %w", convErr)
+	}
+	return nil
+}
+
+// PlayWithTracksAndPosition は指定した曲を、指定した位置から再生を始めるAPIです。deviceIDが空の場合はデフォルトのデバイスで再生されます。
+// APIが非同期で処理がされるため、リクエストが返ってきても再生が開始しているとは限りません。
+// 設定が反映されたか確認するには CurrentlyPlaying() を叩く必要があります。
+// プレミアム会員必須
+func (c *Client) PlayWithTracksAndPosition(ctx context.Context, deviceID string, trackURIs []string, position time.Duration) error {
+	token, ok := service.GetTokenFromContext(ctx)
+	if !ok {
+		return errors.New("token not found")
+	}
+	cli := c.auth.NewClient(token)
+
+	opt := &spotify.PlayOptions{DeviceID: nil, URIs: c.toURIs(trackURIs), PositionMs: int(position.Milliseconds())}
 	if deviceID != "" {
 		spotifyID := spotify.ID(deviceID)
 		opt = &spotify.PlayOptions{DeviceID: &spotifyID, URIs: c.toURIs(trackURIs)}

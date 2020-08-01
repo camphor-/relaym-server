@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/mock_repository"
@@ -80,6 +81,11 @@ func TestSessionUseCase_CanConnectToPusher(t *testing.T) {
 
 type FakePlayer struct{}
 
+func (m *FakePlayer) PlayWithTracksAndPosition(ctx context.Context, deviceID string, trackURIs []string, position time.Duration) error {
+	return nil
+}
+
+// CurrentlyPlaying mocks base method
 func (m *FakePlayer) CurrentlyPlaying(ctx context.Context) (*entity.CurrentPlayingInfo, error) {
 	return &entity.CurrentPlayingInfo{
 		Playing:  true,

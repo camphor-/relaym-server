@@ -40,7 +40,7 @@ func (r *SessionRepository) FindByID(ctx context.Context, id string) (*entity.Se
 	}
 
 	var dto sessionDTO
-	if err := dao.SelectOne(&dto, "SELECT id, name, creator_id, queue_head, state_type, device_id, expired_at, allow_to_control_by_others FROM sessions WHERE id = ?", id); err != nil {
+	if err := dao.SelectOne(&dto, "SELECT id, name, creator_id, queue_head, state_type, device_id, expired_at, allow_to_control_by_others, progress_when_paused FROM sessions WHERE id = ?", id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("select session: %w", entity.ErrSessionNotFound)
 		}
@@ -57,17 +57,7 @@ func (r *SessionRepository) FindByID(ctx context.Context, id string) (*entity.Se
 		return nil, fmt.Errorf("find session: %w", entity.ErrInvalidStateType)
 	}
 
-	return &entity.Session{
-		ID:                     dto.ID,
-		Name:                   dto.Name,
-		CreatorID:              dto.CreatorID,
-		DeviceID:               dto.DeviceID,
-		StateType:              stateType,
-		QueueHead:              dto.QueueHead,
-		QueueTracks:            queueTracks,
-		ExpiredAt:              dto.ExpiredAt,
-		AllowToControlByOthers: dto.AllowToControlByOthers,
-	}, nil
+	return r.dtoToSession(dto, stateType, queueTracks), nil
 }
 
 // FindByIDForUpdate は指定されたIDを持つsessionをDBから取得します
@@ -78,7 +68,7 @@ func (r *SessionRepository) FindByIDForUpdate(ctx context.Context, id string) (*
 	}
 
 	var dto sessionDTO
-	if err := dao.SelectOne(&dto, "SELECT id, name, creator_id, queue_head, state_type, device_id, expired_at, allow_to_control_by_others FROM sessions WHERE id = ? FOR UPDATE", id); err != nil {
+	if err := dao.SelectOne(&dto, "SELECT id, name, creator_id, queue_head, state_type, device_id, expired_at, allow_to_control_by_others, progress_when_paused FROM sessions WHERE id = ? FOR UPDATE", id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("select session: %w", entity.ErrSessionNotFound)
 		}
@@ -95,17 +85,7 @@ func (r *SessionRepository) FindByIDForUpdate(ctx context.Context, id string) (*
 		return nil, fmt.Errorf("find session: %w", entity.ErrInvalidStateType)
 	}
 
-	return &entity.Session{
-		ID:                     dto.ID,
-		Name:                   dto.Name,
-		CreatorID:              dto.CreatorID,
-		DeviceID:               dto.DeviceID,
-		StateType:              stateType,
-		QueueHead:              dto.QueueHead,
-		QueueTracks:            queueTracks,
-		ExpiredAt:              dto.ExpiredAt,
-		AllowToControlByOthers: dto.AllowToControlByOthers,
-	}, nil
+	return r.dtoToSession(dto, stateType, queueTracks), nil
 }
 
 // FindCreatorTokenBySessionID はSessionIDからCreatorのTokenを取得します
@@ -139,17 +119,7 @@ func (r *SessionRepository) StoreSession(ctx context.Context, session *entity.Se
 		dao = r.dbMap
 	}
 
-	threeDaysAfter := time.Now().AddDate(0, 0, 3).UTC()
-	dto := &sessionDTO{
-		ID:                     session.ID,
-		Name:                   session.Name,
-		CreatorID:              session.CreatorID,
-		QueueHead:              session.QueueHead,
-		StateType:              session.StateType.String(),
-		DeviceID:               session.DeviceID,
-		ExpiredAt:              threeDaysAfter,
-		AllowToControlByOthers: session.AllowToControlByOthers,
-	}
+	dto := r.sessionToDTO(session)
 
 	if err := dao.Insert(dto); err != nil {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok && mysqlErr.Number == errorNumDuplicateEntry {
@@ -167,16 +137,7 @@ func (r *SessionRepository) Update(ctx context.Context, session *entity.Session)
 		dao = r.dbMap
 	}
 
-	dto := &sessionDTO{
-		ID:                     session.ID,
-		Name:                   session.Name,
-		CreatorID:              session.CreatorID,
-		QueueHead:              session.QueueHead,
-		StateType:              session.StateType.String(),
-		DeviceID:               session.DeviceID,
-		ExpiredAt:              session.ExpiredAt,
-		AllowToControlByOthers: session.AllowToControlByOthers,
-	}
+	dto := r.sessionToDTO(session)
 
 	if _, err := dao.Update(dto); err != nil {
 		return fmt.Errorf("update session: %w", err)
@@ -250,6 +211,35 @@ func (r *SessionRepository) DoInTx(ctx context.Context, f func(ctx context.Conte
 	return v, nil
 }
 
+func (r *SessionRepository) dtoToSession(dto sessionDTO, stateType entity.StateType, queueTracks []*entity.QueueTrack) *entity.Session {
+	return &entity.Session{
+		ID:                     dto.ID,
+		Name:                   dto.Name,
+		CreatorID:              dto.CreatorID,
+		DeviceID:               dto.DeviceID,
+		StateType:              stateType,
+		QueueHead:              dto.QueueHead,
+		QueueTracks:            queueTracks,
+		ExpiredAt:              dto.ExpiredAt,
+		AllowToControlByOthers: dto.AllowToControlByOthers,
+		ProgressWhenPaused:     time.Duration(dto.ProgressWhenPaused) * time.Millisecond,
+	}
+}
+
+func (r *SessionRepository) sessionToDTO(session *entity.Session) *sessionDTO {
+	return &sessionDTO{
+		ID:                     session.ID,
+		Name:                   session.Name,
+		CreatorID:              session.CreatorID,
+		QueueHead:              session.QueueHead,
+		StateType:              session.StateType.String(),
+		DeviceID:               session.DeviceID,
+		ExpiredAt:              session.ExpiredAt,
+		AllowToControlByOthers: session.AllowToControlByOthers,
+		ProgressWhenPaused:     session.ProgressWhenPaused.Milliseconds(),
+	}
+}
+
 type sessionDTO struct {
 	ID                     string    `db:"id"`
 	Name                   string    `db:"name"`
@@ -259,6 +249,7 @@ type sessionDTO struct {
 	DeviceID               string    `db:"device_id"`
 	ExpiredAt              time.Time `db:"expired_at"`
 	AllowToControlByOthers bool      `db:"allow_to_control_by_others"`
+	ProgressWhenPaused     int64     `db:"progress_when_paused"`
 }
 
 type queueTrackDTO struct {

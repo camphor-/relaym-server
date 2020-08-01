@@ -41,7 +41,7 @@ func TestNewSession(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			opts := []cmp.Option{cmpopts.IgnoreFields(Session{}, "ID")}
+			opts := []cmp.Option{cmpopts.IgnoreFields(Session{}, "ID"), cmpopts.IgnoreFields(Session{}, "ExpiredAt")}
 			if !cmp.Equal(got, tt.want, opts...) {
 				t.Errorf("NewSession() diff = %v", cmp.Diff(got, tt.want, opts...))
 			}
