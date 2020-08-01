@@ -4,6 +4,7 @@ package spotify
 
 import (
 	"context"
+	"time"
 
 	"github.com/camphor-/relaym-server/domain/entity"
 )
@@ -13,6 +14,7 @@ type Player interface {
 	CurrentlyPlaying(ctx context.Context) (*entity.CurrentPlayingInfo, error)
 	Play(ctx context.Context, deviceID string) error
 	PlayWithTracks(ctx context.Context, deviceID string, trackURIs []string) error
+	PlayWithTracksAndPosition(ctx context.Context, deviceID string, trackURIs []string, position time.Duration) error
 	Pause(ctx context.Context, deviceID string) error
 	Enqueue(ctx context.Context, trackURI string, deviceID string) error
 	SetRepeatMode(ctx context.Context, on bool, deviceID string) error

@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS `sessions` (
   `device_id` varchar(255) COLLATE utf8mb4_bin NOT NULL COMMENT '再生する端末のID(存在しない場合は空文字列)',
   `expired_at` datetime NOT NULL,
   `allow_to_control_by_others` TINYINT(1) NOT NULL DEFAULT '0',
+  `progress_when_paused` INT NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   INDEX `sessions_user_id_fk_idx` (`creator_id` ASC) VISIBLE,
   CONSTRAINT `sessions_user_id_fk`

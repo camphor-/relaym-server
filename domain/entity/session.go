@@ -20,6 +20,7 @@ type Session struct {
 	QueueTracks            []*QueueTrack
 	ExpiredAt              time.Time
 	AllowToControlByOthers bool
+	ProgressWhenPaused     time.Duration
 }
 
 type SessionWithUser struct {
@@ -37,7 +38,9 @@ func NewSession(name string, creatorID string, allowToControlByOthers bool) (*Se
 		StateType:              Stop,
 		QueueHead:              0,
 		QueueTracks:            nil,
+		ExpiredAt:              time.Now().AddDate(0, 0, 3).UTC(),
 		AllowToControlByOthers: allowToControlByOthers,
+		ProgressWhenPaused:     0 * time.Second,
 	}, nil
 }
 
@@ -62,6 +65,7 @@ func (s *Session) MoveToPlay() error {
 	}
 
 	s.StateType = Play
+	s.SetProgressWhenPaused(0 * time.Second)
 	return nil
 }
 
@@ -77,11 +81,13 @@ func (s *Session) MoveToPause() error {
 // MoveToStop はセッションのStateTypeをStopに状態遷移します。
 func (s *Session) MoveToStop() {
 	s.StateType = Stop
+	s.SetProgressWhenPaused(0 * time.Second)
 }
 
 // MoveToArchived はセッションのStateTypeをArchivedに状態遷移します。
 func (s *Session) MoveToArchived() {
 	s.StateType = Archived
+	s.SetProgressWhenPaused(0 * time.Second)
 }
 
 // IsCreator は指定されたユーザがセッションの作成者かどうか返します。
@@ -207,6 +213,16 @@ func (s *Session) IsValidNextStateFromAPI(nextState StateType) bool {
 	}
 
 	return false
+}
+
+// SetProgressWhenPaused はProgressWhenPausedに時間をセットします。
+func (s *Session) SetProgressWhenPaused(d time.Duration) {
+	s.ProgressWhenPaused = d
+}
+
+// HeadTrack は現在のHeadの曲を返します。
+func (s *Session) HeadTrack() *QueueTrack {
+	return s.QueueTracks[s.QueueHead]
 }
 
 type StateType string

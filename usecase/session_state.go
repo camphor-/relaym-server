@@ -73,12 +73,12 @@ func (s *SessionStateUseCase) playORResume(ctx context.Context, sess *entity.Ses
 	}
 
 	if sess.IsResume(entity.Play) {
-		if err := s.playerCli.Play(ctx, sess.DeviceID); err != nil {
-			return fmt.Errorf("call play api: %w", err)
+		if err := s.pauseToPlay(ctx, sess); err != nil {
+			return fmt.Errorf("from pause to play: %w", err)
 		}
 	} else {
 		if err := s.stopToPlay(ctx, sess); err != nil {
-			return fmt.Errorf("start to play: %w", err)
+			return fmt.Errorf("from stop to play: %w", err)
 		}
 	}
 
@@ -100,7 +100,15 @@ func (s *SessionStateUseCase) playORResume(ctx context.Context, sess *entity.Ses
 	return nil
 }
 
+func (s *SessionStateUseCase) pauseToPlay(ctx context.Context, sess *entity.Session) error {
+	if err := s.playerCli.PlayWithTracksAndPosition(ctx, sess.DeviceID, []string{sess.HeadTrack().URI}, sess.ProgressWhenPaused); err != nil {
+		return fmt.Errorf("call play api: %w", err)
+	}
+	return nil
+}
+
 func (s *SessionStateUseCase) stopToPlay(ctx context.Context, sess *entity.Session) error {
+
 	trackURIs, err := sess.TrackURIsShouldBeAddedWhenStopToPlay()
 	if err != nil {
 		return fmt.Errorf(": %w", err)
@@ -125,6 +133,12 @@ func (s *SessionStateUseCase) stopToPlay(ctx context.Context, sess *entity.Sessi
 
 // Pause はセッションのstateをPLAY→PAUSEに変更して曲の再生を一時停止します。
 func (s *SessionStateUseCase) pause(ctx context.Context, sess *entity.Session) error {
+	cpi, err := s.playerCli.CurrentlyPlaying(ctx)
+	if err != nil && !errors.Is(err, entity.ErrActiveDeviceNotFound) {
+		return fmt.Errorf("call currently playing api: %w", err)
+	}
+	sess.SetProgressWhenPaused(cpi.Progress)
+
 	if err := s.playerCli.Pause(ctx, sess.DeviceID); err != nil && !errors.Is(err, entity.ErrActiveDeviceNotFound) {
 		return fmt.Errorf("call pause api: %w", err)
 	}

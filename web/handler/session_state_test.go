@@ -79,7 +79,7 @@ func TestSessionHandler_State(t *testing.T) {
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
 				m.EXPECT().SetRepeatMode(gomock.Any(), false, "device_id").Return(nil)
 				m.EXPECT().SetShuffleMode(gomock.Any(), false, "device_id").Return(nil)
-				m.EXPECT().Play(gomock.Any(), "device_id").Return(nil)
+				m.EXPECT().PlayWithTracksAndPosition(gomock.Any(), "device_id", []string{"spotify:track:5uQ0vKy2973Y9IUCd1wMEF"}, 10*time.Second).Return(nil)
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockPusherFn: func(m *mock_event.MockPusher) {
@@ -98,6 +98,7 @@ func TestSessionHandler_State(t *testing.T) {
 						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
 					},
 					AllowToControlByOthers: true,
+					ProgressWhenPaused:     10 * time.Second,
 				}, nil)
 				m.EXPECT().Update(gomock.Any(), &entity.Session{
 					ID:        "sessionID",
@@ -111,6 +112,7 @@ func TestSessionHandler_State(t *testing.T) {
 						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
 					},
 					AllowToControlByOthers: true,
+					ProgressWhenPaused:     0 * time.Second,
 				}).Return(nil)
 			},
 			wantErr:  false,
@@ -167,7 +169,7 @@ func TestSessionHandler_State_PLAY(t *testing.T) {
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
 				m.EXPECT().SetRepeatMode(gomock.Any(), false, "device_id").Return(nil)
 				m.EXPECT().SetShuffleMode(gomock.Any(), false, "device_id").Return(nil)
-				m.EXPECT().Play(gomock.Any(), "device_id").Return(nil)
+				m.EXPECT().PlayWithTracksAndPosition(gomock.Any(), "device_id", []string{"spotify:track:5uQ0vKy2973Y9IUCd1wMEF"}, 10*time.Second).Return(nil)
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockPusherFn: func(m *mock_event.MockPusher) {
@@ -186,6 +188,7 @@ func TestSessionHandler_State_PLAY(t *testing.T) {
 						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
 					},
 					AllowToControlByOthers: true,
+					ProgressWhenPaused:     10 * time.Second,
 				}, nil)
 				m.EXPECT().Update(gomock.Any(), &entity.Session{
 					ID:        "sessionID",
@@ -199,6 +202,7 @@ func TestSessionHandler_State_PLAY(t *testing.T) {
 						{Index: 1, URI: "spotify:track:49BRCNV7E94s7Q2FUhhT3w"},
 					},
 					AllowToControlByOthers: true,
+					ProgressWhenPaused:     0 * time.Second,
 				}).Return(nil)
 			},
 			wantErr:  false,
@@ -406,6 +410,9 @@ func TestSessionHandler_State_PAUSE(t *testing.T) {
 			name:      "StateType=PLAY: 正しく一時停止処理が行われたら202",
 			sessionID: "sessionID",
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().CurrentlyPlaying(gomock.Any()).Return(&entity.CurrentPlayingInfo{
+					Progress: 10 * time.Second,
+				}, nil)
 				m.EXPECT().Pause(gomock.Any(), "device_id").Return(nil)
 			},
 			prepareMockPusherFn: func(m *mock_event.MockPusher) {
@@ -417,11 +424,12 @@ func TestSessionHandler_State_PAUSE(t *testing.T) {
 					ID:                     "sessionID",
 					Name:                   "session_name",
 					CreatorID:              "creator_id",
-					QueueHead:              0,
 					DeviceID:               "device_id",
 					StateType:              entity.Play,
+					QueueHead:              0,
 					QueueTracks:            nil,
 					AllowToControlByOthers: true,
+					ProgressWhenPaused:     0 * time.Second,
 				}, nil)
 				m.EXPECT().Update(gomock.Any(), &entity.Session{
 					ID:                     "sessionID",
@@ -432,6 +440,7 @@ func TestSessionHandler_State_PAUSE(t *testing.T) {
 					StateType:              entity.Pause,
 					QueueTracks:            nil,
 					AllowToControlByOthers: true,
+					ProgressWhenPaused:     10 * time.Second,
 				}).Return(nil)
 
 			},
@@ -442,6 +451,9 @@ func TestSessionHandler_State_PAUSE(t *testing.T) {
 			name:      "StateType=PLAY: 再生するデバイスがオフラインのときは、既に再生が止まっているはずなので202",
 			sessionID: "sessionID",
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().CurrentlyPlaying(gomock.Any()).Return(&entity.CurrentPlayingInfo{
+					Progress: 0 * time.Second,
+				}, nil)
 				m.EXPECT().Pause(gomock.Any(), "device_id").Return(entity.ErrActiveDeviceNotFound)
 			},
 			prepareMockPusherFn: func(m *mock_event.MockPusher) {
@@ -458,6 +470,7 @@ func TestSessionHandler_State_PAUSE(t *testing.T) {
 					StateType:              entity.Play,
 					QueueTracks:            nil,
 					AllowToControlByOthers: true,
+					ProgressWhenPaused:     0 * time.Second,
 				}, nil)
 				m.EXPECT().Update(gomock.Any(), &entity.Session{
 					ID:                     "sessionID",
@@ -468,6 +481,7 @@ func TestSessionHandler_State_PAUSE(t *testing.T) {
 					StateType:              entity.Pause,
 					QueueTracks:            nil,
 					AllowToControlByOthers: true,
+					ProgressWhenPaused:     0 * time.Second,
 				}).Return(nil)
 			},
 			wantErr:  false,
@@ -477,6 +491,9 @@ func TestSessionHandler_State_PAUSE(t *testing.T) {
 			name:      "StateType=PAUSE: 既にPAUSEでも一応一時停止APIを叩いて202",
 			sessionID: "sessionID",
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().CurrentlyPlaying(gomock.Any()).Return(&entity.CurrentPlayingInfo{
+					Progress: 0 * time.Second,
+				}, nil)
 				m.EXPECT().Pause(gomock.Any(), "device_id").Return(nil)
 			},
 			prepareMockPusherFn: func(m *mock_event.MockPusher) {
@@ -493,6 +510,7 @@ func TestSessionHandler_State_PAUSE(t *testing.T) {
 					StateType:              entity.Pause,
 					QueueTracks:            nil,
 					AllowToControlByOthers: true,
+					ProgressWhenPaused:     0 * time.Second,
 				}, nil)
 				m.EXPECT().Update(gomock.Any(), &entity.Session{
 					ID:                     "sessionID",
@@ -503,6 +521,7 @@ func TestSessionHandler_State_PAUSE(t *testing.T) {
 					StateType:              entity.Pause,
 					QueueTracks:            nil,
 					AllowToControlByOthers: true,
+					ProgressWhenPaused:     0 * time.Second,
 				}).Return(nil)
 			},
 			wantErr:  false,
@@ -512,6 +531,9 @@ func TestSessionHandler_State_PAUSE(t *testing.T) {
 			name:      "StateType=PAUSE: 既にPAUSEでも一応一時停止APIを叩くが、デバイスがオフラインなら既に再生が止まっているはずなので202",
 			sessionID: "sessionID",
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().CurrentlyPlaying(gomock.Any()).Return(&entity.CurrentPlayingInfo{
+					Progress: 0 * time.Second,
+				}, nil)
 				m.EXPECT().Pause(gomock.Any(), "device_id").Return(entity.ErrActiveDeviceNotFound)
 			},
 			prepareMockPusherFn: func(m *mock_event.MockPusher) {
@@ -523,11 +545,12 @@ func TestSessionHandler_State_PAUSE(t *testing.T) {
 					ID:                     "sessionID",
 					Name:                   "session_name",
 					CreatorID:              "creator_id",
-					QueueHead:              0,
 					DeviceID:               "device_id",
 					StateType:              entity.Pause,
+					QueueHead:              0,
 					QueueTracks:            nil,
 					AllowToControlByOthers: true,
+					ProgressWhenPaused:     0 * time.Second,
 				}, nil)
 				m.EXPECT().Update(gomock.Any(), &entity.Session{
 					ID:                     "sessionID",
@@ -538,6 +561,7 @@ func TestSessionHandler_State_PAUSE(t *testing.T) {
 					StateType:              entity.Pause,
 					QueueTracks:            nil,
 					AllowToControlByOthers: true,
+					ProgressWhenPaused:     0 * time.Second,
 				}).Return(nil)
 			},
 			wantErr:  false,
