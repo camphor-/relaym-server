@@ -2,12 +2,9 @@ package usecase
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/camphor-/relaym-server/log"
-
-	"github.com/camphor-/relaym-server/domain/service"
 
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/event"
@@ -165,116 +162,6 @@ func (s *SessionUseCase) GetSession(ctx context.Context, sessionID string) (*ent
 	}
 
 	return entity.NewSessionWithUser(session, creator), tracks, cpi, nil
-}
-
-// NextTrack は指定されたidのsessionを次の曲に進めます
-func (s *SessionUseCase) NextTrack(ctx context.Context, sessionID string) error {
-	session, err := s.sessionRepo.FindByID(ctx, sessionID)
-	if err != nil {
-		return fmt.Errorf("find session id=%s: %w", sessionID, err)
-	}
-
-	userID, _ := service.GetUserIDFromContext(ctx)
-	if !session.AllowToControlByOthers && !session.IsCreator(userID) {
-		return fmt.Errorf("not allowd to control session: %w", entity.ErrSessionNotAllowToControlOthers)
-	}
-
-	switch session.StateType {
-	case entity.Play:
-		if err = s.nextTrackInPlay(ctx, session); err != nil {
-			return fmt.Errorf("go next track in play session id=%s: %w", session.ID, err)
-		}
-	case entity.Pause:
-		if err = s.nextTrackInPause(ctx, session); err != nil {
-			return fmt.Errorf("go next track in pause session id=%s: %w", session.ID, err)
-		}
-	case entity.Stop:
-		if err = s.nextTrackInStop(ctx, session); err != nil {
-			return fmt.Errorf("go next track in stop session id=%s: %w", session.ID, err)
-		}
-	case entity.Archived:
-		return fmt.Errorf("go next track: %w", entity.ErrChangeSessionStateNotPermit)
-	}
-
-	return nil
-}
-
-// nextTrackInPlay はsessionのstateがPLAYの時のnextTrackの処理を行います
-func (s *SessionUseCase) nextTrackInPlay(ctx context.Context, session *entity.Session) error {
-	if err := s.playerCli.SkipCurrentTrack(ctx, session.DeviceID); err != nil {
-		return fmt.Errorf("SkipCurrentTrack: %w", err)
-	}
-
-	// sessionのtimerをExpiredさせることでstartTrackEndTrigger中のhandleSkipTrackが呼び出される
-	if err := s.timerUC.tm.SendToNextCh(session.ID); err != nil {
-		return fmt.Errorf("ExpiredTimer: %w", err)
-	}
-
-	return nil
-}
-
-// nextTrackInPause はsessionのstateがPAUSEの時のnextTrackの処理を行います
-func (s *SessionUseCase) nextTrackInPause(ctx context.Context, session *entity.Session) error {
-	if err := s.playerCli.SkipCurrentTrack(ctx, session.DeviceID); err != nil {
-		return fmt.Errorf("SkipCurrentTrack: %w", err)
-	}
-
-	if err := session.GoNextTrack(); err != nil && errors.Is(err, entity.ErrSessionAllTracksFinished) {
-		s.timerUC.handleAllTrackFinish(session)
-		if err := s.sessionRepo.Update(ctx, session); err != nil {
-			return fmt.Errorf("update session id=%s: %w", session.ID, err)
-		}
-		return nil
-	}
-
-	// Skipだけだと次の曲の再生が始まってしまう
-	if err := s.playerCli.Pause(ctx, session.DeviceID); err != nil {
-		return fmt.Errorf("call pause api: %w", err)
-	}
-
-	if err := s.sessionRepo.Update(ctx, session); err != nil {
-		return fmt.Errorf("update session id=%s: %w", session.ID, err)
-	}
-
-	track := session.TrackURIShouldBeAddedWhenHandleTrackEnd()
-	if track != "" {
-		if err := s.playerCli.Enqueue(ctx, track, session.DeviceID); err != nil {
-			return fmt.Errorf("enqueue error session id=%s: %w", session.ID, err)
-		}
-	}
-
-	s.pusher.Push(&event.PushMessage{
-		SessionID: session.ID,
-		Msg:       entity.NewEventNextTrack(session.QueueHead),
-	})
-
-	return nil
-}
-
-// nextTrackInStop はsessionのstateがSTOPの時のnextTrackの処理を行います
-func (s *SessionUseCase) nextTrackInStop(ctx context.Context, session *entity.Session) error {
-	if !session.IsNextTrackExistWhenStateIsStop() {
-		return nil
-	}
-
-	if err := session.GoNextTrack(); err != nil && errors.Is(err, entity.ErrSessionAllTracksFinished) {
-		s.timerUC.handleAllTrackFinish(session)
-		if err := s.sessionRepo.Update(ctx, session); err != nil {
-			return fmt.Errorf("update session id=%s: %w", session.ID, err)
-		}
-		return nil
-	}
-
-	if err := s.sessionRepo.Update(ctx, session); err != nil {
-		return fmt.Errorf("update session id=%s: %w", session.ID, err)
-	}
-
-	s.pusher.Push(&event.PushMessage{
-		SessionID: session.ID,
-		Msg:       entity.NewEventNextTrack(session.QueueHead),
-	})
-
-	return nil
 }
 
 // GetActiveDevices はログインしているユーザがSpotifyを起動している端末を取得します。
