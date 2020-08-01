@@ -149,7 +149,7 @@ func (s *SessionUseCase) GetSession(ctx context.Context, sessionID string) (*ent
 	}
 
 	// timerが存在しない時はsyncCheckOffsetの時間なのでcpiのチェックは飛ばす
-	if _, isExist := s.timerUC.tm.GetTimer(sessionID); isExist {
+	if isExist := s.timerUC.existsTimer(sessionID); isExist {
 		if err := session.IsPlayingCorrectTrack(cpi); err != nil {
 			logger.Debugj(map[string]interface{}{"message": "timer exists, but play different track", "sessionID": session.ID})
 
