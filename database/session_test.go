@@ -37,6 +37,7 @@ func TestSessionRepository_FindByID(t *testing.T) {
 		DeviceID:               "device_id",
 		ExpiredAt:              time.Date(2020, time.December, 1, 12, 0, 0, 0, time.UTC),
 		AllowToControlByOthers: true,
+		ProgressWhenPaused:     1 * time.Second.Milliseconds(),
 	}
 	queueTrack := &queueTrackDTO{
 		Index:     0,
@@ -72,6 +73,7 @@ func TestSessionRepository_FindByID(t *testing.T) {
 				},
 				ExpiredAt:              time.Date(2020, time.December, 1, 12, 0, 0, 0, time.UTC),
 				AllowToControlByOthers: true,
+				ProgressWhenPaused:     1 * time.Second,
 			},
 			wantErr: nil,
 		},
@@ -122,6 +124,7 @@ func TestSessionRepository_FindByIDForUpdate(t *testing.T) {
 		DeviceID:               "device_id",
 		ExpiredAt:              time.Date(2020, time.December, 1, 12, 0, 0, 0, time.UTC),
 		AllowToControlByOthers: true,
+		ProgressWhenPaused:     1 * time.Second.Milliseconds(),
 	}
 	queueTrack := &queueTrackDTO{
 		Index:     0,
@@ -157,6 +160,7 @@ func TestSessionRepository_FindByIDForUpdate(t *testing.T) {
 				},
 				ExpiredAt:              time.Date(2020, time.December, 1, 12, 0, 0, 0, time.UTC),
 				AllowToControlByOthers: true,
+				ProgressWhenPaused:     1 * time.Second,
 			},
 			wantErr: nil,
 		},
@@ -205,8 +209,9 @@ func TestSessionRepository_StoreSession(t *testing.T) {
 		QueueHead:              0,
 		StateType:              "PLAY",
 		DeviceID:               "device_id",
-		ExpiredAt:              time.Now(),
+		ExpiredAt:              time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
 		AllowToControlByOthers: true,
+		ProgressWhenPaused:     (1 * time.Second).Milliseconds(),
 	}
 	if err := dbMap.Insert(user, session); err != nil {
 		t.Fatal(err)
@@ -227,7 +232,9 @@ func TestSessionRepository_StoreSession(t *testing.T) {
 				StateType:              "PLAY",
 				QueueHead:              0,
 				QueueTracks:            nil,
+				ExpiredAt:              time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
 				AllowToControlByOthers: true,
+				ProgressWhenPaused:     1 * time.Second,
 			},
 			wantErr: nil,
 		},
@@ -241,7 +248,9 @@ func TestSessionRepository_StoreSession(t *testing.T) {
 				StateType:              "PLAY",
 				QueueHead:              0,
 				QueueTracks:            nil,
+				ExpiredAt:              time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
 				AllowToControlByOthers: true,
+				ProgressWhenPaused:     1 * time.Second,
 			},
 			wantErr: entity.ErrSessionAlreadyExisted,
 		},
@@ -282,6 +291,7 @@ func TestSessionRepository_Update(t *testing.T) {
 		DeviceID:               "device_id",
 		ExpiredAt:              time.Date(2020, time.December, 1, 12, 0, 0, 0, time.UTC),
 		AllowToControlByOthers: false,
+		ProgressWhenPaused:     1 * time.Second.Milliseconds(),
 	}
 	sameFieldSession := &sessionDTO{
 		ID:                     "same_field_session_id",
@@ -291,6 +301,7 @@ func TestSessionRepository_Update(t *testing.T) {
 		StateType:              "PAUSE",
 		ExpiredAt:              time.Date(2020, time.December, 1, 12, 0, 0, 0, time.UTC),
 		AllowToControlByOthers: true,
+		ProgressWhenPaused:     1 * time.Second.Milliseconds(),
 	}
 	if err := dbMap.Insert(user, session, sameFieldSession); err != nil {
 		t.Fatal(err)
@@ -313,6 +324,7 @@ func TestSessionRepository_Update(t *testing.T) {
 				QueueTracks:            []*entity.QueueTrack{},
 				ExpiredAt:              time.Date(2020, time.December, 1, 12, 0, 0, 0, time.UTC),
 				AllowToControlByOthers: true,
+				ProgressWhenPaused:     2 * time.Second,
 			},
 			wantErr: false,
 		},
@@ -327,6 +339,7 @@ func TestSessionRepository_Update(t *testing.T) {
 				QueueTracks:            []*entity.QueueTrack{},
 				ExpiredAt:              time.Date(2020, time.December, 1, 12, 0, 0, 0, time.UTC),
 				AllowToControlByOthers: true,
+				ProgressWhenPaused:     1 * time.Second,
 			},
 			wantErr: false,
 		},

@@ -20,6 +20,7 @@ type Session struct {
 	QueueTracks            []*QueueTrack
 	ExpiredAt              time.Time
 	AllowToControlByOthers bool
+	ProgressWhenPaused     time.Duration
 }
 
 type SessionWithUser struct {
@@ -37,7 +38,9 @@ func NewSession(name string, creatorID string, allowToControlByOthers bool) (*Se
 		StateType:              Stop,
 		QueueHead:              0,
 		QueueTracks:            nil,
+		ExpiredAt:              time.Now().AddDate(0, 0, 3).UTC(),
 		AllowToControlByOthers: allowToControlByOthers,
+		ProgressWhenPaused:     0 * time.Second,
 	}, nil
 }
 
@@ -207,6 +210,11 @@ func (s *Session) IsValidNextStateFromAPI(nextState StateType) bool {
 	}
 
 	return false
+}
+
+// HeadTrack は現在のHeadの曲を返します。
+func (s *Session) HeadTrack() *QueueTrack {
+	return s.QueueTracks[s.QueueHead]
 }
 
 type StateType string
