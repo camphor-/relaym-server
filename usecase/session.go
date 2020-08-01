@@ -206,7 +206,7 @@ func (s *SessionUseCase) nextTrackInPlay(ctx context.Context, session *entity.Se
 	}
 
 	// sessionのtimerをExpiredさせることでstartTrackEndTrigger中のhandleSkipTrackが呼び出される
-	if err := s.timerUC.tm.CallNextCh(session.ID); err != nil {
+	if err := s.timerUC.tm.SendToNextCh(session.ID); err != nil {
 		return fmt.Errorf("ExpiredTimer: %w", err)
 	}
 

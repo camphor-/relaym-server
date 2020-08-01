@@ -137,8 +137,8 @@ func (m *SyncCheckTimerManager) GetTimer(sessionID string) (*SyncCheckTimer, boo
 	return nil, false
 }
 
-// CallNextCh は与えられたセッションのタイマーのNextChに通知を送ります
-func (m *SyncCheckTimerManager) CallNextCh(sessionID string) error {
+// SendToNextCh は与えられたセッションのタイマーのNextChに通知を送ります
+func (m *SyncCheckTimerManager) SendToNextCh(sessionID string) error {
 	logger := log.New()
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -150,6 +150,6 @@ func (m *SyncCheckTimerManager) CallNextCh(sessionID string) error {
 		return nil
 	}
 
-	logger.Debugj(map[string]interface{}{"message": "timer not existed on CallNextCh", "sessionID": sessionID})
+	logger.Debugj(map[string]interface{}{"message": "timer not existed on SendToNextCh", "sessionID": sessionID})
 	return fmt.Errorf("timer not existed")
 }
