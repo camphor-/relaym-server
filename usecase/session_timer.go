@@ -105,7 +105,7 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 
 // handleSkipTrack はある一曲のSkipが呼び出された時の処理を行います。
 func (s *SessionTimerUseCase) handleSkipTrack(ctx context.Context, sessionID string) (*entity.SyncCheckTimer, bool, error) {
-	s.tm.DeleteTimer(sessionID)
+	s.deleteTimer(sessionID)
 
 	triggerAfterTrackEndResponse, err := s.sessionRepo.DoInTx(ctx, s.handleSkipTrackTx(sessionID))
 	if v, ok := triggerAfterTrackEndResponse.(*handleTrackEndResponse); ok {
@@ -124,7 +124,7 @@ func (s *SessionTimerUseCase) handleSkipTrack(ctx context.Context, sessionID str
 
 // handleTrackEnd はある一曲の再生が終わったときの処理を行います。
 func (s *SessionTimerUseCase) handleTrackEnd(ctx context.Context, sessionID string) (*entity.SyncCheckTimer, bool, error) {
-	s.tm.DeleteTimer(sessionID)
+	s.deleteTimer(sessionID)
 	time.Sleep(waitTimeBeforeHandleTrackEnd)
 
 	triggerAfterTrackEndResponse, err := s.sessionRepo.DoInTx(ctx, s.handleTrackEndTx(sessionID))
