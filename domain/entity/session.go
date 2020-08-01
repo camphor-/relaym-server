@@ -212,6 +212,11 @@ func (s *Session) IsValidNextStateFromAPI(nextState StateType) bool {
 	return false
 }
 
+// SetProgressWhenPaused はProgressWhenPausedに時間をセットします。
+func (s *Session) SetProgressWhenPaused(d time.Duration) {
+	s.ProgressWhenPaused = d
+}
+
 // HeadTrack は現在のHeadの曲を返します。
 func (s *Session) HeadTrack() *QueueTrack {
 	return s.QueueTracks[s.QueueHead]

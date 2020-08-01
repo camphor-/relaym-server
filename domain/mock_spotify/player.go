@@ -9,6 +9,7 @@ import (
 	entity "github.com/camphor-/relaym-server/domain/entity"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
+	time "time"
 )
 
 // MockPlayer is a mock of Player interface
@@ -75,6 +76,20 @@ func (m *MockPlayer) PlayWithTracks(ctx context.Context, deviceID string, trackU
 func (mr *MockPlayerMockRecorder) PlayWithTracks(ctx, deviceID, trackURIs interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PlayWithTracks", reflect.TypeOf((*MockPlayer)(nil).PlayWithTracks), ctx, deviceID, trackURIs)
+}
+
+// PlayWithTracksAndPosition mocks base method
+func (m *MockPlayer) PlayWithTracksAndPosition(ctx context.Context, deviceID string, trackURIs []string, position time.Duration) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PlayWithTracksAndPosition", ctx, deviceID, trackURIs, position)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PlayWithTracksAndPosition indicates an expected call of PlayWithTracksAndPosition
+func (mr *MockPlayerMockRecorder) PlayWithTracksAndPosition(ctx, deviceID, trackURIs, position interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PlayWithTracksAndPosition", reflect.TypeOf((*MockPlayer)(nil).PlayWithTracksAndPosition), ctx, deviceID, trackURIs, position)
 }
 
 // Pause mocks base method
