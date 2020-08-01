@@ -247,7 +247,7 @@ func (s *SessionTimerUseCase) updateForHandleNextTrackTx(ctx context.Context, se
 
 	triggerAfterTrackEnd := s.tm.CreateExpiredTimer(sess.ID)
 
-	triggerAfterTrackEnd.SetDuration(playingInfo.Remain())
+	triggerAfterTrackEnd.SetDuration(playingInfo.Remain() - 2*time.Second)
 
 	logger.Infoj(map[string]interface{}{
 		"message": "restart timer", "sessionID": sess.ID, "remainDuration": playingInfo.Remain().String(),
