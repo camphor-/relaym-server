@@ -181,7 +181,7 @@ func (s *Session) canMoveFromStopToPlay() error {
 
 // IsNextTrackExistWhenStateIsStop はstateがstopの時に次の曲が存在するかを調べます
 func (s *Session) IsNextTrackExistWhenStateIsStop() bool {
-	return len(s.QueueTracks) <= s.QueueHead
+	return len(s.QueueTracks) > s.QueueHead
 }
 
 // IsPlaying は現在のStateTypeがPlayかどうか返します。
