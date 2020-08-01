@@ -292,6 +292,10 @@ func (s *SessionTimerUseCase) deleteTimer(sessionID string) {
 	s.tm.DeleteTimer(sessionID)
 }
 
+func (s *SessionTimerUseCase) sendToNextCh(sessionID string) error {
+	return s.tm.SendToNextCh(sessionID)
+}
+
 type handleTrackEndResponse struct {
 	triggerAfterTrackEnd *entity.SyncCheckTimer
 	nextTrack            bool
