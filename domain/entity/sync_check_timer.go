@@ -65,9 +65,9 @@ func NewSyncCheckTimerManager() *SyncCheckTimerManager {
 	}
 }
 
-// CreateTimer は与えられたセッションの同期チェック用のタイマーを作成します。
+// CreateExpiredTimer は与えられたセッションの同期チェック用のタイマーを作成します。
 // 既存のタイマーが存在する場合はstopしてから新しいタイマーを作成します。
-func (m *SyncCheckTimerManager) CreateTimer(sessionID string) *SyncCheckTimer {
+func (m *SyncCheckTimerManager) CreateExpiredTimer(sessionID string) *SyncCheckTimer {
 	logger := log.New()
 	m.mu.Lock()
 	defer m.mu.Unlock()

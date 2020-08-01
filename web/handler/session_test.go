@@ -924,7 +924,7 @@ func newSessionHandlerForTest(
 	prepareMockSessionRepoFn(mockSessionRepo)
 	syncCheckTimerManager := entity.NewSyncCheckTimerManager()
 	if sessionID != "" {
-		timer := syncCheckTimerManager.CreateTimer(sessionID)
+		timer := syncCheckTimerManager.CreateExpiredTimer(sessionID)
 		timer.SetDuration(5 * time.Minute)
 	}
 	timerUC := usecase.NewSessionTimerUseCase(mockSessionRepo, mockPlayer, mockPusher, syncCheckTimerManager)

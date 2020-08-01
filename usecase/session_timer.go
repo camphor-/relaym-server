@@ -34,7 +34,7 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 	// 曲の再生を待つ
 	waitPlayTimer := time.NewTimer(5 * time.Second)
 
-	triggerAfterTrackEnd := s.tm.CreateTimer(sessionID)
+	triggerAfterTrackEnd := s.tm.CreateExpiredTimer(sessionID)
 	for {
 		select {
 		case <-waitPlayTimer.C:
@@ -245,7 +245,7 @@ func (s *SessionTimerUseCase) UpdateForHandleNextTrackTx(ctx context.Context, se
 		Msg:       entity.NewEventNextTrack(sess.QueueHead),
 	})
 
-	triggerAfterTrackEnd := s.tm.CreateTimer(sess.ID)
+	triggerAfterTrackEnd := s.tm.CreateExpiredTimer(sess.ID)
 
 	triggerAfterTrackEnd.SetDuration(playingInfo.Remain())
 

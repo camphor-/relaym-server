@@ -130,10 +130,10 @@ func TestSyncCheckTimerManager_CreateTimer(t *testing.T) {
 				return
 			}
 			opts := []cmp.Option{cmp.AllowUnexported(SyncCheckTimer{}), cmpopts.IgnoreUnexported(time.Timer{})}
-			got := m.CreateTimer(tt.sessionID)
+			got := m.CreateExpiredTimer(tt.sessionID)
 			got.SetDuration(tt.d)
 			if !cmp.Equal(got, tt.want, opts...) {
-				t.Errorf("CreateTimer() diff=%v", cmp.Diff(tt.want, got, opts...))
+				t.Errorf("CreateExpiredTimer() diff=%v", cmp.Diff(tt.want, got, opts...))
 			}
 		})
 	}
