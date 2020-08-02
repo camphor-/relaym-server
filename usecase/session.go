@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/camphor-/relaym-server/log"
-
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/event"
 	"github.com/camphor-/relaym-server/domain/repository"
@@ -118,8 +116,6 @@ func (s *SessionUseCase) SetDevice(ctx context.Context, sessionID string, device
 
 // GetSession は指定されたidからsessionの情報を返します
 func (s *SessionUseCase) GetSession(ctx context.Context, sessionID string) (*entity.SessionWithUser, []*entity.Track, *entity.CurrentPlayingInfo, error) {
-	logger := log.New()
-
 	session, err := s.sessionRepo.FindByID(ctx, sessionID)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("FindByID sessionID=%s: %w", sessionID, err)
@@ -151,22 +147,21 @@ func (s *SessionUseCase) GetSession(ctx context.Context, sessionID string) (*ent
 	}
 
 	isExpired, err := s.timerUC.isTimerExpired(sessionID)
-	if !isExpired {
-		if err != nil {
-			return nil, nil, nil, fmt.Errorf("isTimerExpired: %w", err)
-		}
 
-		if err := session.IsPlayingCorrectTrack(cpi); err != nil {
-			logger.Debugj(map[string]interface{}{"message": "timer exists, but play different track", "sessionID": session.ID})
+	if isExpired {
+		return entity.NewSessionWithUser(session, creator), tracks, cpi, nil
+	}
 
-			s.timerUC.deleteTimer(session.ID)
-			s.timerUC.handleInterrupt(session)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("isTimerExpired: %w", err)
+	}
 
-			if updateErr := s.sessionRepo.Update(ctx, session); updateErr != nil {
-				return nil, nil, nil, fmt.Errorf("update session id=%s: %v: %w", session.ID, err, updateErr)
-			}
+	if err := session.IsPlayingCorrectTrack(cpi); err != nil {
+		s.timerUC.deleteTimer(session.ID)
+		s.timerUC.handleInterrupt(session)
 
-			return entity.NewSessionWithUser(session, creator), tracks, cpi, nil
+		if updateErr := s.sessionRepo.Update(ctx, session); updateErr != nil {
+			return nil, nil, nil, fmt.Errorf("update session id=%s: %v: %w", session.ID, err, updateErr)
 		}
 	}
 
