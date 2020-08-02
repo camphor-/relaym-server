@@ -828,73 +828,362 @@ func TestUserHandler_GetActiveDevices(t *testing.T) {
 	}
 }
 
-//func TestUserHandler_NextTrack(t *testing.T) {
-//	t.Parallel()
-//
-//	tests := []struct {
-//		name                     string
-//		sessionID                string
-//		userID                   string
-//		prepareMockPlayerCliFn   func(m *mock_spotify.MockPlayer)
-//		prepareMockSessionRepoFn func(m *mock_repository.MockSession)
-//		prepareMockUserRepoFn    func(m *mock_repository.MockUser)
-//		prepareMockTrackCli      func(m *mock_spotify.MockTrackClient)
-//		prepareMockPusherFn      func(m *mock_event.MockPusher)
-//		wantErr                  bool
-//		wantCode                 int
-//	}{
-//		{
-//			name:      "Playかつ次の曲が存在する時に次の曲にPlayのまま遷移, 202",
-//			sessionID: "sessionID",
-//			userID:    "userID",
-//			wantErr:   false,
-//			wantCode:  http.StatusAccepted,
-//		},
-//	}
-//
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			e := echo.New()
-//			req := httptest.NewRequest(http.MethodPut, "/", nil)
-//			rec := httptest.NewRecorder()
-//			c := e.NewContext(req, rec)
-//			c.SetPath("/sessions/:id/devices")
-//			c.SetParamNames("id")
-//			c.SetParamValues(tt.sessionID)
-//			c = setToContext(c, tt.userID, nil)
-//
-//			// モックの準備
-//			ctrl := gomock.NewController(t)
-//			defer ctrl.Finish()
-//			mockPC := mock_spotify.NewMockPlayer(ctrl)
-//			tt.prepareMockPlayerCliFn(mockPC)
-//			mockP := mock_event.NewMockPusher(ctrl)
-//			tt.prepareMockPusherFn(mockP)
-//			mockSR := mock_repository.NewMockSession(ctrl)
-//			tt.prepareMockSessionRepoFn(mockSR)
-//			mockTC := mock_spotify.NewMockTrackClient(ctrl)
-//			tt.prepareMockTrackCli(mockTC)
-//			mockUR := mock_repository.NewMockUser(ctrl)
-//			tt.prepareMockUserRepoFn(mockUR)
-//			syncCheckTimerManager := entity.NewSyncCheckTimerManager()
-//			icm := entity.NewInterruptChanManager()
-//			timerUC := usecase.NewSessionTimerUseCase(mockSR, mockPC, mockP, syncCheckTimerManager, icm)
-//
-//			uc := usecase.NewSessionUseCase(mockSR, mockUR, mockPC, mockTC, nil, mockP, timerUC)
-//			h := &SessionHandler{uc: uc}
-//
-//			err := h.GetActiveDevices(c)
-//			if (err != nil) != tt.wantErr {
-//				t.Errorf("NextTrack() error = %v, wantErr %v", err, tt.wantErr)
-//			}
-//			// ステータスコードのチェック
-//			if er, ok := err.(*echo.HTTPError); (ok && er.Code != tt.wantCode) || (!ok && rec.Code != tt.wantCode) {
-//				t.Errorf("NextTrack() code = %d, want = %d", rec.Code, tt.wantCode)
-//			}
-//
-//		})
-//	}
-//}
+func TestUserHandler_NextTrack(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name                     string
+		sessionID                string
+		userID                   string
+		addToTimerSessionID      string
+		prepareMockPlayerCliFn   func(m *mock_spotify.MockPlayer)
+		prepareMockSessionRepoFn func(m *mock_repository.MockSession)
+		prepareMockPusherFn      func(m *mock_event.MockPusher)
+		prepareMockTrackCliFn    func(m *mock_spotify.MockTrackClient)
+		prepareMockUserRepoFn    func(m *mock_repository.MockUser)
+		wantErr                  bool
+		wantCode                 int
+	}{
+		{
+			name:                   "STOPかつ次の曲が存在する時に次の曲にSTOPのまま遷移,202",
+			sessionID:              "sessionID",
+			userID:                 "userID",
+			addToTimerSessionID:    "sessionID",
+			prepareMockPlayerCliFn: func(m *mock_spotify.MockPlayer) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(
+					&entity.Session{
+						ID:        "sessionID",
+						Name:      "name",
+						CreatorID: "creatorID",
+						DeviceID:  "deviceID",
+						StateType: "STOP",
+						QueueHead: 0,
+						QueueTracks: []*entity.QueueTrack{
+							{
+								Index:     0,
+								URI:       "spotify:track:track_uri1",
+								SessionID: "sessionID",
+							},
+							{
+								Index:     1,
+								URI:       "spotify:track:track_uri2",
+								SessionID: "sessionID",
+							},
+						},
+						ExpiredAt:              time.Time{},
+						AllowToControlByOthers: true,
+						ProgressWhenPaused:     0,
+					}, nil)
+				m.EXPECT().Update(gomock.Any(), &entity.Session{
+					ID:        "sessionID",
+					Name:      "name",
+					CreatorID: "creatorID",
+					DeviceID:  "deviceID",
+					StateType: "STOP",
+					QueueHead: 1,
+					QueueTracks: []*entity.QueueTrack{
+						{
+							Index:     0,
+							URI:       "spotify:track:track_uri1",
+							SessionID: "sessionID",
+						},
+						{
+							Index:     1,
+							URI:       "spotify:track:track_uri2",
+							SessionID: "sessionID",
+						},
+					},
+					ExpiredAt:              time.Time{},
+					AllowToControlByOthers: true,
+					ProgressWhenPaused:     0,
+				}).Return(nil)
+			},
+			prepareMockPusherFn: func(m *mock_event.MockPusher) {
+				m.EXPECT().Push(&event.PushMessage{
+					SessionID: "sessionID",
+					Msg:       entity.NewEventNextTrack(1),
+				})
+			},
+			prepareMockTrackCliFn: func(m *mock_spotify.MockTrackClient) {},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			wantErr:               false,
+			wantCode:              http.StatusAccepted,
+		},
+		{
+			name:                   "Archivedの際はどのような状態でも400",
+			sessionID:              "sessionID",
+			userID:                 "userID",
+			addToTimerSessionID:    "sessionID",
+			prepareMockPlayerCliFn: func(m *mock_spotify.MockPlayer) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(
+					&entity.Session{
+						ID:                     "sessionID",
+						Name:                   "name",
+						CreatorID:              "creatorID",
+						DeviceID:               "deviceID",
+						StateType:              "ARCHIVED",
+						QueueHead:              0,
+						QueueTracks:            nil,
+						ExpiredAt:              time.Time{},
+						AllowToControlByOthers: true,
+						ProgressWhenPaused:     0,
+					}, nil)
+			},
+			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
+			prepareMockTrackCliFn: func(m *mock_spotify.MockTrackClient) {},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			wantErr:               true,
+			wantCode:              http.StatusBadRequest,
+		},
+		{
+			name:                "Playかつ次の曲が存在する時に次の曲にPlayのまま遷移,202",
+			sessionID:           "sessionID",
+			userID:              "userID",
+			addToTimerSessionID: "sessionID",
+			prepareMockPlayerCliFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().SkipCurrentTrack(gomock.Any(), "deviceID").Return(nil)
+			},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(
+					&entity.Session{
+						ID:                     "sessionID",
+						Name:                   "name",
+						CreatorID:              "creatorID",
+						DeviceID:               "deviceID",
+						StateType:              "PLAY",
+						QueueHead:              0,
+						QueueTracks:            nil,
+						ExpiredAt:              time.Time{},
+						AllowToControlByOthers: true,
+						ProgressWhenPaused:     0,
+					}, nil)
+			},
+			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
+			prepareMockTrackCliFn: func(m *mock_spotify.MockTrackClient) {},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			wantErr:               false,
+			wantCode:              http.StatusAccepted,
+		},
+		{
+			name:                   "Playかつ次の曲が存在しても、AllowToControlByOthersかつcreatorでない時,400",
+			sessionID:              "sessionID",
+			userID:                 "userID",
+			addToTimerSessionID:    "sessionID",
+			prepareMockPlayerCliFn: func(m *mock_spotify.MockPlayer) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(
+					&entity.Session{
+						ID:                     "sessionID",
+						Name:                   "name",
+						CreatorID:              "creatorID",
+						DeviceID:               "deviceID",
+						StateType:              "PLAY",
+						QueueHead:              0,
+						QueueTracks:            nil,
+						ExpiredAt:              time.Time{},
+						AllowToControlByOthers: false,
+						ProgressWhenPaused:     0,
+					}, nil)
+			},
+			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
+			prepareMockTrackCliFn: func(m *mock_spotify.MockTrackClient) {},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			wantErr:               true,
+			wantCode:              http.StatusBadRequest,
+		},
+		{
+			name:                "Pauseかつ次の曲が存在すると次の曲に遷移し、202",
+			sessionID:           "sessionID",
+			userID:              "userID",
+			addToTimerSessionID: "sessionID",
+			prepareMockPlayerCliFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().SkipCurrentTrack(gomock.Any(), "deviceID").Return(nil)
+				m.EXPECT().Pause(gomock.Any(), "deviceID").Return(nil)
+			},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(
+					&entity.Session{
+						ID:        "sessionID",
+						Name:      "name",
+						CreatorID: "creatorID",
+						DeviceID:  "deviceID",
+						StateType: "PAUSE",
+						QueueHead: 0,
+						QueueTracks: []*entity.QueueTrack{
+							{
+								Index:     0,
+								URI:       "spotify:track:track_uri1",
+								SessionID: "sessionID",
+							},
+							{
+								Index:     1,
+								URI:       "spotify:track:track_uri2",
+								SessionID: "sessionID",
+							},
+						},
+						ExpiredAt:              time.Time{},
+						AllowToControlByOthers: true,
+						ProgressWhenPaused:     0,
+					}, nil)
+				m.EXPECT().Update(gomock.Any(), &entity.Session{
+					ID:        "sessionID",
+					Name:      "name",
+					CreatorID: "creatorID",
+					DeviceID:  "deviceID",
+					StateType: "PAUSE",
+					QueueHead: 1,
+					QueueTracks: []*entity.QueueTrack{
+						{
+							Index:     0,
+							URI:       "spotify:track:track_uri1",
+							SessionID: "sessionID",
+						},
+						{
+							Index:     1,
+							URI:       "spotify:track:track_uri2",
+							SessionID: "sessionID",
+						},
+					},
+					ExpiredAt:              time.Time{},
+					AllowToControlByOthers: true,
+					ProgressWhenPaused:     0,
+				})
+			},
+			prepareMockPusherFn: func(m *mock_event.MockPusher) {
+				m.EXPECT().Push(&event.PushMessage{
+					SessionID: "sessionID",
+					Msg:       entity.NewEventNextTrack(1),
+				})
+			},
+			prepareMockTrackCliFn: func(m *mock_spotify.MockTrackClient) {},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			wantErr:               false,
+			wantCode:              http.StatusAccepted,
+		},
+		{
+			name:                "Pauseかつ次の曲が3曲存在すると次の曲に遷移し、三曲先がEnqueueされ、202",
+			sessionID:           "sessionID",
+			userID:              "userID",
+			addToTimerSessionID: "sessionID",
+			prepareMockPlayerCliFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().SkipCurrentTrack(gomock.Any(), "deviceID").Return(nil)
+				m.EXPECT().Pause(gomock.Any(), "deviceID").Return(nil)
+				m.EXPECT().Enqueue(gomock.Any(), "spotify:track:track_uri4", "deviceID").Return(nil)
+			},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(
+					&entity.Session{
+						ID:        "sessionID",
+						Name:      "name",
+						CreatorID: "creatorID",
+						DeviceID:  "deviceID",
+						StateType: "PAUSE",
+						QueueHead: 0,
+						QueueTracks: []*entity.QueueTrack{
+							{
+								Index:     0,
+								URI:       "spotify:track:track_uri1",
+								SessionID: "sessionID",
+							},
+							{
+								Index:     1,
+								URI:       "spotify:track:track_uri2",
+								SessionID: "sessionID",
+							},
+							{
+								Index:     2,
+								URI:       "spotify:track:track_uri3",
+								SessionID: "sessionID",
+							},
+							{
+								Index:     3,
+								URI:       "spotify:track:track_uri4",
+								SessionID: "sessionID",
+							},
+						},
+						ExpiredAt:              time.Time{},
+						AllowToControlByOthers: true,
+						ProgressWhenPaused:     0,
+					}, nil)
+				m.EXPECT().Update(gomock.Any(), &entity.Session{
+					ID:        "sessionID",
+					Name:      "name",
+					CreatorID: "creatorID",
+					DeviceID:  "deviceID",
+					StateType: "PAUSE",
+					QueueHead: 1,
+					QueueTracks: []*entity.QueueTrack{
+						{
+							Index:     0,
+							URI:       "spotify:track:track_uri1",
+							SessionID: "sessionID",
+						},
+						{
+							Index:     1,
+							URI:       "spotify:track:track_uri2",
+							SessionID: "sessionID",
+						},
+						{
+							Index:     2,
+							URI:       "spotify:track:track_uri3",
+							SessionID: "sessionID",
+						},
+						{
+							Index:     3,
+							URI:       "spotify:track:track_uri4",
+							SessionID: "sessionID",
+						},
+					},
+					ExpiredAt:              time.Time{},
+					AllowToControlByOthers: true,
+					ProgressWhenPaused:     0,
+				})
+			},
+			prepareMockPusherFn: func(m *mock_event.MockPusher) {
+				m.EXPECT().Push(&event.PushMessage{
+					SessionID: "sessionID",
+					Msg:       entity.NewEventNextTrack(1),
+				})
+			},
+			prepareMockTrackCliFn: func(m *mock_spotify.MockTrackClient) {},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			wantErr:               false,
+			wantCode:              http.StatusAccepted,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			c.SetPath("/sessions/:id/devices")
+			c.SetParamNames("id")
+			c.SetParamValues(tt.sessionID)
+			c = setToContext(c, tt.userID, nil)
+
+			// モックの準備
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			h := newSessionHandlerForTest(t, ctrl, tt.prepareMockPlayerCliFn, tt.prepareMockTrackCliFn,
+				tt.prepareMockPusherFn, tt.prepareMockUserRepoFn, tt.prepareMockSessionRepoFn, tt.addToTimerSessionID)
+
+			err := h.NextTrack(c)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("NextTrack() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			// ステータスコードのチェック
+			if er, ok := err.(*echo.HTTPError); (ok && er.Code != tt.wantCode) || (!ok && rec.Code != tt.wantCode) {
+				t.Errorf("NextTrack() code = %d, want = %d", rec.Code, tt.wantCode)
+			}
+
+		})
+	}
+}
 
 func convToPointer(given int64) *int64 {
 	return &given
@@ -929,5 +1218,6 @@ func newSessionHandlerForTest(
 	}
 	timerUC := usecase.NewSessionTimerUseCase(mockSessionRepo, mockPlayer, mockPusher, syncCheckTimerManager)
 	uc := usecase.NewSessionUseCase(mockSessionRepo, mockUserRepo, mockPlayer, mockTrackCli, nil, mockPusher, timerUC)
-	return &SessionHandler{uc: uc}
+	stateUC := usecase.NewSessionStateUseCase(mockSessionRepo, mockPlayer, mockPusher, timerUC)
+	return &SessionHandler{uc: uc, stateUC: stateUC}
 }
