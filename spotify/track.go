@@ -22,19 +22,17 @@ func (c *Client) Search(ctx context.Context, q string) ([]*entity.Track, error) 
 		return nil, fmt.Errorf("token not found")
 	}
 
-	var result *spotify.SearchResult
 	cached, ok := c.cache.Get(searchKey + q)
-	if v, typeOK := cached.(*spotify.SearchResult); ok && typeOK {
-		result = v
-	} else {
-		var err error
-		cli := c.auth.NewClient(token)
-		result, err = cli.Search(q, spotify.SearchTypeTrack)
-		if err != nil {
-			return nil, fmt.Errorf("search q=%s: %w", q, err)
-		}
-		c.cache.SetDefault(searchKey+q, result)
+	if result, typeOK := cached.(*spotify.SearchResult); ok && typeOK {
+		return c.toTracks(result.Tracks.Tracks), nil
 	}
+
+	cli := c.auth.NewClient(token)
+	result, err := cli.Search(q, spotify.SearchTypeTrack)
+	if err != nil {
+		return nil, fmt.Errorf("search q=%s: %w", q, err)
+	}
+	c.cache.SetDefault(searchKey+q, result)
 	tracks := c.toTracks(result.Tracks.Tracks)
 
 	return tracks, nil
@@ -71,11 +69,11 @@ func (c *Client) GetTracksFromURI(ctx context.Context, trackURIs []string) ([]*e
 		}
 
 		var resultTracks []*spotify.FullTrack
+
 		key := c.idsToCacheKey(idsForAPI)
 		cached, ok := c.cache.Get(getTracksKey + key)
 		if v, typeOK := cached.([]*spotify.FullTrack); ok && typeOK {
 			resultTracks = v
-
 		} else {
 			var err error
 			resultTracks, err = cli.GetTracks(idsForAPI...)
@@ -84,6 +82,7 @@ func (c *Client) GetTracksFromURI(ctx context.Context, trackURIs []string) ([]*e
 			}
 			c.cache.SetDefault(getTracksKey+key, resultTracks)
 		}
+
 		for j, rt := range resultTracks {
 			idx := i*50 + j
 			tracks[idx] = c.toTrack(rt)
