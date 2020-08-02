@@ -163,7 +163,7 @@ func (m *SyncCheckTimerManager) SendToNextCh(sessionID string) error {
 	return fmt.Errorf("timer not existed")
 }
 
-//
+// IsTimerExpired は与えられたセッションのisTimerExpiredの値を返します
 func (m *SyncCheckTimerManager) IsTimerExpired(sessionID string) (bool, error) {
 	logger := log.New()
 	m.mu.Lock()
