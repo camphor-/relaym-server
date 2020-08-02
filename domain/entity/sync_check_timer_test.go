@@ -82,7 +82,7 @@ func TestSyncCheckTimer_StopCh(t *testing.T) {
 	}
 }
 
-func TestSyncCheckTimerManager_CreateTimer(t *testing.T) {
+func TestSyncCheckTimerManager_CreateExpiredTimer(t *testing.T) {
 	t.Parallel()
 
 	timer := newSyncCheckTimer()

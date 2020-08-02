@@ -102,7 +102,7 @@ func (h *SessionHandler) Enqueue(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-// nextTrack は PUT /sessions/:id/next に対応するハンドラーです。
+// NextTrack は PUT /sessions/:id/next に対応するハンドラーです。
 func (h *SessionHandler) NextTrack(c echo.Context) error {
 	logger := log.New()
 

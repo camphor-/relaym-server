@@ -25,7 +25,7 @@ func NewSessionStateUseCase(sessionRepo repository.Session, playerCli spotify.Pl
 	return &SessionStateUseCase{sessionRepo: sessionRepo, playerCli: playerCli, pusher: pusher, timerUC: timerUC}
 }
 
-// nextTrack は指定されたidのsessionを次の曲に進めます
+// NextTrack は指定されたidのsessionを次の曲に進めます
 func (s *SessionUseCase) NextTrack(ctx context.Context, sessionID string) error {
 	session, err := s.sessionRepo.FindByID(ctx, sessionID)
 	if err != nil {
@@ -63,7 +63,7 @@ func (s *SessionUseCase) nextTrackInPlay(ctx context.Context, session *entity.Se
 		return fmt.Errorf("SkipCurrentTrack: %w", err)
 	}
 
-	// NextChを通してstartTrackEndTriggerに次の曲への繊維を通知
+	// NextChを通してstartTrackEndTriggerに次の曲への遷移を通知
 	if err := s.timerUC.sendToNextCh(session.ID); err != nil {
 		return fmt.Errorf("send to next ch: %w", err)
 	}
