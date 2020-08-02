@@ -142,7 +142,6 @@ func (s *SessionUseCase) GetSession(ctx context.Context, sessionID string) (*ent
 	}
 
 	if !s.timerUC.existsTimer(sessionID) {
-		// timerがexistしないのはsessionの作成後, PAUSE中
 		return entity.NewSessionWithUser(session, creator), tracks, cpi, nil
 	}
 
