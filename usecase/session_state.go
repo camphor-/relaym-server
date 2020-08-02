@@ -113,7 +113,7 @@ func (s *SessionStateUseCase) nextTrackInPause(ctx context.Context, session *ent
 // stopToPlayで曲がResetされ、再度Spotifyのキューに積まれるため、Enqueueを行っていません
 func (s *SessionStateUseCase) nextTrackInStop(ctx context.Context, session *entity.Session) error {
 	if !session.IsNextTrackExistWhenStateIsStop() {
-		return nil
+		return fmt.Errorf("nextTrackInStop: %w", entity.ErrNextQueueTrackNotFound)
 	}
 
 	if err := session.GoNextTrack(); err != nil && errors.Is(err, entity.ErrSessionAllTracksFinished) {

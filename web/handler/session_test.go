@@ -911,6 +911,44 @@ func TestUserHandler_NextTrack(t *testing.T) {
 			wantCode:              http.StatusAccepted,
 		},
 		{
+			name:                   "STOPかつ次の曲が存在しない時にErrNextQueueTrackNotFound,400",
+			sessionID:              "sessionID",
+			userID:                 "userID",
+			addToTimerSessionID:    "sessionID",
+			prepareMockPlayerCliFn: func(m *mock_spotify.MockPlayer) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(
+					&entity.Session{
+						ID:        "sessionID",
+						Name:      "name",
+						CreatorID: "creatorID",
+						DeviceID:  "deviceID",
+						StateType: "STOP",
+						QueueHead: 2,
+						QueueTracks: []*entity.QueueTrack{
+							{
+								Index:     0,
+								URI:       "spotify:track:track_uri1",
+								SessionID: "sessionID",
+							},
+							{
+								Index:     1,
+								URI:       "spotify:track:track_uri2",
+								SessionID: "sessionID",
+							},
+						},
+						ExpiredAt:              time.Time{},
+						AllowToControlByOthers: true,
+						ProgressWhenPaused:     0,
+					}, nil)
+			},
+			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
+			prepareMockTrackCliFn: func(m *mock_spotify.MockTrackClient) {},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			wantErr:               true,
+			wantCode:              http.StatusBadRequest,
+		},
+		{
 			name:                   "Archivedの際はどのような状態でも400",
 			sessionID:              "sessionID",
 			userID:                 "userID",
