@@ -35,6 +35,16 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 	// 曲の再生を待つ
 	waitTimer := time.NewTimer(5 * time.Second)
 
+	currentOperation, err := s.newCurrentOperation("Play")
+	if err != nil {
+		logger.Errorj(map[string]interface{}{
+			"message":   "startTrackEndTrigger: failed to change string to current operation",
+			"sessionID": sessionID,
+			"error":     err.Error(),
+		})
+		return
+	}
+
 	triggerAfterTrackEnd := s.tm.CreateExpiredTimer(sessionID)
 	for {
 		select {
@@ -61,7 +71,24 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 
 			if err := sess.IsPlayingCorrectTrack(playingInfo); err != nil {
 				s.handleInterrupt(sess)
+				if err := s.sessionRepo.Update(ctx, sess); err != nil {
+					logger.Errorj(map[string]interface{}{
+						"message":   "startTrackEndTrigger: failed to update session after handleInterrupt",
+						"sessionID": sessionID,
+						"error":     err.Error(),
+					})
+					return
+				}
 				return
+			}
+
+			switch currentOperation {
+			case Play:
+			case NextTrack:
+				s.pusher.Push(&event.PushMessage{
+					SessionID: sess.ID,
+					Msg:       entity.NewEventNextTrack(sess.QueueHead),
+				})
 			}
 
 			// ぴったしのタイマーをセットすると、Spotifyでは次の曲の再生が始まってるのにRelaym側では次の曲に進んでおらず、
@@ -98,6 +125,15 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 			}
 
 			waitTimer = time.NewTimer(waitTimeAfterHandleSkipTrack)
+			currentOperation, err = s.newCurrentOperation("Play")
+			if err != nil {
+				logger.Errorj(map[string]interface{}{
+					"message":   "startTrackEndTrigger: failed to change string to current operation",
+					"sessionID": sessionID,
+					"error":     err.Error(),
+				})
+				return
+			}
 
 		case <-triggerAfterTrackEnd.ExpireCh():
 			triggerAfterTrackEnd.MakeIsTimerExpiredTrue()
@@ -116,6 +152,15 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 				return
 			}
 			waitTimer = time.NewTimer(waitTimeAfterHandleTrackEnd)
+			currentOperation, err = s.newCurrentOperation("Play")
+			if err != nil {
+				logger.Errorj(map[string]interface{}{
+					"message":   "startTrackEndTrigger: failed to change string to current operation",
+					"sessionID": sessionID,
+					"error":     err.Error(),
+				})
+				return
+			}
 		}
 	}
 }
@@ -192,11 +237,6 @@ func (s *SessionTimerUseCase) handleTrackEndTx(sessionID string) func(ctx contex
 
 		logger.Debugj(map[string]interface{}{"message": "next track", "sessionID": sess.ID, "queueHead": sess.QueueHead})
 
-		s.pusher.Push(&event.PushMessage{
-			SessionID: sess.ID,
-			Msg:       entity.NewEventNextTrack(sess.QueueHead),
-		})
-
 		return &handleTrackEndResponse{nextTrack: true, err: nil}, nil
 	}
 }
@@ -248,4 +288,28 @@ func (s *SessionTimerUseCase) sendToNextCh(sessionID string) error {
 type handleTrackEndResponse struct {
 	nextTrack bool
 	err       error
+}
+
+type CurrentOperation string
+
+const (
+	Play      CurrentOperation = "Play"
+	NextTrack CurrentOperation = "NextTrack"
+)
+
+var CurrentOperations = []CurrentOperation{Play, NextTrack}
+
+// newCurrentOperation はstringから対応するCurrentOperationを生成します。
+func (s *SessionTimerUseCase) newCurrentOperation(currentOperation string) (CurrentOperation, error) {
+	for _, co := range CurrentOperations {
+		if co.String() == currentOperation {
+			return co, nil
+		}
+	}
+	return "", fmt.Errorf("invalid currentOperation")
+}
+
+// String はfmt.Stringerを満たすメソッドです。
+func (st CurrentOperation) String() string {
+	return string(st)
 }
