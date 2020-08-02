@@ -110,6 +110,7 @@ func (s *SessionStateUseCase) nextTrackInPause(ctx context.Context, session *ent
 }
 
 // nextTrackInStop はsessionのstateがSTOPの時のnextTrackの処理を行います
+// stopToPlayで曲がResetされ、再度Spotifyのキューに積まれるため、Enqueueを行っていません
 func (s *SessionStateUseCase) nextTrackInStop(ctx context.Context, session *entity.Session) error {
 	if !session.IsNextTrackExistWhenStateIsStop() {
 		return nil
