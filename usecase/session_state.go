@@ -65,7 +65,7 @@ func (s *SessionUseCase) nextTrackInPlay(ctx context.Context, session *entity.Se
 
 	// NextChを通してstartTrackEndTriggerに次の曲への繊維を通知
 	if err := s.timerUC.sendToNextCh(session.ID); err != nil {
-		return fmt.Errorf("ExpiredTimer: %w", err)
+		return fmt.Errorf("send to next ch: %w", err)
 	}
 
 	return nil
