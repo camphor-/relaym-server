@@ -57,6 +57,10 @@ func newSyncCheckTimer() *SyncCheckTimer {
 
 // SetTimerはSyncCheckTimerにTimerをセットします
 func (s *SyncCheckTimer) SetDuration(d time.Duration) {
+	if !s.timer.Stop() && !s.isTimerExpired {
+		<-s.timer.C
+	}
+
 	s.isTimerExpired = false
 	s.timer.Reset(d)
 }
