@@ -34,16 +34,7 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 
 	// 曲の再生を待つ
 	waitTimer := time.NewTimer(5 * time.Second)
-
-	currentOperation, err := s.newCurrentOperation("Play")
-	if err != nil {
-		logger.Errorj(map[string]interface{}{
-			"message":   "startTrackEndTrigger: failed to change string to current operation",
-			"sessionID": sessionID,
-			"error":     err.Error(),
-		})
-		return
-	}
+	currentOperation := Play
 
 	triggerAfterTrackEnd := s.tm.CreateExpiredTimer(sessionID)
 	for {
@@ -126,7 +117,7 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 			}
 
 			waitTimer = time.NewTimer(waitTimeAfterHandleSkipTrack)
-			currentOperation, err = s.newCurrentOperation("NextTrack")
+			currentOperation = NextTrack
 			if err != nil {
 				logger.Errorj(map[string]interface{}{
 					"message":   "startTrackEndTrigger: failed to change string to current operation",
@@ -153,7 +144,7 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 				return
 			}
 			waitTimer = time.NewTimer(waitTimeAfterHandleTrackEnd)
-			currentOperation, err = s.newCurrentOperation("NextTrack")
+			currentOperation = NextTrack
 			if err != nil {
 				logger.Errorj(map[string]interface{}{
 					"message":   "startTrackEndTrigger: failed to change string to current operation",
@@ -297,20 +288,3 @@ const (
 	Play      CurrentOperation = "Play"
 	NextTrack CurrentOperation = "NextTrack"
 )
-
-var CurrentOperations = []CurrentOperation{Play, NextTrack}
-
-// newCurrentOperation はstringから対応するCurrentOperationを生成します。
-func (s *SessionTimerUseCase) newCurrentOperation(currentOperation string) (CurrentOperation, error) {
-	for _, co := range CurrentOperations {
-		if co.String() == currentOperation {
-			return co, nil
-		}
-	}
-	return "", fmt.Errorf("invalid currentOperation")
-}
-
-// String はfmt.Stringerを満たすメソッドです。
-func (st CurrentOperation) String() string {
-	return string(st)
-}
