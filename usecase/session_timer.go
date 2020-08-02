@@ -82,8 +82,9 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 				return
 			}
 
+			logger.Debugj(map[string]interface{}{"message": "currentOperation", "currentOperation": currentOperation})
+
 			switch currentOperation {
-			case Play:
 			case NextTrack:
 				s.pusher.Push(&event.PushMessage{
 					SessionID: sess.ID,
@@ -125,7 +126,7 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 			}
 
 			waitTimer = time.NewTimer(waitTimeAfterHandleSkipTrack)
-			currentOperation, err = s.newCurrentOperation("Play")
+			currentOperation, err = s.newCurrentOperation("NextTrack")
 			if err != nil {
 				logger.Errorj(map[string]interface{}{
 					"message":   "startTrackEndTrigger: failed to change string to current operation",
@@ -152,7 +153,7 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 				return
 			}
 			waitTimer = time.NewTimer(waitTimeAfterHandleTrackEnd)
-			currentOperation, err = s.newCurrentOperation("Play")
+			currentOperation, err = s.newCurrentOperation("NextTrack")
 			if err != nil {
 				logger.Errorj(map[string]interface{}{
 					"message":   "startTrackEndTrigger: failed to change string to current operation",
