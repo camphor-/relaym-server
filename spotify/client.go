@@ -2,23 +2,26 @@ package spotify
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/camphor-/relaym-server/config"
 
+	"github.com/patrickmn/go-cache"
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
 )
 
 // Client はSpotifyのWeb APIをコールするクライアントです。
 type Client struct {
-	auth spotify.Authenticator
+	auth  spotify.Authenticator
+	cache *cache.Cache
 }
 
 // NewClient はClientのポインタを生成する関数です。
 func NewClient(cfg *config.Spotify) *Client {
 	auth := spotify.NewAuthenticator(cfg.RedirectURL(), spotify.ScopeUserReadPrivate, spotify.ScopeUserReadPlaybackState, spotify.ScopeUserModifyPlaybackState)
 	auth.SetAuthInfo(cfg.ClientID(), cfg.ClientSecret())
-	return &Client{auth: auth}
+	return &Client{auth: auth, cache: cache.New(5*time.Minute, 10*time.Minute)}
 }
 
 // GetAuthURL はSpotifyの認証画面のURLを取得します。
