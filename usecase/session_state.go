@@ -26,7 +26,7 @@ func NewSessionStateUseCase(sessionRepo repository.Session, playerCli spotify.Pl
 }
 
 // NextTrack は指定されたidのsessionを次の曲に進めます
-func (s *SessionUseCase) NextTrack(ctx context.Context, sessionID string) error {
+func (s *SessionStateUseCase) NextTrack(ctx context.Context, sessionID string) error {
 	session, err := s.sessionRepo.FindByID(ctx, sessionID)
 	if err != nil {
 		return fmt.Errorf("find session id=%s: %w", sessionID, err)
@@ -58,7 +58,7 @@ func (s *SessionUseCase) NextTrack(ctx context.Context, sessionID string) error 
 }
 
 // nextTrackInPlay はsessionのstateがPLAYの時のnextTrackの処理を行います
-func (s *SessionUseCase) nextTrackInPlay(ctx context.Context, session *entity.Session) error {
+func (s *SessionStateUseCase) nextTrackInPlay(ctx context.Context, session *entity.Session) error {
 	if err := s.playerCli.SkipCurrentTrack(ctx, session.DeviceID); err != nil {
 		return fmt.Errorf("SkipCurrentTrack: %w", err)
 	}
@@ -72,7 +72,7 @@ func (s *SessionUseCase) nextTrackInPlay(ctx context.Context, session *entity.Se
 }
 
 // nextTrackInPause はsessionのstateがPAUSEの時のnextTrackの処理を行います
-func (s *SessionUseCase) nextTrackInPause(ctx context.Context, session *entity.Session) error {
+func (s *SessionStateUseCase) nextTrackInPause(ctx context.Context, session *entity.Session) error {
 	if err := s.playerCli.SkipCurrentTrack(ctx, session.DeviceID); err != nil {
 		return fmt.Errorf("SkipCurrentTrack: %w", err)
 	}
@@ -110,7 +110,7 @@ func (s *SessionUseCase) nextTrackInPause(ctx context.Context, session *entity.S
 }
 
 // nextTrackInStop はsessionのstateがSTOPの時のnextTrackの処理を行います
-func (s *SessionUseCase) nextTrackInStop(ctx context.Context, session *entity.Session) error {
+func (s *SessionStateUseCase) nextTrackInStop(ctx context.Context, session *entity.Session) error {
 	if !session.IsNextTrackExistWhenStateIsStop() {
 		return nil
 	}

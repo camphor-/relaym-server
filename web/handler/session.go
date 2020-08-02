@@ -109,7 +109,7 @@ func (h *SessionHandler) NextTrack(c echo.Context) error {
 	ctx := c.Request().Context()
 	id := c.Param("id")
 
-	if err := h.uc.NextTrack(ctx, id); err != nil {
+	if err := h.stateUC.NextTrack(ctx, id); err != nil {
 		switch {
 		case errors.Is(err, entity.ErrSessionNotAllowToControlOthers):
 			return echo.NewHTTPError(http.StatusBadRequest, entity.ErrSessionNotAllowToControlOthers.Error())
