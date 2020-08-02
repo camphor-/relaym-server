@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/event"
@@ -388,6 +389,222 @@ func TestSessionTimerUseCase_handleTrackEndTx(t *testing.T) {
 			}
 			if gotHandleTrackEndResponse.nextTrack != tt.wantNextTrack {
 				t.Errorf("handleTrackEnd() gotNextTrack = %v, want %v", gotHandleTrackEndResponse.nextTrack, tt.wantNextTrack)
+			}
+		})
+	}
+}
+
+func TestSessionTimerUseCase_handleWaitTimerExpired(t *testing.T) {
+	tests := []struct {
+		name                     string
+		sessionID                string
+		currentOperation         CurrentOperation
+		prepareMockPlayerFn      func(m *mock_spotify.MockPlayer)
+		prepareMockPusherFn      func(m *mock_event.MockPusher)
+		prepareMockUserRepoFn    func(m *mock_repository.MockUser)
+		prepareMockSessionRepoFn func(m *mock_repository.MockSession)
+		wantErr                  bool
+	}{
+		{
+			name:             "Spotifyとの同期が取れていることが確認されると、currentOperationがPlayの時はイベントは送信されない",
+			sessionID:        "sessionID",
+			currentOperation: "Play",
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().CurrentlyPlaying(gomock.Any()).Return(&entity.CurrentPlayingInfo{
+					Playing:  true,
+					Progress: 10000000,
+					Track: &entity.Track{
+						URI:      "spotify:track:06QTSGUEgcmKwiEJ0IMPig",
+						ID:       "06QTSGUEgcmKwiEJ0IMPig",
+						Name:     "Borderland",
+						Duration: 213066000000,
+						Artists:  []*entity.Artist{{Name: "MONOEYES"}},
+						URL:      "https://open.spotify.com/track/06QTSGUEgcmKwiEJ0IMPig",
+						Album: &entity.Album{
+							Name: "Interstate 46 E.P.",
+							Images: []*entity.AlbumImage{
+								{
+									URL:    "https://i.scdn.co/image/ab67616d0000b273b48630d6efcebca2596120c4",
+									Height: 640,
+									Width:  640,
+								},
+							},
+						},
+					},
+				}, nil)
+			},
+			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+					ID:        "sessionID",
+					Name:      "name",
+					CreatorID: "creatorID",
+					DeviceID:  "deviceID",
+					StateType: "PLAY",
+					QueueHead: 1,
+					QueueTracks: []*entity.QueueTrack{
+						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+						{Index: 1, URI: "spotify:track:06QTSGUEgcmKwiEJ0IMPig"},
+					},
+					ExpiredAt:              time.Time{},
+					AllowToControlByOthers: false,
+					ProgressWhenPaused:     0,
+				}, nil)
+			},
+			wantErr: false,
+		},
+		{
+			name:             "Spotifyとの同期が取れていることが確認されると、currentOperationがの時はイベントは送信されない",
+			sessionID:        "sessionID",
+			currentOperation: "NextTrack",
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().CurrentlyPlaying(gomock.Any()).Return(&entity.CurrentPlayingInfo{
+					Playing:  true,
+					Progress: 10000000,
+					Track: &entity.Track{
+						URI:      "spotify:track:06QTSGUEgcmKwiEJ0IMPig",
+						ID:       "06QTSGUEgcmKwiEJ0IMPig",
+						Name:     "Borderland",
+						Duration: 213066000000,
+						Artists:  []*entity.Artist{{Name: "MONOEYES"}},
+						URL:      "https://open.spotify.com/track/06QTSGUEgcmKwiEJ0IMPig",
+						Album: &entity.Album{
+							Name: "Interstate 46 E.P.",
+							Images: []*entity.AlbumImage{
+								{
+									URL:    "https://i.scdn.co/image/ab67616d0000b273b48630d6efcebca2596120c4",
+									Height: 640,
+									Width:  640,
+								},
+							},
+						},
+					},
+				}, nil)
+			},
+			prepareMockPusherFn: func(m *mock_event.MockPusher) {
+				m.EXPECT().Push(&event.PushMessage{
+					SessionID: "sessionID",
+					Msg:       entity.NewEventNextTrack(1),
+				})
+			},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+					ID:        "sessionID",
+					Name:      "name",
+					CreatorID: "creatorID",
+					DeviceID:  "deviceID",
+					StateType: "PLAY",
+					QueueHead: 1,
+					QueueTracks: []*entity.QueueTrack{
+						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+						{Index: 1, URI: "spotify:track:06QTSGUEgcmKwiEJ0IMPig"},
+					},
+					ExpiredAt:              time.Time{},
+					AllowToControlByOthers: false,
+					ProgressWhenPaused:     0,
+				}, nil)
+			},
+			wantErr: false,
+		},
+		{
+			name:             "Spotifyとの同期が取れていないとhandleInterruptが呼び出されErrorが返る",
+			sessionID:        "sessionID",
+			currentOperation: "NextTrack",
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().CurrentlyPlaying(gomock.Any()).Return(&entity.CurrentPlayingInfo{
+					Playing:  true,
+					Progress: 10000000,
+					Track: &entity.Track{
+						URI:      "spotify:track:06QTSGUEgcmKwiEJ0IMPig",
+						ID:       "06QTSGUEgcmKwiEJ0IMPig",
+						Name:     "Borderland",
+						Duration: 213066000000,
+						Artists:  []*entity.Artist{{Name: "MONOEYES"}},
+						URL:      "https://open.spotify.com/track/06QTSGUEgcmKwiEJ0IMPig",
+						Album: &entity.Album{
+							Name: "Interstate 46 E.P.",
+							Images: []*entity.AlbumImage{
+								{
+									URL:    "https://i.scdn.co/image/ab67616d0000b273b48630d6efcebca2596120c4",
+									Height: 640,
+									Width:  640,
+								},
+							},
+						},
+					},
+				}, nil)
+			},
+			prepareMockPusherFn: func(m *mock_event.MockPusher) {
+				m.EXPECT().Push(&event.PushMessage{
+					SessionID: "sessionID",
+					Msg:       entity.EventInterrupt,
+				})
+			},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+					ID:        "sessionID",
+					Name:      "name",
+					CreatorID: "creatorID",
+					DeviceID:  "deviceID",
+					StateType: "PLAY",
+					QueueHead: 1,
+					QueueTracks: []*entity.QueueTrack{
+						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+						{Index: 1, URI: "spotify:track:hogehogehogehogehogeho"},
+					},
+					ExpiredAt:              time.Time{},
+					AllowToControlByOthers: false,
+					ProgressWhenPaused:     0,
+				}, nil)
+				m.EXPECT().Update(gomock.Any(), &entity.Session{
+					ID:        "sessionID",
+					Name:      "name",
+					CreatorID: "creatorID",
+					DeviceID:  "deviceID",
+					StateType: "STOP",
+					QueueHead: 1,
+					QueueTracks: []*entity.QueueTrack{
+						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+						{Index: 1, URI: "spotify:track:hogehogehogehogehogeho"},
+					},
+					ExpiredAt:              time.Time{},
+					AllowToControlByOthers: false,
+					ProgressWhenPaused:     0,
+				}).Return(nil)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			mockPlayer := mock_spotify.NewMockPlayer(ctrl)
+			tt.prepareMockPlayerFn(mockPlayer)
+			mockPusher := mock_event.NewMockPusher(ctrl)
+			tt.prepareMockPusherFn(mockPusher)
+			mockUserRepo := mock_repository.NewMockUser(ctrl)
+			tt.prepareMockUserRepoFn(mockUserRepo)
+			mockSessionRepo := mock_repository.NewMockSession(ctrl)
+			tt.prepareMockSessionRepoFn(mockSessionRepo)
+
+			tmpWaitTimeBeforeHandleTrackEnd := waitTimeAfterHandleTrackEnd
+			waitTimeAfterHandleTrackEnd = 0
+			defer func() {
+				waitTimeAfterHandleTrackEnd = tmpWaitTimeBeforeHandleTrackEnd
+			}()
+
+			syncCheckTimerManager := entity.NewSyncCheckTimerManager()
+
+			s := NewSessionTimerUseCase(mockSessionRepo, mockPlayer, mockPusher, syncCheckTimerManager)
+
+			triggerAfterTrackEnd := s.tm.CreateExpiredTimer(tt.sessionID)
+
+			if err := s.handleWaitTimerExpired(context.Background(), tt.sessionID, triggerAfterTrackEnd, tt.currentOperation); (err != nil) != tt.wantErr {
+				t.Errorf("handleWaitTimerExpired() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
