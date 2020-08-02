@@ -25,7 +25,7 @@ func NewSessionStateUseCase(sessionRepo repository.Session, playerCli spotify.Pl
 	return &SessionStateUseCase{sessionRepo: sessionRepo, playerCli: playerCli, pusher: pusher, timerUC: timerUC}
 }
 
-// NextTrack は指定されたidのsessionを次の曲に進めます
+// nextTrack は指定されたidのsessionを次の曲に進めます
 func (s *SessionUseCase) NextTrack(ctx context.Context, sessionID string) error {
 	session, err := s.sessionRepo.FindByID(ctx, sessionID)
 	if err != nil {

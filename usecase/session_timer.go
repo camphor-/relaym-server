@@ -34,7 +34,7 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 
 	// 曲の再生を待つ
 	waitTimer := time.NewTimer(5 * time.Second)
-	currentOperation := Play
+	currentOperation := play
 
 	triggerAfterTrackEnd := s.tm.CreateExpiredTimer(sessionID)
 	for {
@@ -76,7 +76,7 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 			logger.Debugj(map[string]interface{}{"message": "currentOperation", "currentOperation": currentOperation})
 
 			switch currentOperation {
-			case NextTrack:
+			case nextTrack:
 				s.pusher.Push(&event.PushMessage{
 					SessionID: sess.ID,
 					Msg:       entity.NewEventNextTrack(sess.QueueHead),
@@ -117,7 +117,7 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 			}
 
 			waitTimer = time.NewTimer(waitTimeAfterHandleSkipTrack)
-			currentOperation = NextTrack
+			currentOperation = nextTrack
 			if err != nil {
 				logger.Errorj(map[string]interface{}{
 					"message":   "startTrackEndTrigger: failed to change string to current operation",
@@ -144,7 +144,7 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 				return
 			}
 			waitTimer = time.NewTimer(waitTimeAfterHandleTrackEnd)
-			currentOperation = NextTrack
+			currentOperation = nextTrack
 			if err != nil {
 				logger.Errorj(map[string]interface{}{
 					"message":   "startTrackEndTrigger: failed to change string to current operation",
@@ -285,6 +285,6 @@ type handleTrackEndResponse struct {
 type CurrentOperation string
 
 const (
-	Play      CurrentOperation = "Play"
-	NextTrack CurrentOperation = "NextTrack"
+	play      CurrentOperation = "play"
+	nextTrack CurrentOperation = "nextTrack"
 )

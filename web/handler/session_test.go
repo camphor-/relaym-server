@@ -885,11 +885,11 @@ func TestUserHandler_GetActiveDevices(t *testing.T) {
 //
 //			err := h.GetActiveDevices(c)
 //			if (err != nil) != tt.wantErr {
-//				t.Errorf("NextTrack() error = %v, wantErr %v", err, tt.wantErr)
+//				t.Errorf("nextTrack() error = %v, wantErr %v", err, tt.wantErr)
 //			}
 //			// ステータスコードのチェック
 //			if er, ok := err.(*echo.HTTPError); (ok && er.Code != tt.wantCode) || (!ok && rec.Code != tt.wantCode) {
-//				t.Errorf("NextTrack() code = %d, want = %d", rec.Code, tt.wantCode)
+//				t.Errorf("nextTrack() code = %d, want = %d", rec.Code, tt.wantCode)
 //			}
 //
 //		})
