@@ -40,59 +40,9 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 	for {
 		select {
 		case <-waitTimer.C:
-			playingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
-			if err != nil {
-				logger.Errorj(map[string]interface{}{
-					"message":   "startTrackEndTrigger: failed to get currently playing info",
-					"sessionID": sessionID,
-					"error":     err.Error(),
-				})
+			if err := s.handleWaitTimerExpired(ctx, sessionID, triggerAfterTrackEnd, currentOperation); err != nil {
 				return
 			}
-
-			sess, err := s.sessionRepo.FindByID(ctx, sessionID)
-			if err != nil {
-				logger.Errorj(map[string]interface{}{
-					"message":   "startTrackEndTrigger: failed to get session",
-					"sessionID": sessionID,
-					"error":     err.Error(),
-				})
-				return
-			}
-
-			if err := sess.IsPlayingCorrectTrack(playingInfo); err != nil {
-				s.handleInterrupt(sess)
-				if err := s.sessionRepo.Update(ctx, sess); err != nil {
-					logger.Errorj(map[string]interface{}{
-						"message":   "startTrackEndTrigger: failed to update session after handleInterrupt",
-						"sessionID": sessionID,
-						"error":     err.Error(),
-					})
-					return
-				}
-				return
-			}
-
-			logger.Debugj(map[string]interface{}{"message": "currentOperation", "currentOperation": currentOperation})
-
-			switch currentOperation {
-			case operationNextTrack:
-				s.pusher.Push(&event.PushMessage{
-					SessionID: sess.ID,
-					Msg:       entity.NewEventNextTrack(sess.QueueHead),
-				})
-			}
-
-			// ぴったしのタイマーをセットすると、Spotifyでは次の曲の再生が始まってるのにRelaym側では次の曲に進んでおらず、
-			// INTERRUPTになってしまう
-			remainDuration := playingInfo.Remain() - 2*time.Second
-
-			logger.Infoj(map[string]interface{}{
-				"message": "start timer", "sessionID": sessionID, "remainDuration": remainDuration.String(),
-			})
-
-			triggerAfterTrackEnd.SetDuration(remainDuration)
-
 		case <-triggerAfterTrackEnd.StopCh():
 			logger.Infoj(map[string]interface{}{"message": "stop timer", "sessionID": sessionID})
 			waitTimer.Stop()
@@ -118,14 +68,6 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 
 			waitTimer = time.NewTimer(waitTimeAfterHandleSkipTrack)
 			currentOperation = operationNextTrack
-			if err != nil {
-				logger.Errorj(map[string]interface{}{
-					"message":   "startTrackEndTrigger: failed to change string to current operation",
-					"sessionID": sessionID,
-					"error":     err.Error(),
-				})
-				return
-			}
 
 		case <-triggerAfterTrackEnd.ExpireCh():
 			triggerAfterTrackEnd.MakeIsTimerExpiredTrue()
@@ -145,16 +87,67 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 			}
 			waitTimer = time.NewTimer(waitTimeAfterHandleTrackEnd)
 			currentOperation = operationNextTrack
-			if err != nil {
-				logger.Errorj(map[string]interface{}{
-					"message":   "startTrackEndTrigger: failed to change string to current operation",
-					"sessionID": sessionID,
-					"error":     err.Error(),
-				})
-				return
-			}
 		}
 	}
+}
+
+func (s *SessionTimerUseCase) handleWaitTimerExpired(ctx context.Context, sessionID string, triggerAfterTrackEnd *entity.SyncCheckTimer, currentOperation CurrentOperation) error {
+	logger := log.New()
+
+	playingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
+	if err != nil {
+		logger.Errorj(map[string]interface{}{
+			"message":   "startTrackEndTrigger: failed to get currently playing info",
+			"sessionID": sessionID,
+			"error":     err.Error(),
+		})
+		return fmt.Errorf("failed to get currently playing info")
+	}
+
+	sess, err := s.sessionRepo.FindByID(ctx, sessionID)
+	if err != nil {
+		logger.Errorj(map[string]interface{}{
+			"message":   "startTrackEndTrigger: failed to get session",
+			"sessionID": sessionID,
+			"error":     err.Error(),
+		})
+		return fmt.Errorf("failed to get session from repo")
+	}
+
+	if err := sess.IsPlayingCorrectTrack(playingInfo); err != nil {
+		s.handleInterrupt(sess)
+		if err := s.sessionRepo.Update(ctx, sess); err != nil {
+			logger.Errorj(map[string]interface{}{
+				"message":   "startTrackEndTrigger: failed to update session after handleInterrupt",
+				"sessionID": sessionID,
+				"error":     err.Error(),
+			})
+			return fmt.Errorf("failed to update session")
+		}
+		return fmt.Errorf("session interrupt")
+	}
+
+	logger.Debugj(map[string]interface{}{"message": "currentOperation", "currentOperation": currentOperation})
+
+	switch currentOperation {
+	case operationNextTrack:
+		s.pusher.Push(&event.PushMessage{
+			SessionID: sess.ID,
+			Msg:       entity.NewEventNextTrack(sess.QueueHead),
+		})
+	}
+
+	// ぴったしのタイマーをセットすると、Spotifyでは次の曲の再生が始まってるのにRelaym側では次の曲に進んでおらず、
+	// INTERRUPTになってしまう
+	remainDuration := playingInfo.Remain() - 2*time.Second
+
+	logger.Infoj(map[string]interface{}{
+		"message": "start timer", "sessionID": sessionID, "remainDuration": remainDuration.String(),
+	})
+
+	triggerAfterTrackEnd.SetDuration(remainDuration)
+
+	return nil
 }
 
 // handleTrackEnd はある一曲の再生が終わったときの処理を行います。
