@@ -99,30 +99,8 @@ func (m *SyncCheckTimerManager) CreateExpiredTimer(sessionID string) *SyncCheckT
 	return timer
 }
 
-// StopTimer は与えられたセッションのタイマーを終了します。
-func (m *SyncCheckTimerManager) StopTimer(sessionID string) {
-	logger := log.New()
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	logger.Debugj(map[string]interface{}{"message": "stop timer", "sessionID": sessionID})
-
-	if timer, ok := m.timers[sessionID]; ok {
-		if !timer.timer.Stop() {
-			<-timer.timer.C
-		}
-		close(timer.stopCh)
-		delete(m.timers, sessionID)
-		return
-	}
-
-	logger.Debugj(map[string]interface{}{"message": "timer not existed", "sessionID": sessionID})
-}
-
 // DeleteTimer は与えられたセッションのタイマーをマップから削除します。
-// StopTimerと異なり、タイマーのストップ処理は行いません。
 // 既にタイマーがExpireして、そのチャネルの値を取り出してしまった後にマップから削除したいときに使います。
-// <-timer.timer.Cを呼ぶと無限に待ちが発生してしまいます。(値を取り出すことは一生出来ないので)
 func (m *SyncCheckTimerManager) DeleteTimer(sessionID string) {
 	logger := log.New()
 	m.mu.Lock()

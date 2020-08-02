@@ -254,10 +254,6 @@ func (s *SessionTimerUseCase) existsTimer(sessionID string) bool {
 	return exists
 }
 
-func (s *SessionTimerUseCase) stopTimer(sessionID string) {
-	s.tm.StopTimer(sessionID)
-}
-
 func (s *SessionTimerUseCase) deleteTimer(sessionID string) {
 	s.tm.DeleteTimer(sessionID)
 }
