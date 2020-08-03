@@ -21,7 +21,7 @@ type Client struct {
 func NewClient(cfg *config.Spotify) *Client {
 	auth := spotify.NewAuthenticator(cfg.RedirectURL(), spotify.ScopeUserReadPrivate, spotify.ScopeUserReadPlaybackState, spotify.ScopeUserModifyPlaybackState)
 	auth.SetAuthInfo(cfg.ClientID(), cfg.ClientSecret())
-	return &Client{auth: auth, cache: cache.New(5*time.Minute, 10*time.Minute)}
+	return &Client{auth: auth, cache: cache.New(10*time.Minute, 20*time.Minute)}
 }
 
 // GetAuthURL はSpotifyの認証画面のURLを取得します。
