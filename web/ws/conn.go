@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"errors"
 	"time"
 
 	"github.com/camphor-/relaym-server/domain/entity"
@@ -104,6 +105,9 @@ func (c *Client) PushLoop() {
 		case <-ticker.C:
 			_ = c.ws.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.ws.WriteMessage(websocket.PingMessage, nil); err != nil {
+				if errors.Is(err, websocket.ErrCloseSent) {
+					return
+				}
 				logger.Warnj(map[string]interface{}{
 					"message":   "failed to ping",
 					"sessionID": c.sessionID,
