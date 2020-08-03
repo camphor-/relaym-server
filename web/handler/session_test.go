@@ -981,7 +981,7 @@ func TestUserHandler_NextTrack(t *testing.T) {
 			userID:              "userID",
 			addToTimerSessionID: "sessionID",
 			prepareMockPlayerCliFn: func(m *mock_spotify.MockPlayer) {
-				m.EXPECT().SkipCurrentTrack(gomock.Any(), "deviceID").Return(nil)
+				m.EXPECT().GoNextTrack(gomock.Any(), "deviceID").Return(nil)
 			},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
 				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(
@@ -1037,7 +1037,7 @@ func TestUserHandler_NextTrack(t *testing.T) {
 			userID:              "userID",
 			addToTimerSessionID: "sessionID",
 			prepareMockPlayerCliFn: func(m *mock_spotify.MockPlayer) {
-				m.EXPECT().SkipCurrentTrack(gomock.Any(), "deviceID").Return(nil)
+				m.EXPECT().GoNextTrack(gomock.Any(), "deviceID").Return(nil)
 				m.EXPECT().Pause(gomock.Any(), "deviceID").Return(nil)
 			},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
@@ -1106,7 +1106,7 @@ func TestUserHandler_NextTrack(t *testing.T) {
 			userID:              "userID",
 			addToTimerSessionID: "sessionID",
 			prepareMockPlayerCliFn: func(m *mock_spotify.MockPlayer) {
-				m.EXPECT().SkipCurrentTrack(gomock.Any(), "deviceID").Return(nil)
+				m.EXPECT().GoNextTrack(gomock.Any(), "deviceID").Return(nil)
 				m.EXPECT().Pause(gomock.Any(), "deviceID").Return(nil)
 				m.EXPECT().Enqueue(gomock.Any(), "spotify:track:track_uri4", "deviceID").Return(nil)
 			},

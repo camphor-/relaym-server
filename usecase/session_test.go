@@ -135,10 +135,10 @@ func (m *FakePlayer) SetShuffleMode(ctx context.Context, on bool, deviceID strin
 	return nil
 }
 
-func (m *FakePlayer) SkipAllTracks(ctx context.Context, deviceID, trackURI string) error {
+func (m *FakePlayer) DeleteAllTracksInQueue(ctx context.Context, deviceID, trackURI string) error {
 	return nil
 }
 
-func (m *FakePlayer) SkipCurrentTrack(ctx context.Context, deviceID string) error {
+func (m *FakePlayer) GoNextTrack(ctx context.Context, deviceID string) error {
 	return nil
 }

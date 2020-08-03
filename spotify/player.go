@@ -43,10 +43,10 @@ func (c *Client) toDevice(device spotify.PlayerDevice) *entity.Device {
 	}
 }
 
-// SkipCurrentTrack はユーザーが現在再生している曲を1曲skipします。
+// GoNextTrack はユーザーが現在再生している曲を1曲skipします。
 // APIが非同期で処理がされるため、リクエストが返ってきてもskipが完了しているとは限りません。
 // プレミアム会員必須
-func (c *Client) SkipCurrentTrack(ctx context.Context, deviceID string) error {
+func (c *Client) GoNextTrack(ctx context.Context, deviceID string) error {
 	token, ok := service.GetTokenFromContext(ctx)
 	if !ok {
 		return errors.New("token not found")
@@ -67,9 +67,9 @@ func (c *Client) SkipCurrentTrack(ctx context.Context, deviceID string) error {
 	return nil
 }
 
-// SkipAllTracks はユーザーのSpotifyに積まれている「次に再生される曲」「再生待ち」を全てskipします。
+// DeleteAllTracksInQueue はユーザーのSpotifyに積まれている「次に再生される曲」「再生待ち」を全てskipします。
 // プレミアム会員必須
-func (c *Client) SkipAllTracks(ctx context.Context, deviceID string, trackURI string) error {
+func (c *Client) DeleteAllTracksInQueue(ctx context.Context, deviceID string, trackURI string) error {
 	token, ok := service.GetTokenFromContext(ctx)
 	if !ok {
 		return errors.New("token not found")

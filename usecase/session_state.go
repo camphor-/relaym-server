@@ -59,8 +59,8 @@ func (s *SessionStateUseCase) NextTrack(ctx context.Context, sessionID string) e
 
 // nextTrackInPlay はsessionのstateがPLAYの時のnextTrackの処理を行います
 func (s *SessionStateUseCase) nextTrackInPlay(ctx context.Context, session *entity.Session) error {
-	if err := s.playerCli.SkipCurrentTrack(ctx, session.DeviceID); err != nil {
-		return fmt.Errorf("SkipCurrentTrack: %w", err)
+	if err := s.playerCli.GoNextTrack(ctx, session.DeviceID); err != nil {
+		return fmt.Errorf("GoNextTrack: %w", err)
 	}
 
 	// NextChを通してstartTrackEndTriggerに次の曲への遷移を通知
@@ -73,8 +73,8 @@ func (s *SessionStateUseCase) nextTrackInPlay(ctx context.Context, session *enti
 
 // nextTrackInPause はsessionのstateがPAUSEの時のnextTrackの処理を行います
 func (s *SessionStateUseCase) nextTrackInPause(ctx context.Context, session *entity.Session) error {
-	if err := s.playerCli.SkipCurrentTrack(ctx, session.DeviceID); err != nil {
-		return fmt.Errorf("SkipCurrentTrack: %w", err)
+	if err := s.playerCli.GoNextTrack(ctx, session.DeviceID); err != nil {
+		return fmt.Errorf("GoNextTrack: %w", err)
 	}
 
 	if err := session.GoNextTrack(); err != nil && errors.Is(err, entity.ErrSessionAllTracksFinished) {
@@ -85,7 +85,7 @@ func (s *SessionStateUseCase) nextTrackInPause(ctx context.Context, session *ent
 		return nil
 	}
 
-	// Skipだけだと次の曲の再生が始まってしまう
+	// GoNextTrackだけだと次の曲の再生が始まってしまう
 	if err := s.playerCli.Pause(ctx, session.DeviceID); err != nil {
 		return fmt.Errorf("call pause api: %w", err)
 	}
@@ -225,8 +225,8 @@ func (s *SessionStateUseCase) stopToPlay(ctx context.Context, sess *entity.Sessi
 		return fmt.Errorf(": %w", err)
 	}
 
-	if err := s.playerCli.SkipAllTracks(ctx, sess.DeviceID, trackURIs[0]); err != nil {
-		return fmt.Errorf("call SkipAllTracks: %w", err)
+	if err := s.playerCli.DeleteAllTracksInQueue(ctx, sess.DeviceID, trackURIs[0]); err != nil {
+		return fmt.Errorf("call DeleteAllTracksInQueue: %w", err)
 	}
 	for i := 0; i < len(trackURIs); i++ {
 		if i == 0 {
