@@ -398,7 +398,7 @@ func TestSessionTimerUseCase_handleWaitTimerExpired(t *testing.T) {
 	tests := []struct {
 		name                     string
 		sessionID                string
-		currentOperation         CurrentOperation
+		currentOperation         currentOperation
 		prepareMockPlayerFn      func(m *mock_spotify.MockPlayer)
 		prepareMockPusherFn      func(m *mock_event.MockPusher)
 		prepareMockUserRepoFn    func(m *mock_repository.MockUser)

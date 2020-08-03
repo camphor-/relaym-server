@@ -91,7 +91,7 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 	}
 }
 
-func (s *SessionTimerUseCase) handleWaitTimerExpired(ctx context.Context, sessionID string, triggerAfterTrackEnd *entity.SyncCheckTimer, currentOperation CurrentOperation) error {
+func (s *SessionTimerUseCase) handleWaitTimerExpired(ctx context.Context, sessionID string, triggerAfterTrackEnd *entity.SyncCheckTimer, currentOperation currentOperation) error {
 	logger := log.New()
 
 	playingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
@@ -271,9 +271,9 @@ type handleTrackEndResponse struct {
 	err       error
 }
 
-type CurrentOperation string
+type currentOperation string
 
 const (
-	operationPlay      CurrentOperation = "play"
-	operationNextTrack CurrentOperation = "NextTrack"
+	operationPlay      currentOperation = "play"
+	operationNextTrack currentOperation = "NextTrack"
 )
