@@ -455,7 +455,7 @@ func TestSessionTimerUseCase_handleWaitTimerExpired(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:             "Spotifyとの同期が取れていることが確認されると、currentOperationがの時はイベントは送信されない",
+			name:             "Spotifyとの同期が取れていることが確認されると、currentOperationがNextTrackの時はイベントは送信されない",
 			sessionID:        "sessionID",
 			currentOperation: "NextTrack",
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
