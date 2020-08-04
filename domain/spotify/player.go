@@ -19,5 +19,6 @@ type Player interface {
 	Enqueue(ctx context.Context, trackURI string, deviceID string) error
 	SetRepeatMode(ctx context.Context, on bool, deviceID string) error
 	SetShuffleMode(ctx context.Context, on bool, deviceID string) error
-	SkipAllTracks(ctx context.Context, deviceID string, trackURI string) error
+	DeleteAllTracksInQueue(ctx context.Context, deviceID string, trackURI string) error
+	GoNextTrack(ctx context.Context, deviceID string) error
 }

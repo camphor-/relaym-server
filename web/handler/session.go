@@ -102,6 +102,34 @@ func (h *SessionHandler) Enqueue(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+// NextTrack は PUT /sessions/:id/next に対応するハンドラーです。
+func (h *SessionHandler) NextTrack(c echo.Context) error {
+	logger := log.New()
+
+	ctx := c.Request().Context()
+	id := c.Param("id")
+
+	if err := h.stateUC.NextTrack(ctx, id); err != nil {
+		switch {
+		case errors.Is(err, entity.ErrSessionNotAllowToControlOthers):
+			return echo.NewHTTPError(http.StatusBadRequest, entity.ErrSessionNotAllowToControlOthers.Error())
+		case errors.Is(err, entity.ErrChangeSessionStateNotPermit):
+			return echo.NewHTTPError(http.StatusBadRequest, entity.ErrChangeSessionStateNotPermit.Error())
+		case errors.Is(err, entity.ErrNextQueueTrackNotFound):
+			return echo.NewHTTPError(http.StatusBadRequest, entity.ErrNextQueueTrackNotFound.Error())
+		case errors.Is(err, entity.ErrSessionNotFound):
+			logger.Debug(err)
+			return echo.NewHTTPError(http.StatusNotFound, entity.ErrSessionNotFound.Error())
+		case errors.Is(err, entity.ErrActiveDeviceNotFound):
+			logger.Debug(err)
+			return echo.NewHTTPError(http.StatusForbidden, entity.ErrActiveDeviceNotFound.Error())
+		}
+		logger.Errorj(map[string]interface{}{"message": "failed to move to next track", "error": err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return c.NoContent(http.StatusAccepted)
+}
+
 // State は PUT /sessions/:id/state に対応するハンドラーです。
 func (h *SessionHandler) State(c echo.Context) error {
 	logger := log.New()
