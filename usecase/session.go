@@ -116,7 +116,7 @@ func (s *SessionUseCase) SetDevice(ctx context.Context, sessionID string, device
 
 // GetSession は指定されたidからsessionの情報を返します
 func (s *SessionUseCase) GetSession(ctx context.Context, sessionID string) (*entity.SessionWithUser, []*entity.Track, *entity.CurrentPlayingInfo, error) {
-	session, err := s.sessionRepo.FindByID(ctx, sessionID)
+	session, err := s.sessionRepo.FindByIDForUpdate(ctx, sessionID)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("FindByID sessionID=%s: %w", sessionID, err)
 	}
