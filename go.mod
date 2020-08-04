@@ -19,3 +19,5 @@ require (
 	golang.org/x/sys v0.0.0-20200420163511-1957bb5e6d1f // indirect
 	google.golang.org/appengine v1.6.6 // indirect
 )
+
+replace github.com/zmb3/spotify => github.com/p1ass/spotify v0.0.0-20200804070451-35a3efb1eefb
