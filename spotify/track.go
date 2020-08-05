@@ -28,6 +28,7 @@ func (c *Client) Search(ctx context.Context, q string) ([]*entity.Track, error) 
 	}
 
 	cli := c.auth.NewClient(token)
+	cli.AcceptLanguage = "ja,en;q=0.9"
 	result, err := cli.Search(q, spotify.SearchTypeTrack)
 	if err != nil {
 		return nil, fmt.Errorf("search q=%s: %w", q, err)
@@ -49,6 +50,7 @@ func (c *Client) GetTracksFromURI(ctx context.Context, trackURIs []string) ([]*e
 		return nil, fmt.Errorf("token not found")
 	}
 	cli := c.auth.NewClient(token)
+	cli.AcceptLanguage = "ja,en;q=0.9"
 
 	ids := make([]spotify.ID, len(trackURIs))
 	for i, trackURI := range trackURIs {
