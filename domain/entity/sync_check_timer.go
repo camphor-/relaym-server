@@ -1,7 +1,6 @@
 package entity
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
@@ -11,10 +10,8 @@ import (
 // SyncCheckTimer はSpotifyとの同期チェック用のタイマーです。タイマーが止まったことを確認するためのstopチャネルがあります。
 // ref : http://okzk.hatenablog.com/entry/2015/12/01/001924
 type SyncCheckTimer struct {
-	timer          *time.Timer
-	isTimerExpired bool
-	stopCh         chan struct{}
-	nextCh         chan struct{}
+	timer  *time.Timer
+	stopCh chan struct{}
 }
 
 // ExpireCh は指定設定された秒数経過したことを送るチャネルを返します。
@@ -27,42 +24,11 @@ func (s *SyncCheckTimer) StopCh() <-chan struct{} {
 	return s.stopCh
 }
 
-// NextCh は次の曲への遷移の指示を送るチャネルを返します。
-func (s *SyncCheckTimer) NextCh() <-chan struct{} {
-	return s.nextCh
-}
-
-// MakeIsTimerExpiredTrue はisTimerExpiredをtrueに変更します
-// <- s.ExpireCh でtimerから値を受け取った際に呼び出してください
-func (s *SyncCheckTimer) MakeIsTimerExpiredTrue() {
-	s.isTimerExpired = true
-}
-
-// newSyncCheckTimer はSyncCheckTimerを作成します
-// この段階ではtimerには空のtimerがセットされており、SetTimerを使用して正しいtimerのセットを行う必要があります
-func newSyncCheckTimer() *SyncCheckTimer {
-	timer := time.NewTimer(0)
-	//Expiredしたtimerを作成する
-	if !timer.Stop() {
-		<-timer.C
-	}
-
+func newSyncCheckTimer(d time.Duration) *SyncCheckTimer {
 	return &SyncCheckTimer{
-		stopCh:         make(chan struct{}, 2),
-		nextCh:         make(chan struct{}, 1),
-		isTimerExpired: true,
-		timer:          timer,
+		timer:  time.NewTimer(d),
+		stopCh: make(chan struct{}, 2),
 	}
-}
-
-// SetTimerはSyncCheckTimerにTimerをセットします
-func (s *SyncCheckTimer) SetDuration(d time.Duration) {
-	if !s.timer.Stop() && !s.isTimerExpired {
-		<-s.timer.C
-	}
-
-	s.isTimerExpired = false
-	s.timer.Reset(d)
 }
 
 // SyncCheckTimerManager はSpotifyとの同期チェック用のタイマーを一括して管理する構造体です。
@@ -78,9 +44,9 @@ func NewSyncCheckTimerManager() *SyncCheckTimerManager {
 	}
 }
 
-// CreateExpiredTimer は与えられたセッションの同期チェック用のタイマーを作成します。
+// CreateTimer は与えられたセッションの同期チェック用のタイマーを作成します。
 // 既存のタイマーが存在する場合はstopしてから新しいタイマーを作成します。
-func (m *SyncCheckTimerManager) CreateExpiredTimer(sessionID string) *SyncCheckTimer {
+func (m *SyncCheckTimerManager) CreateTimer(sessionID string, d time.Duration) *SyncCheckTimer {
 	logger := log.New()
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -94,13 +60,35 @@ func (m *SyncCheckTimerManager) CreateExpiredTimer(sessionID string) *SyncCheckT
 		existing.timer.Stop()
 		close(existing.stopCh)
 	}
-	timer := newSyncCheckTimer()
+	timer := newSyncCheckTimer(d)
 	m.timers[sessionID] = timer
 	return timer
 }
 
+// StopTimer は与えられたセッションのタイマーを終了します。
+func (m *SyncCheckTimerManager) StopTimer(sessionID string) {
+	logger := log.New()
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	logger.Debugj(map[string]interface{}{"message": "stop timer", "sessionID": sessionID})
+
+	if timer, ok := m.timers[sessionID]; ok {
+		if !timer.timer.Stop() {
+			<-timer.timer.C
+		}
+		close(timer.stopCh)
+		delete(m.timers, sessionID)
+		return
+	}
+
+	logger.Debugj(map[string]interface{}{"message": "timer not existed", "sessionID": sessionID})
+}
+
 // DeleteTimer は与えられたセッションのタイマーをマップから削除します。
+// StopTimerと異なり、タイマーのストップ処理は行いません。
 // 既にタイマーがExpireして、そのチャネルの値を取り出してしまった後にマップから削除したいときに使います。
+// <-timer.timer.Cを呼ぶと無限に待ちが発生してしまいます。(値を取り出すことは一生出来ないので)
 func (m *SyncCheckTimerManager) DeleteTimer(sessionID string) {
 	logger := log.New()
 	m.mu.Lock()
@@ -126,35 +114,4 @@ func (m *SyncCheckTimerManager) GetTimer(sessionID string) (*SyncCheckTimer, boo
 		return existing, true
 	}
 	return nil, false
-}
-
-// SendToNextCh は与えられたセッションのタイマーのNextChに通知を送ります
-func (m *SyncCheckTimerManager) SendToNextCh(sessionID string) error {
-	logger := log.New()
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	logger.Debugj(map[string]interface{}{"message": "call next ch", "sessionID": sessionID})
-
-	if timer, ok := m.timers[sessionID]; ok {
-		timer.nextCh <- struct{}{}
-		return nil
-	}
-
-	logger.Debugj(map[string]interface{}{"message": "timer not existed on SendToNextCh", "sessionID": sessionID})
-	return fmt.Errorf("timer not existed")
-}
-
-// IsTimerExpired は与えられたセッションのisTimerExpiredの値を返します
-func (m *SyncCheckTimerManager) IsTimerExpired(sessionID string) (bool, error) {
-	logger := log.New()
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	if existing, ok := m.timers[sessionID]; ok {
-		return existing.isTimerExpired, nil
-	}
-
-	logger.Debugj(map[string]interface{}{"message": "timer not existed on IsRemainDuration", "sessionID": sessionID})
-	return false, fmt.Errorf("timer not existed")
 }

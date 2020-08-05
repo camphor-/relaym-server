@@ -195,7 +195,7 @@ func TestClient_SetRepeatMode(t *testing.T) {
 }
 
 // テスト前にSpotify側で「次に再生される曲」を積んでください
-func TestClient_DeleteAllTracksInQueueTracks(t *testing.T) {
+func TestClient_SkipAllTracks(t *testing.T) {
 	tests := []struct {
 		name    string
 		wantErr string
@@ -220,8 +220,8 @@ func TestClient_DeleteAllTracksInQueueTracks(t *testing.T) {
 			}
 			ctx := context.Background()
 			ctx = service.SetTokenToContext(ctx, token)
-			if err := c.DeleteAllTracksInQueue(ctx, "", "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"); err.Error() != tt.wantErr {
-				t.Errorf("DeleteAllTracksInQueue() error = %v, wantErr %v", err, tt.wantErr)
+			if err := c.SkipAllTracks(ctx, "", "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"); err.Error() != tt.wantErr {
+				t.Errorf("SkipAllTracks() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
