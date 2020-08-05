@@ -212,6 +212,9 @@ func (s *SessionTimerUseCase) handleTrackEndTx(sessionID string) func(ctx contex
 
 		track := sess.TrackURIShouldBeAddedWhenHandleTrackEnd()
 		if track != "" {
+			// TODO: Spotifyアプリを閉じた後、ずっとRelaymを開かないとINTERRUPTにならずにここまでたどり着いて
+			// active device not foundになってしまう
+			// そのときstateはPLAYのままなので表示がバグる
 			if err := s.playerCli.Enqueue(ctx, track, sess.DeviceID); err != nil {
 				return &handleTrackEndResponse{
 					nextTrack: false,

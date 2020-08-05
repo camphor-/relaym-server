@@ -478,6 +478,23 @@ func TestSession_IsPlayingCorrectTrack(t *testing.T) {
 			wantErr:     true,
 		},
 		{
+			name: "再生されているはずなのにSpotify側が一時停止していたらエラー",
+			session: &Session{
+				StateType: Play,
+				QueueHead: 0,
+				QueueTracks: []*QueueTrack{
+					{URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+				},
+			},
+			playingInfo: &CurrentPlayingInfo{
+				Playing:  false,
+				Progress: 0,
+				Track:    &Track{},
+				Device:   &Device{},
+			},
+			wantErr: true,
+		},
+		{
 			name: "再生が終了してStopになっていたらエラーにならない",
 			session: &Session{
 				StateType: Stop,
