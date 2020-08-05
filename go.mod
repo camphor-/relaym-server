@@ -12,6 +12,7 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/labstack/echo/v4 v4.1.16
 	github.com/labstack/gommon v0.3.0
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/zmb3/spotify v0.0.0-20200422222148-5fe5f9535a2c
 	golang.org/x/crypto v0.0.0-20200423211502-4bdfaf469ed5 // indirect
 	golang.org/x/net v0.0.0-20200425230154-ff2c4b7c35a0 // indirect
