@@ -141,17 +141,26 @@ func (s *SessionUseCase) GetSession(ctx context.Context, sessionID string) (*ent
 		return nil, nil, nil, fmt.Errorf("CurrentlyPlaying: %w", err)
 	}
 
-	// timerが存在しない時はsyncCheckOffsetの時間なのでcpiのチェックは飛ばす
-	if _, isExist := s.timerUC.tm.GetTimer(sessionID); isExist {
-		if err := session.IsPlayingCorrectTrack(cpi); err != nil {
-			s.timerUC.deleteTimer(session.ID)
-			s.timerUC.handleInterrupt(session)
+	if !s.timerUC.existsTimer(sessionID) {
+		return entity.NewSessionWithUser(session, creator), tracks, cpi, nil
+	}
 
-			if updateErr := s.sessionRepo.Update(ctx, session); updateErr != nil {
-				return nil, nil, nil, fmt.Errorf("update session id=%s: %v: %w", session.ID, err, updateErr)
-			}
+	isExpired, err := s.timerUC.isTimerExpired(sessionID)
 
-			return entity.NewSessionWithUser(session, creator), tracks, cpi, nil
+	if isExpired {
+		return entity.NewSessionWithUser(session, creator), tracks, cpi, nil
+	}
+
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("isTimerExpired: %w", err)
+	}
+
+	if err := session.IsPlayingCorrectTrack(cpi); err != nil {
+		s.timerUC.deleteTimer(session.ID)
+		s.timerUC.handleInterrupt(session)
+
+		if updateErr := s.sessionRepo.Update(ctx, session); updateErr != nil {
+			return nil, nil, nil, fmt.Errorf("update session id=%s: %v: %w", session.ID, err, updateErr)
 		}
 	}
 
