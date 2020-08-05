@@ -180,6 +180,13 @@ func TestSession_MoveToPause(t *testing.T) {
 			session: &Session{
 				StateType: Stop,
 			},
+			wantErr: false,
+		},
+		{
+			name: "Archived",
+			session: &Session{
+				StateType: Archived,
+			},
 			wantErr: true,
 		},
 	}

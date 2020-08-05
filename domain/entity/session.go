@@ -71,7 +71,7 @@ func (s *Session) MoveToPlay() error {
 
 // MoveToPause はセッションのStateTypeをPauseに状態遷移します。
 func (s *Session) MoveToPause() error {
-	if s.StateType == Play || s.StateType == Pause {
+	if s.StateType == Play || s.StateType == Pause || s.StateType == Stop {
 		s.StateType = Pause
 		return nil
 	}
@@ -97,6 +97,7 @@ func (s *Session) IsCreator(userID string) bool {
 
 // GoNextTrack 次の曲の状態に進めます。
 func (s *Session) GoNextTrack() error {
+	s.SetProgressWhenPaused(0 * time.Second)
 	if len(s.QueueTracks) <= s.QueueHead+1 {
 		s.QueueHead++ // https://github.com/camphor-/relaym-server/blob/master/docs/definition.md#%E7%8F%BE%E5%9C%A8%E5%AF%BE%E8%B1%A1%E3%81%AE%E6%9B%B2%E3%81%AE%E3%82%A4%E3%83%B3%E3%83%87%E3%83%83%E3%82%AF%E3%82%B9-head
 		s.StateType = Stop
@@ -183,6 +184,11 @@ func (s *Session) canMoveFromStopToPlay() error {
 	}
 
 	return nil
+}
+
+// IsNextTrackExistWhenStateIsStop はstateがstopの時に次の曲が存在するかを調べます
+func (s *Session) IsNextTrackExistWhenStateIsStop() bool {
+	return len(s.QueueTracks) > s.QueueHead
 }
 
 // IsPlaying は現在のStateTypeがPlayかどうか返します。
