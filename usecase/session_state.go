@@ -25,117 +25,6 @@ func NewSessionStateUseCase(sessionRepo repository.Session, playerCli spotify.Pl
 	return &SessionStateUseCase{sessionRepo: sessionRepo, playerCli: playerCli, pusher: pusher, timerUC: timerUC}
 }
 
-// NextTrack は指定されたidのsessionを次の曲に進めます
-func (s *SessionStateUseCase) NextTrack(ctx context.Context, sessionID string) error {
-	session, err := s.sessionRepo.FindByID(ctx, sessionID)
-	if err != nil {
-		return fmt.Errorf("find session id=%s: %w", sessionID, err)
-	}
-
-	userID, _ := service.GetUserIDFromContext(ctx)
-	if !session.AllowToControlByOthers && !session.IsCreator(userID) {
-		return fmt.Errorf("not allowd to control session: %w", entity.ErrSessionNotAllowToControlOthers)
-	}
-
-	switch session.StateType {
-	case entity.Play:
-		if err = s.nextTrackInPlay(ctx, session); err != nil {
-			return fmt.Errorf("go next track in play session id=%s: %w", session.ID, err)
-		}
-	case entity.Pause:
-		if err = s.nextTrackInPause(ctx, session); err != nil {
-			return fmt.Errorf("go next track in pause session id=%s: %w", session.ID, err)
-		}
-	case entity.Stop:
-		if err = s.nextTrackInStop(ctx, session); err != nil {
-			return fmt.Errorf("go next track in stop session id=%s: %w", session.ID, err)
-		}
-	case entity.Archived:
-		return fmt.Errorf("go next track: %w", entity.ErrChangeSessionStateNotPermit)
-	}
-
-	return nil
-}
-
-// nextTrackInPlay はsessionのstateがPLAYの時のnextTrackの処理を行います
-func (s *SessionStateUseCase) nextTrackInPlay(ctx context.Context, session *entity.Session) error {
-	if err := s.playerCli.GoNextTrack(ctx, session.DeviceID); err != nil {
-		return fmt.Errorf("GoNextTrack: %w", err)
-	}
-
-	// NextChを通してstartTrackEndTriggerに次の曲への遷移を通知
-	if err := s.timerUC.sendToNextCh(session.ID); err != nil {
-		return fmt.Errorf("send to next ch: %w", err)
-	}
-
-	return nil
-}
-
-// nextTrackInPause はsessionのstateがPAUSEの時のnextTrackの処理を行います
-func (s *SessionStateUseCase) nextTrackInPause(ctx context.Context, session *entity.Session) error {
-	if err := s.playerCli.GoNextTrack(ctx, session.DeviceID); err != nil {
-		return fmt.Errorf("GoNextTrack: %w", err)
-	}
-
-	if err := session.GoNextTrack(); err != nil && errors.Is(err, entity.ErrSessionAllTracksFinished) {
-		s.timerUC.handleAllTrackFinish(session)
-		if err := s.sessionRepo.Update(ctx, session); err != nil {
-			return fmt.Errorf("update session id=%s: %w", session.ID, err)
-		}
-		return nil
-	}
-
-	// GoNextTrackだけだと次の曲の再生が始まってしまう
-	if err := s.playerCli.Pause(ctx, session.DeviceID); err != nil {
-		return fmt.Errorf("call pause api: %w", err)
-	}
-
-	if err := s.sessionRepo.Update(ctx, session); err != nil {
-		return fmt.Errorf("update session id=%s: %w", session.ID, err)
-	}
-
-	track := session.TrackURIShouldBeAddedWhenHandleTrackEnd()
-	if track != "" {
-		if err := s.playerCli.Enqueue(ctx, track, session.DeviceID); err != nil {
-			return fmt.Errorf("enqueue error session id=%s: %w", session.ID, err)
-		}
-	}
-
-	s.pusher.Push(&event.PushMessage{
-		SessionID: session.ID,
-		Msg:       entity.NewEventNextTrack(session.QueueHead),
-	})
-
-	return nil
-}
-
-// nextTrackInStop はsessionのstateがSTOPの時のnextTrackの処理を行います
-// stopToPlayで曲がResetされ、再度Spotifyのキューに積まれるため、Enqueueを行っていません
-func (s *SessionStateUseCase) nextTrackInStop(ctx context.Context, session *entity.Session) error {
-	if !session.IsNextTrackExistWhenStateIsStop() {
-		return fmt.Errorf("nextTrackInStop: %w", entity.ErrNextQueueTrackNotFound)
-	}
-
-	if err := session.GoNextTrack(); err != nil && errors.Is(err, entity.ErrSessionAllTracksFinished) {
-		s.timerUC.handleAllTrackFinish(session)
-		if err := s.sessionRepo.Update(ctx, session); err != nil {
-			return fmt.Errorf("update session id=%s: %w", session.ID, err)
-		}
-		return nil
-	}
-
-	if err := s.sessionRepo.Update(ctx, session); err != nil {
-		return fmt.Errorf("update session id=%s: %w", session.ID, err)
-	}
-
-	s.pusher.Push(&event.PushMessage{
-		SessionID: session.ID,
-		Msg:       entity.NewEventNextTrack(session.QueueHead),
-	})
-
-	return nil
-}
-
 // ChangeSessionState は与えられたセッションのstateを操作します。
 func (s *SessionStateUseCase) ChangeSessionState(ctx context.Context, sessionID string, st entity.StateType) error {
 	session, err := s.sessionRepo.FindByID(ctx, sessionID)
@@ -225,8 +114,8 @@ func (s *SessionStateUseCase) stopToPlay(ctx context.Context, sess *entity.Sessi
 		return fmt.Errorf(": %w", err)
 	}
 
-	if err := s.playerCli.DeleteAllTracksInQueue(ctx, sess.DeviceID, trackURIs[0]); err != nil {
-		return fmt.Errorf("call DeleteAllTracksInQueue: %w", err)
+	if err := s.playerCli.SkipAllTracks(ctx, sess.DeviceID, trackURIs[0]); err != nil {
+		return fmt.Errorf("call SkipAllTracks: %w", err)
 	}
 	for i := 0; i < len(trackURIs); i++ {
 		if i == 0 {
@@ -254,7 +143,7 @@ func (s *SessionStateUseCase) pause(ctx context.Context, sess *entity.Session) e
 		return fmt.Errorf("call pause api: %w", err)
 	}
 
-	s.timerUC.deleteTimer(sess.ID)
+	s.timerUC.stopTimer(sess.ID)
 
 	if err := sess.MoveToPause(); err != nil {
 		return fmt.Errorf("move to pause id=%s: %w", sess.ID, err)

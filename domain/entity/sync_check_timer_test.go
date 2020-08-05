@@ -82,11 +82,10 @@ func TestSyncCheckTimer_StopCh(t *testing.T) {
 	}
 }
 
-func TestSyncCheckTimerManager_CreateExpiredTimer(t *testing.T) {
+func TestSyncCheckTimerManager_CreateTimer(t *testing.T) {
 	t.Parallel()
 
-	timer := newSyncCheckTimer()
-	timer.SetDuration(time.Second)
+	timer := newSyncCheckTimer(time.Second)
 
 	tests := []struct {
 		name      string
@@ -130,11 +129,67 @@ func TestSyncCheckTimerManager_CreateExpiredTimer(t *testing.T) {
 				return
 			}
 			opts := []cmp.Option{cmp.AllowUnexported(SyncCheckTimer{}), cmpopts.IgnoreUnexported(time.Timer{})}
-			got := m.CreateExpiredTimer(tt.sessionID)
-			got.SetDuration(tt.d)
-			if !cmp.Equal(got, tt.want, opts...) {
-				t.Errorf("CreateExpiredTimer() diff=%v", cmp.Diff(tt.want, got, opts...))
+			if got := m.CreateTimer(tt.sessionID, tt.d); !cmp.Equal(got, tt.want, opts...) {
+				t.Errorf("CreateTimer() diff=%v", cmp.Diff(tt.want, got, opts...))
 			}
+		})
+	}
+}
+
+func TestSyncCheckTimerManager_StopTimer(t *testing.T) {
+	t.Parallel()
+
+	timer := newSyncCheckTimer(time.Second)
+	timerForNotFound := newSyncCheckTimer(time.Second)
+
+	tests := []struct {
+		name      string
+		timer     *SyncCheckTimer
+		timers    map[string]*SyncCheckTimer
+		sessionID string
+		want      map[string]*SyncCheckTimer
+		wantPanic bool
+	}{
+		{
+			name:      "存在するセッションのタイマーが削除される",
+			timer:     timer,
+			timers:    map[string]*SyncCheckTimer{"sessionID": timer},
+			sessionID: "sessionID",
+			want:      map[string]*SyncCheckTimer{},
+			wantPanic: true,
+		},
+
+		{
+			name:      "存在しないセッションの場合は何も起こらない",
+			timer:     timerForNotFound,
+			timers:    map[string]*SyncCheckTimer{"sessionID": timerForNotFound},
+			sessionID: "not_found",
+			want:      map[string]*SyncCheckTimer{"sessionID": timerForNotFound},
+			wantPanic: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				err := recover()
+				if (err != nil) != tt.wantPanic {
+					t.Errorf("StopTimer() wantPanic=%v, but err=%v", tt.wantPanic, err)
+				}
+			}()
+
+			m := &SyncCheckTimerManager{
+				timers: tt.timers,
+				mu:     sync.Mutex{},
+			}
+			m.StopTimer(tt.sessionID)
+
+			opts := []cmp.Option{cmp.AllowUnexported(SyncCheckTimer{}), cmpopts.IgnoreUnexported(time.Timer{})}
+			if !cmp.Equal(m.timers, tt.want, opts...) {
+				t.Errorf("StopTimer() diff=%v", cmp.Diff(tt.want, m.timers, opts...))
+			}
+
+			// 既に閉じられているchannelに対してcloseするとpanicが起こることを利用して正しくcloseされているかチェックする
+			close(tt.timer.stopCh)
 		})
 	}
 }

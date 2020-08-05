@@ -111,34 +111,37 @@ func (m *FakePlayer) CurrentlyPlaying(ctx context.Context) (*entity.CurrentPlayi
 	}, nil
 }
 
+// Play mocks base method
 func (m *FakePlayer) Play(ctx context.Context, deviceID string) error {
 	return nil
 }
 
+// PlayWithTracks mocks base method
 func (m *FakePlayer) PlayWithTracks(ctx context.Context, deviceID string, trackURIs []string) error {
 	return nil
 }
 
+// Pause mocks base method
 func (m *FakePlayer) Pause(ctx context.Context, deviceID string) error {
 	return nil
 }
 
+// Enqueue mocks base method
 func (m *FakePlayer) Enqueue(ctx context.Context, trackURI, deviceID string) error {
 	return nil
 }
 
+// SetRepeatMode mocks base method
 func (m *FakePlayer) SetRepeatMode(ctx context.Context, on bool, deviceID string) error {
 	return nil
 }
 
+// SetShuffleMode mocks base method
 func (m *FakePlayer) SetShuffleMode(ctx context.Context, on bool, deviceID string) error {
 	return nil
 }
 
-func (m *FakePlayer) DeleteAllTracksInQueue(ctx context.Context, deviceID, trackURI string) error {
-	return nil
-}
-
-func (m *FakePlayer) GoNextTrack(ctx context.Context, deviceID string) error {
+// SkipAllTracks mocks base method
+func (m *FakePlayer) SkipAllTracks(ctx context.Context, deviceID, trackURI string) error {
 	return nil
 }

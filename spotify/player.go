@@ -43,10 +43,9 @@ func (c *Client) toDevice(device spotify.PlayerDevice) *entity.Device {
 	}
 }
 
-// GoNextTrack はユーザーが現在再生している曲を1曲skipします。
-// APIが非同期で処理がされるため、リクエストが返ってきてもskipが完了しているとは限りません。
+// skipAllTracks はユーザーのSpotifyに積まれている「次に再生される曲」「再生待ち」を全てskipします。
 // プレミアム会員必須
-func (c *Client) GoNextTrack(ctx context.Context, deviceID string) error {
+func (c *Client) SkipAllTracks(ctx context.Context, deviceID string, trackURI string) error {
 	token, ok := service.GetTokenFromContext(ctx)
 	if !ok {
 		return errors.New("token not found")
@@ -58,45 +57,22 @@ func (c *Client) GoNextTrack(ctx context.Context, deviceID string) error {
 		spotifyID := spotify.ID(deviceID)
 		opt = &spotify.PlayOptions{DeviceID: &spotifyID}
 	}
-
-	err := cli.NextOpt(opt)
-	if convErr := c.convertPlayerError(err); convErr != nil {
-		return fmt.Errorf("spotify api: next: %w", convErr)
-	}
-
-	return nil
-}
-
-// DeleteAllTracksInQueue はユーザーのSpotifyに積まれている「次に再生される曲」「再生待ち」を全てskipします。
-// プレミアム会員必須
-func (c *Client) DeleteAllTracksInQueue(ctx context.Context, deviceID string, trackURI string) error {
-	token, ok := service.GetTokenFromContext(ctx)
-	if !ok {
-		return errors.New("token not found")
-	}
-	cli := c.auth.NewClient(token)
 
 	// PlayWithTracksで「再生待ち」を0曲にする
 	if err := c.PlayWithTracks(ctx, deviceID, []string{trackURI}); err != nil {
 		return fmt.Errorf("call play api with tracks %v: %w", trackURI, err)
 	}
 
-	opt := &spotify.PlayOptions{DeviceID: nil}
-	if deviceID != "" {
-		spotifyID := spotify.ID(deviceID)
-		opt = &spotify.PlayOptions{DeviceID: &spotifyID}
-	}
-
 	skipOnceTime := 3
 	sleepTime := 300 * time.Millisecond
 	for i := 1; ; i++ {
 		err := cli.NextOpt(opt)
+		// SpotifyAPIを叩いてからSpotifyが曲をskipするのに時間がかかるため余計にAPIを叩かないように調節
 		if convErr := c.convertPlayerError(err); convErr != nil {
 			return fmt.Errorf("spotify api: next: %w", convErr)
 		}
 
 		if i%skipOnceTime == 0 {
-			// SpotifyAPIを叩いてからSpotifyが曲をskipするのに時間がかかるため余計にAPIを叩かないように調節
 			time.Sleep(sleepTime)
 			cpi, err := c.CurrentlyPlaying(ctx)
 			if err != nil {
@@ -260,7 +236,7 @@ func (c *Client) SetRepeatMode(ctx context.Context, on bool, deviceID string) er
 }
 
 // SetShuffleMode はシャッフルモードの設定を変更するAPIです。
-// APIが非同期で処理がされるため、リクエストが返ってきてもシャッフルモードの設定が完了しているとは限りません。
+// APIが非同期で処理がされるため、リクエストが返ってきてもリピートモードの設定が完了しているとは限りません。
 // 設定が反映されたか確認するには CurrentlyPlaying() を叩く必要があります。
 // プレミアム会員必須
 func (c *Client) SetShuffleMode(ctx context.Context, on bool, deviceID string) error {

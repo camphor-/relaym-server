@@ -148,30 +148,16 @@ func (mr *MockPlayerMockRecorder) SetShuffleMode(ctx, on, deviceID interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetShuffleMode", reflect.TypeOf((*MockPlayer)(nil).SetShuffleMode), ctx, on, deviceID)
 }
 
-// DeleteAllTracksInQueue mocks base method
-func (m *MockPlayer) DeleteAllTracksInQueue(ctx context.Context, deviceID, trackURI string) error {
+// SkipAllTracks mocks base method
+func (m *MockPlayer) SkipAllTracks(ctx context.Context, deviceID, trackURI string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteAllTracksInQueue", ctx, deviceID, trackURI)
+	ret := m.ctrl.Call(m, "SkipAllTracks", ctx, deviceID, trackURI)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// DeleteAllTracksInQueue indicates an expected call of DeleteAllTracksInQueue
-func (mr *MockPlayerMockRecorder) DeleteAllTracksInQueue(ctx, deviceID, trackURI interface{}) *gomock.Call {
+// SkipAllTracks indicates an expected call of SkipAllTracks
+func (mr *MockPlayerMockRecorder) SkipAllTracks(ctx, deviceID, trackURI interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAllTracksInQueue", reflect.TypeOf((*MockPlayer)(nil).DeleteAllTracksInQueue), ctx, deviceID, trackURI)
-}
-
-// GoNextTrack mocks base method
-func (m *MockPlayer) GoNextTrack(ctx context.Context, deviceID string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GoNextTrack", ctx, deviceID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// GoNextTrack indicates an expected call of GoNextTrack
-func (mr *MockPlayerMockRecorder) GoNextTrack(ctx, deviceID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GoNextTrack", reflect.TypeOf((*MockPlayer)(nil).GoNextTrack), ctx, deviceID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SkipAllTracks", reflect.TypeOf((*MockPlayer)(nil).SkipAllTracks), ctx, deviceID, trackURI)
 }
