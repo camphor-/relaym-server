@@ -162,7 +162,7 @@ func (r *SessionRepository) StoreQueueTrack(ctx context.Context, queueTrack *ent
 //// - 作成から3日以上が経過している。もしくはArchiveが解除されてから3日以上が経過している
 func (r *SessionRepository) ArchiveSessionsForBatch() error {
 	currentDateTime := time.Now().UTC()
-	if _, err := r.dbMap.Exec("UPDATE sessions SET state_type = 'ARCHIVED' WHERE state_type != 'ARCHIVED' AND expired_at < ?;", currentDateTime); err != nil {
+	if _, err := r.dbMap.Exec("UPDATE sessions SET state_type = 'ARCHIVED' WHERE allow_to_control_by_others = true AND state_type != 'ARCHIVED' AND expired_at < ?;", currentDateTime); err != nil {
 		return fmt.Errorf("update session state_type to ARCHIVED: %w", err)
 	}
 	return nil

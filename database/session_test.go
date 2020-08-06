@@ -685,23 +685,36 @@ func TestSessionRepository_ArchiveSessionsForBatch(t *testing.T) {
 		DisplayName:   "existing_user_display_name",
 	}
 	oldSession := &sessionDTO{
-		ID:        "existing_session_id1",
-		Name:      "existing_session_name",
-		CreatorID: "existing_user",
-		QueueHead: 0,
-		StateType: "PLAY",
-		DeviceID:  "device_id",
-		ExpiredAt: time.Now().Add(-1 * 24 * time.Hour),
+		ID:                     "existing_session_id1",
+		Name:                   "existing_session_name",
+		CreatorID:              "existing_user",
+		QueueHead:              0,
+		StateType:              "PLAY",
+		DeviceID:               "device_id",
+		ExpiredAt:              time.Now().Add(-1 * 24 * time.Hour),
+		AllowToControlByOthers: true,
 	}
 
 	newSession := &sessionDTO{
-		ID:        "existing_session_id2",
-		Name:      "existing_session_name",
-		CreatorID: "existing_user",
-		QueueHead: 0,
-		StateType: "PLAY",
-		DeviceID:  "device_id",
-		ExpiredAt: time.Now().Add(1 * 24 * time.Hour),
+		ID:                     "existing_session_id2",
+		Name:                   "existing_session_name",
+		CreatorID:              "existing_user",
+		QueueHead:              0,
+		StateType:              "PLAY",
+		DeviceID:               "device_id",
+		ExpiredAt:              time.Now().Add(1 * 24 * time.Hour),
+		AllowToControlByOthers: true,
+	}
+
+	notAllowedSessions := &sessionDTO{
+		ID:                     "existing_session_id3",
+		Name:                   "existing_session_name",
+		CreatorID:              "existing_user",
+		QueueHead:              0,
+		StateType:              "PLAY",
+		DeviceID:               "device_id",
+		ExpiredAt:              time.Now().Add(-1 * 24 * time.Hour),
+		AllowToControlByOthers: false,
 	}
 
 	tests := []struct {
@@ -718,6 +731,11 @@ func TestSessionRepository_ArchiveSessionsForBatch(t *testing.T) {
 			name:      "古いsessionはARCHIVEされる",
 			session:   oldSession,
 			wantState: "ARCHIVED",
+		},
+		{
+			name:      "古くても他人の操作を許可していないsessionはARCHIVEされない",
+			session:   notAllowedSessions,
+			wantState: "PLAY",
 		},
 	}
 	for _, tt := range tests {
