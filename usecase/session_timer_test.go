@@ -120,80 +120,6 @@ func TestSessionTimerUseCase_handleTrackEndTx(t *testing.T) {
 			wantErr:       false,
 		},
 		{
-			name:      "次の曲が存在し、次に再生される曲の二曲先の曲が存在するときはNEXTTRACKイベントが送られて、次の再生状態に遷移し、同時に二曲先の曲がSpotifyのqueueに積まれる",
-			sessionID: "sessionID",
-			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
-				m.EXPECT().Enqueue(gomock.Any(), "spotify:track:3", "deviceID").Return(nil)
-			},
-			prepareMockPusherFn: func(m *mock_event.MockPusher) {
-			},
-			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
-			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
-					ID:        "sessionID",
-					Name:      "name",
-					CreatorID: "creatorID",
-					DeviceID:  "deviceID",
-					StateType: entity.Play,
-					QueueHead: 0,
-					QueueTracks: []*entity.QueueTrack{
-						{
-							Index:     0,
-							URI:       "spotify:track:asfafefea",
-							SessionID: "sessionID",
-						},
-						{
-							Index:     1,
-							URI:       "spotify:track:06QTSGUEgcmKwiEJ0IMPig",
-							SessionID: "sessionID",
-						},
-						{
-							Index:     2,
-							URI:       "spotify:track:2",
-							SessionID: "sessionID",
-						},
-						{
-							Index:     3,
-							URI:       "spotify:track:3",
-							SessionID: "sessionID",
-						},
-					},
-				}, nil)
-				m.EXPECT().Update(gomock.Any(), &entity.Session{
-					ID:        "sessionID",
-					Name:      "name",
-					CreatorID: "creatorID",
-					DeviceID:  "deviceID",
-					StateType: entity.Play,
-					QueueHead: 1,
-					QueueTracks: []*entity.QueueTrack{
-						{
-							Index:     0,
-							URI:       "spotify:track:asfafefea",
-							SessionID: "sessionID",
-						},
-						{
-							Index:     1,
-							URI:       "spotify:track:06QTSGUEgcmKwiEJ0IMPig",
-							SessionID: "sessionID",
-						},
-						{
-							Index:     2,
-							URI:       "spotify:track:2",
-							SessionID: "sessionID",
-						},
-						{
-							Index:     3,
-							URI:       "spotify:track:3",
-							SessionID: "sessionID",
-						},
-					},
-				}).Return(nil)
-			},
-			wantNextTrack: true,
-			wantErr:       false,
-		},
-		{
 			name:                  "次の曲が存在するが、実際には違う曲が流れていた場合はINTERRUPTイベントが送られる",
 			sessionID:             "sessionID",
 			prepareMockPlayerFn:   func(m *mock_spotify.MockPlayer) {},
@@ -455,7 +381,7 @@ func TestSessionTimerUseCase_handleWaitTimerExpired(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:             "Spotifyとの同期が取れていることが確認されると、currentOperationがNextTrackの時はイベントは送信されない",
+			name:             "Spotifyとの同期が取れていることが確認されると、currentOperationがNextTrackの時はイベントが送信される",
 			sessionID:        "sessionID",
 			currentOperation: "NextTrack",
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
@@ -500,6 +426,63 @@ func TestSessionTimerUseCase_handleWaitTimerExpired(t *testing.T) {
 					QueueTracks: []*entity.QueueTrack{
 						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
 						{Index: 1, URI: "spotify:track:06QTSGUEgcmKwiEJ0IMPig"},
+					},
+					ExpiredAt:              time.Time{},
+					AllowToControlByOthers: false,
+					ProgressWhenPaused:     0,
+				}, nil)
+			},
+			wantErr: false,
+		},
+		{
+			name:             "Spotifyとの同期が取れていることが確認されると、新しく追加すべき曲がSpotifyのキューに追加される",
+			sessionID:        "sessionID",
+			currentOperation: "NextTrack",
+			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().CurrentlyPlaying(gomock.Any()).Return(&entity.CurrentPlayingInfo{
+					Playing:  true,
+					Progress: 10000000,
+					Track: &entity.Track{
+						URI:      "spotify:track:06QTSGUEgcmKwiEJ0IMPig",
+						ID:       "06QTSGUEgcmKwiEJ0IMPig",
+						Name:     "Borderland",
+						Duration: 213066000000,
+						Artists:  []*entity.Artist{{Name: "MONOEYES"}},
+						URL:      "https://open.spotify.com/track/06QTSGUEgcmKwiEJ0IMPig",
+						Album: &entity.Album{
+							Name: "Interstate 46 E.P.",
+							Images: []*entity.AlbumImage{
+								{
+									URL:    "https://i.scdn.co/image/ab67616d0000b273b48630d6efcebca2596120c4",
+									Height: 640,
+									Width:  640,
+								},
+							},
+						},
+					},
+				}, nil)
+				m.EXPECT().Enqueue(gomock.Any(), "spotify:track:track3", "deviceID").Return(nil)
+			},
+			prepareMockPusherFn: func(m *mock_event.MockPusher) {
+				m.EXPECT().Push(&event.PushMessage{
+					SessionID: "sessionID",
+					Msg:       entity.NewEventNextTrack(1),
+				})
+			},
+			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
+			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
+				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+					ID:        "sessionID",
+					Name:      "name",
+					CreatorID: "creatorID",
+					DeviceID:  "deviceID",
+					StateType: "PLAY",
+					QueueHead: 1,
+					QueueTracks: []*entity.QueueTrack{
+						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+						{Index: 1, URI: "spotify:track:06QTSGUEgcmKwiEJ0IMPig"},
+						{Index: 2, URI: "spotify:track:track2"},
+						{Index: 3, URI: "spotify:track:track3"},
 					},
 					ExpiredAt:              time.Time{},
 					AllowToControlByOthers: false,
