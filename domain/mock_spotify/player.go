@@ -50,34 +50,6 @@ func (mr *MockPlayerMockRecorder) CurrentlyPlaying(ctx interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CurrentlyPlaying", reflect.TypeOf((*MockPlayer)(nil).CurrentlyPlaying), ctx)
 }
 
-// Play mocks base method
-func (m *MockPlayer) Play(ctx context.Context, deviceID string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Play", ctx, deviceID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Play indicates an expected call of Play
-func (mr *MockPlayerMockRecorder) Play(ctx, deviceID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Play", reflect.TypeOf((*MockPlayer)(nil).Play), ctx, deviceID)
-}
-
-// PlayWithTracks mocks base method
-func (m *MockPlayer) PlayWithTracks(ctx context.Context, deviceID string, trackURIs []string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PlayWithTracks", ctx, deviceID, trackURIs)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// PlayWithTracks indicates an expected call of PlayWithTracks
-func (mr *MockPlayerMockRecorder) PlayWithTracks(ctx, deviceID, trackURIs interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PlayWithTracks", reflect.TypeOf((*MockPlayer)(nil).PlayWithTracks), ctx, deviceID, trackURIs)
-}
-
 // PlayWithTracksAndPosition mocks base method
 func (m *MockPlayer) PlayWithTracksAndPosition(ctx context.Context, deviceID string, trackURIs []string, position time.Duration) error {
 	m.ctrl.T.Helper()

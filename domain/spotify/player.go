@@ -12,8 +12,6 @@ import (
 // Player はSpotifyの曲の操作に関連するAPIを呼び出すためのインターフェースです。
 type Player interface {
 	CurrentlyPlaying(ctx context.Context) (*entity.CurrentPlayingInfo, error)
-	Play(ctx context.Context, deviceID string) error
-	PlayWithTracks(ctx context.Context, deviceID string, trackURIs []string) error
 	PlayWithTracksAndPosition(ctx context.Context, deviceID string, trackURIs []string, position time.Duration) error
 	Pause(ctx context.Context, deviceID string) error
 	Enqueue(ctx context.Context, trackURI string, deviceID string) error

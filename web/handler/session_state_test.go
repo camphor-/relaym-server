@@ -242,7 +242,7 @@ func TestSessionHandler_State_PLAY(t *testing.T) {
 				m.EXPECT().SetRepeatMode(gomock.Any(), false, "device_id").Return(nil)
 				m.EXPECT().SetShuffleMode(gomock.Any(), false, "device_id").Return(nil)
 				m.EXPECT().DeleteAllTracksInQueue(gomock.Any(), "device_id", "spotify:track:5uQ0vKy2973Y9IUCd1wMEF").Return(nil)
-				m.EXPECT().PlayWithTracks(gomock.Any(), "device_id", []string{"spotify:track:5uQ0vKy2973Y9IUCd1wMEF"}).Return(nil)
+				m.EXPECT().PlayWithTracksAndPosition(gomock.Any(), "device_id", []string{"spotify:track:5uQ0vKy2973Y9IUCd1wMEF"}, 0*time.Second).Return(nil)
 				m.EXPECT().Enqueue(gomock.Any(), "spotify:track:49BRCNV7E94s7Q2FUhhT3w", "device_id").Return(nil)
 				m.EXPECT().Enqueue(gomock.Any(), "spotify:track:3", "device_id").Return(nil)
 			},
