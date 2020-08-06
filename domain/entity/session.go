@@ -130,6 +130,17 @@ func (s *Session) IsPlayingCorrectTrack(playingInfo *CurrentPlayingInfo) error {
 		})
 		return fmt.Errorf("session playing different track: queue track %s, but playing track %v: %w", s.QueueTracks[s.QueueHead].URI, playingInfo.Track, ErrSessionPlayingDifferentTrack)
 	}
+
+	if playingInfo.Playing != s.IsPlaying() {
+		logger.Infoj(map[string]interface{}{
+			"message":      "session playing, but spotify is not playing",
+			"queueTrack":   s.QueueTracks[s.QueueHead].URI,
+			"playingTrack": playingInfo.Track,
+		})
+		return fmt.Errorf("session playing, but spotify is not playing: %w", ErrSessionPlayingDifferentTrack)
+
+	}
+
 	return nil
 }
 
