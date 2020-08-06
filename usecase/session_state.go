@@ -231,7 +231,7 @@ func (s *SessionStateUseCase) stopToPlay(ctx context.Context, sess *entity.Sessi
 	}
 	for i := 0; i < len(trackURIs); i++ {
 		if i == 0 {
-			if err := s.playerCli.PlayWithTracksAndPosition(ctx, sess.DeviceID, trackURIs[:1], 0*time.Second); err != nil {
+			if err := s.playerCli.PlayWithTracksAndPosition(ctx, sess.DeviceID, trackURIs[:1], 500*time.Millisecond); err != nil {
 				return fmt.Errorf("call play api with tracks %v: %w", trackURIs[:1], err)
 			}
 			continue
