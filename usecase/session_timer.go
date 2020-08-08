@@ -55,7 +55,6 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 			logger.Debugj(map[string]interface{}{"message": "call to move next track", "sessionID": sessionID})
 			waitTimer.Stop()
 			triggerAfterTrackEnd.MakeIsTimerExpiredTrue()
-
 			session, err := s.sessionRepo.FindByIDForUpdate(ctx, sessionID)
 			if err != nil {
 				logger.Errorj(map[string]interface{}{
@@ -73,7 +72,6 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 				})
 				return
 			}
-
 			nextTrack, err := s.handleTrackEnd(ctx, sessionID)
 			if err != nil {
 				if errors.Is(err, entity.ErrSessionPlayingDifferentTrack) {
@@ -87,7 +85,6 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 				logger.Infoj(map[string]interface{}{"message": "no next track", "sessionID": sessionID})
 				return
 			}
-
 			s.setNewTimerOnWaitTimer(waitTimer, waitTimeAfterHandleSkipTrack)
 			currentOperation = operationNextTrack
 
