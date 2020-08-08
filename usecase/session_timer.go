@@ -14,7 +14,7 @@ import (
 )
 
 var waitTimeAfterHandleTrackEnd = 7 * time.Second
-var waitTimeAfterHandleSkipTrack = 300 * time.Millisecond
+var waitTimeAfterHandleSkipTrack = 400 * time.Millisecond
 
 type SessionTimerUseCase struct {
 	tm          *entity.SyncCheckTimerManager
@@ -63,6 +63,7 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 					"sessionID": sessionID,
 					"error":     err.Error(),
 				})
+				triggerAfterTrackEnd.UnlockNextCh()
 				return
 			}
 			if err := s.playerCli.GoNextTrack(ctx, session.DeviceID); err != nil {
@@ -71,15 +72,18 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 					"sessionID": sessionID,
 					"error":     err.Error(),
 				})
+				triggerAfterTrackEnd.UnlockNextCh()
 				return
 			}
 			nextTrack, err := s.handleTrackEnd(ctx, sessionID)
 			if err != nil {
 				logger.Errorj(map[string]interface{}{"message": "handleTrackEnd with error", "sessionID": sessionID, "error": err.Error()})
+				triggerAfterTrackEnd.UnlockNextCh()
 				return
 			}
 			if !nextTrack {
 				logger.Infoj(map[string]interface{}{"message": "no next track", "sessionID": sessionID})
+				triggerAfterTrackEnd.UnlockNextCh()
 				return
 			}
 
@@ -105,6 +109,13 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 }
 
 func (s *SessionTimerUseCase) handleWaitTimerExpired(ctx context.Context, sessionID string, triggerAfterTrackEnd *entity.SyncCheckTimer, currentOperation currentOperation) error {
+
+	defer func() {
+		if currentOperation == operationNextTrack {
+			triggerAfterTrackEnd.UnlockNextCh()
+		}
+	}()
+
 	logger := log.New()
 	logger.Debugj(map[string]interface{}{"message": "currentOperation", "currentOperation": currentOperation})
 
@@ -129,6 +140,9 @@ func (s *SessionTimerUseCase) handleWaitTimerExpired(ctx context.Context, sessio
 	}
 
 	if err := sess.IsPlayingCorrectTrack(playingInfo); err != nil {
+		logger.Infoj(map[string]interface{}{
+			"message": "session should be playing but not playing from handleWaitTimerExpired",
+		})
 		s.handleInterrupt(sess)
 		if err := s.sessionRepo.Update(ctx, sess); err != nil {
 			logger.Errorj(map[string]interface{}{
@@ -162,7 +176,6 @@ func (s *SessionTimerUseCase) handleWaitTimerExpired(ctx context.Context, sessio
 			SessionID: sess.ID,
 			Msg:       entity.NewEventNextTrack(sess.QueueHead),
 		})
-		triggerAfterTrackEnd.UnlockNextCh()
 	}
 
 	// ぴったしのタイマーをセットすると、Spotifyでは次の曲の再生が始まってるのにRelaym側では次の曲に進んでおらず、
