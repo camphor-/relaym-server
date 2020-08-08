@@ -183,7 +183,7 @@ func TestSyncCheckTimerManager_GetTimer(t *testing.T) {
 			}
 			got, got1 := m.GetTimer(tt.sessionID)
 
-			opts := []cmp.Option{cmp.AllowUnexported(SyncCheckTimer{}), cmpopts.IgnoreUnexported(time.Timer{})}
+			opts := []cmp.Option{cmp.AllowUnexported(SyncCheckTimer{}), cmpopts.IgnoreUnexported(time.Timer{}, sync.Mutex{})}
 			if !cmp.Equal(got, tt.want, opts...) {
 				t.Errorf("GetTimer() diff=%v", cmp.Diff(tt.want, got, opts...))
 			}

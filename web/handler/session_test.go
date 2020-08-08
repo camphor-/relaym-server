@@ -976,13 +976,11 @@ func TestUserHandler_NextTrack(t *testing.T) {
 			wantCode:              http.StatusBadRequest,
 		},
 		{
-			name:                "Playかつ次の曲が存在する時に次の曲にPlayのまま遷移,202",
-			sessionID:           "sessionID",
-			userID:              "userID",
-			addToTimerSessionID: "sessionID",
-			prepareMockPlayerCliFn: func(m *mock_spotify.MockPlayer) {
-				m.EXPECT().GoNextTrack(gomock.Any(), "deviceID").Return(nil)
-			},
+			name:                   "Playかつ次の曲が存在する時に次の曲にPlayのまま遷移,202",
+			sessionID:              "sessionID",
+			userID:                 "userID",
+			addToTimerSessionID:    "sessionID",
+			prepareMockPlayerCliFn: func(m *mock_spotify.MockPlayer) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
 				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(
 					&entity.Session{

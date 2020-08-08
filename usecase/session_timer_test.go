@@ -585,6 +585,9 @@ func TestSessionTimerUseCase_handleWaitTimerExpired(t *testing.T) {
 			s := NewSessionTimerUseCase(mockSessionRepo, mockPlayer, mockPusher, syncCheckTimerManager)
 
 			triggerAfterTrackEnd := s.tm.CreateExpiredTimer(tt.sessionID)
+			if tt.currentOperation == operationNextTrack {
+				triggerAfterTrackEnd.LockNextCh()
+			}
 
 			if err := s.handleWaitTimerExpired(context.Background(), tt.sessionID, triggerAfterTrackEnd, tt.currentOperation); (err != nil) != tt.wantErr {
 				t.Errorf("handleWaitTimerExpired() error = %v, wantErr %v", err, tt.wantErr)
