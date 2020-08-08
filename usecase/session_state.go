@@ -40,7 +40,7 @@ func (s *SessionStateUseCase) NextTrack(ctx context.Context, sessionID string) e
 
 	switch session.StateType {
 	case entity.Play:
-		if err = s.nextTrackInPlay(ctx, session); err != nil {
+		if err = s.nextTrackInPlay(session); err != nil {
 			return fmt.Errorf("go next track in play session id=%s: %w", session.ID, err)
 		}
 	case entity.Pause:
@@ -59,15 +59,8 @@ func (s *SessionStateUseCase) NextTrack(ctx context.Context, sessionID string) e
 }
 
 // nextTrackInPlay はsessionのstateがPLAYの時のnextTrackの処理を行います
-func (s *SessionStateUseCase) nextTrackInPlay(ctx context.Context, session *entity.Session) error {
-	if err := s.playerCli.GoNextTrack(ctx, session.DeviceID); err != nil {
-		return fmt.Errorf("GoNextTrack: %w", err)
-	}
-
-	// NextChを通してstartTrackEndTriggerに次の曲への遷移を通知
-	if err := s.timerUC.sendToNextCh(session.ID); err != nil {
-		return fmt.Errorf("send to next ch: %w", err)
-	}
+func (s *SessionStateUseCase) nextTrackInPlay(session *entity.Session) error {
+	s.timerUC.sendToNextCh(session.ID)
 
 	return nil
 }

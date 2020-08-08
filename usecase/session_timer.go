@@ -54,6 +54,26 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 		case <-triggerAfterTrackEnd.NextCh():
 			logger.Debugj(map[string]interface{}{"message": "call to move next track", "sessionID": sessionID})
 			waitTimer.Stop()
+			triggerAfterTrackEnd.MakeIsTimerExpiredTrue()
+
+			session, err := s.sessionRepo.FindByIDForUpdate(ctx, sessionID)
+			if err != nil {
+				logger.Errorj(map[string]interface{}{
+					"message":   "failed to get session",
+					"sessionID": sessionID,
+					"error":     err.Error(),
+				})
+				return
+			}
+			if err := s.playerCli.GoNextTrack(ctx, session.DeviceID); err != nil {
+				logger.Errorj(map[string]interface{}{
+					"message":   "failed to go next track",
+					"sessionID": sessionID,
+					"error":     err.Error(),
+				})
+				return
+			}
+
 			nextTrack, err := s.handleTrackEnd(ctx, sessionID)
 			if err != nil {
 				if errors.Is(err, entity.ErrSessionPlayingDifferentTrack) {
@@ -107,7 +127,7 @@ func (s *SessionTimerUseCase) handleWaitTimerExpired(ctx context.Context, sessio
 		return fmt.Errorf("failed to get currently playing info")
 	}
 
-	sess, err := s.sessionRepo.FindByID(ctx, sessionID)
+	sess, err := s.sessionRepo.FindByIDForUpdate(ctx, sessionID)
 	if err != nil {
 		logger.Errorj(map[string]interface{}{
 			"message":   "handleWaitTimerExpired: failed to get session",
@@ -151,6 +171,7 @@ func (s *SessionTimerUseCase) handleWaitTimerExpired(ctx context.Context, sessio
 			SessionID: sess.ID,
 			Msg:       entity.NewEventNextTrack(sess.QueueHead),
 		})
+		triggerAfterTrackEnd.EnableNextCh()
 	}
 
 	// ぴったしのタイマーをセットすると、Spotifyでは次の曲の再生が始まってるのにRelaym側では次の曲に進んでおらず、
@@ -268,8 +289,8 @@ func (s *SessionTimerUseCase) isTimerExpired(sessionID string) (bool, error) {
 	return s.tm.IsTimerExpired(sessionID)
 }
 
-func (s *SessionTimerUseCase) sendToNextCh(sessionID string) error {
-	return s.tm.SendToNextCh(sessionID)
+func (s *SessionTimerUseCase) sendToNextCh(sessionID string) {
+	go s.tm.SendToNextCh(sessionID)
 }
 
 type handleTrackEndResponse struct {

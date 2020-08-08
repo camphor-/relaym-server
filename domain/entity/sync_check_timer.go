@@ -10,11 +10,14 @@ import (
 
 // SyncCheckTimer はSpotifyとの同期チェック用のタイマーです。タイマーが止まったことを確認するためのstopチャネルがあります。
 // ref : http://okzk.hatenablog.com/entry/2015/12/01/001924
+// nextChはisNextChEnableがtrueの時にのみ値を送ることを想定しています
 type SyncCheckTimer struct {
 	timer          *time.Timer
 	isTimerExpired bool
 	stopCh         chan struct{}
+	isNextChEnable bool
 	nextCh         chan struct{}
+	enableNextCh   chan struct{}
 }
 
 // ExpireCh は指定設定された秒数経過したことを送るチャネルを返します。
@@ -30,6 +33,32 @@ func (s *SyncCheckTimer) StopCh() <-chan struct{} {
 // NextCh は次の曲への遷移の指示を送るチャネルを返します。
 func (s *SyncCheckTimer) NextCh() <-chan struct{} {
 	return s.nextCh
+}
+
+// EnableNextCh はNextChを有効化します・
+// isNextChEnableをtrueにセットし、enableNextChに通知します
+func (s *SyncCheckTimer) EnableNextCh() {
+	select {
+	case s.enableNextCh <- struct{}{}:
+		s.isNextChEnable = true
+		return
+	default:
+		s.isNextChEnable = true
+		return
+	}
+}
+
+// DisableNextCh はNextChを無効化します。
+// isNextChEnableをfalseにセットし、enableNextChの中身を0にします
+func (s *SyncCheckTimer) DisableNextCh() {
+	select {
+	case <-s.enableNextCh:
+		s.isNextChEnable = false
+		return
+	default:
+		s.isNextChEnable = false
+		return
+	}
 }
 
 // MakeIsTimerExpiredTrue はisTimerExpiredをtrueに変更します
@@ -50,7 +79,9 @@ func newSyncCheckTimer() *SyncCheckTimer {
 	return &SyncCheckTimer{
 		stopCh:         make(chan struct{}, 2),
 		nextCh:         make(chan struct{}, 1),
+		enableNextCh:   make(chan struct{}, 1),
 		isTimerExpired: true,
+		isNextChEnable: true,
 		timer:          timer,
 	}
 }
@@ -130,25 +161,36 @@ func (m *SyncCheckTimerManager) GetTimer(sessionID string) (*SyncCheckTimer, boo
 }
 
 // SendToNextCh は与えられたセッションのタイマーのNextChに通知を送ります
-func (m *SyncCheckTimerManager) SendToNextCh(sessionID string) error {
+// 大量にskipが叩かれた場合の待ちが予想されるので、goroutineで実行されることを想定しています
+func (m *SyncCheckTimerManager) SendToNextCh(sessionID string) {
 	logger := log.New()
-	m.mu.Lock()
-	defer m.mu.Unlock()
 
 	logger.Debugj(map[string]interface{}{"message": "call next ch", "sessionID": sessionID})
 
 	if timer, ok := m.timers[sessionID]; ok {
-		// skipを連打された時に送信ブロックが発生する可能性がある
-		select {
-		case timer.nextCh <- struct{}{}:
-			return nil
-		default:
-			return fmt.Errorf("timer existed, but channel's capacity is full")
+		if timer.isNextChEnable {
+			logger.Debugj(map[string]interface{}{"message": "timer existed and NextCh enable", "sessionID": sessionID})
+			m.mu.Lock()
+			timer.DisableNextCh()
+			timer.nextCh <- struct{}{}
+			m.mu.Unlock()
+			return
+		}
+		logger.Debugj(map[string]interface{}{"message": "timer existed and NextCh disable", "sessionID": sessionID})
+		// isNextChEnableがfalseの時はskip処理の途中なので、再度isNextChEnableになるまで待つ
+		for {
+			select {
+			case <-timer.enableNextCh:
+				m.mu.Lock()
+				timer.DisableNextCh()
+				timer.nextCh <- struct{}{}
+				m.mu.Unlock()
+				return
+			}
 		}
 	}
 
 	logger.Debugj(map[string]interface{}{"message": "timer not existed on SendToNextCh", "sessionID": sessionID})
-	return fmt.Errorf("timer not existed")
 }
 
 // IsTimerExpired は与えられたセッションのisTimerExpiredの値を返します
