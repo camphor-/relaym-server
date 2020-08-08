@@ -110,11 +110,13 @@ func (m *SyncCheckTimerManager) DeleteTimer(sessionID string) {
 
 	if timer, ok := m.timers[sessionID]; ok {
 		close(timer.stopCh)
+		close(timer.nextCh)
 		delete(m.timers, sessionID)
 		return
 	}
 
 	logger.Debugj(map[string]interface{}{"message": "timer not existed", "sessionID": sessionID})
+	return
 }
 
 // GetTimer は与えられたセッションのタイマーを取得します。存在しない場合はfalseが返ります。
@@ -137,8 +139,13 @@ func (m *SyncCheckTimerManager) SendToNextCh(sessionID string) error {
 	logger.Debugj(map[string]interface{}{"message": "call next ch", "sessionID": sessionID})
 
 	if timer, ok := m.timers[sessionID]; ok {
-		timer.nextCh <- struct{}{}
-		return nil
+		// skipを連打された時に送信ブロックが発生する可能性がある
+		select {
+		case timer.nextCh <- struct{}{}:
+			return nil
+		default:
+			return fmt.Errorf("timer existed, but channel's capacity is full")
+		}
 	}
 
 	logger.Debugj(map[string]interface{}{"message": "timer not existed on SendToNextCh", "sessionID": sessionID})
