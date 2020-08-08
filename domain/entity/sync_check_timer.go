@@ -197,22 +197,16 @@ func (m *SyncCheckTimerManager) SendToNextCh(sessionID string) {
 		}
 		logger.Debugj(map[string]interface{}{"message": "timer existed and NextCh disable", "sessionID": sessionID})
 		// isNextChEnableがfalseの時はskip処理の途中なので、再度isNextChEnableになるまで待つ
-		for {
-			select {
-			case _, ok := <-timer.enableNextCh:
-				if ok {
-					logger.Debugj(map[string]interface{}{"message": "timer NextCh be enable", "sessionID": sessionID})
-					m.mu.Lock()
-					timer.DisableNextCh()
-					timer.nextCh <- struct{}{}
-					m.mu.Unlock()
-					return
-				}
-				return
-			}
+		for range timer.enableNextCh {
+			logger.Debugj(map[string]interface{}{"message": "timer NextCh be enable", "sessionID": sessionID})
+			m.mu.Lock()
+			timer.DisableNextCh()
+			timer.nextCh <- struct{}{}
+			m.mu.Unlock()
+			return
 		}
+		return
 	}
-
 	logger.Debugj(map[string]interface{}{"message": "timer not existed on SendToNextCh", "sessionID": sessionID})
 }
 
