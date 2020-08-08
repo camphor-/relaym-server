@@ -116,7 +116,6 @@ func (m *SyncCheckTimerManager) DeleteTimer(sessionID string) {
 	}
 
 	logger.Debugj(map[string]interface{}{"message": "timer not existed", "sessionID": sessionID})
-	return
 }
 
 // GetTimer は与えられたセッションのタイマーを取得します。存在しない場合はfalseが返ります。
