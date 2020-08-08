@@ -87,7 +87,7 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 				return
 			}
 
-			waitTimer = time.NewTimer(waitTimeAfterHandleSkipTrack)
+			s.setNewTimerOnWaitTimer(waitTimer, waitTimeAfterHandleSkipTrack)
 			currentOperation = operationNextTrack
 
 		case <-triggerAfterTrackEnd.ExpireCh():
@@ -106,7 +106,7 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 				logger.Infoj(map[string]interface{}{"message": "no next track", "sessionID": sessionID})
 				return
 			}
-			waitTimer = time.NewTimer(waitTimeAfterHandleTrackEnd)
+			s.setNewTimerOnWaitTimer(waitTimer, waitTimeAfterHandleTrackEnd)
 			currentOperation = operationNextTrack
 		}
 	}
@@ -273,6 +273,16 @@ func (s *SessionTimerUseCase) handleInterrupt(sess *entity.Session) {
 		SessionID: sess.ID,
 		Msg:       entity.EventInterrupt,
 	})
+}
+
+func (s *SessionTimerUseCase) setNewTimerOnWaitTimer(timer *time.Timer, d time.Duration) {
+	if !timer.Stop() {
+		select {
+		case <-timer.C:
+		default:
+		}
+	}
+	timer.Reset(d)
 }
 
 func (s *SessionTimerUseCase) existsTimer(sessionID string) bool {
