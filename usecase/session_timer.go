@@ -14,7 +14,7 @@ import (
 )
 
 var waitTimeAfterHandleTrackEnd = 7 * time.Second
-var waitTimeAfterHandleSkipTrack = 400 * time.Millisecond
+var waitTimeAfterHandleSkipTrack = 300 * time.Millisecond
 
 type SessionTimerUseCase struct {
 	tm          *entity.SyncCheckTimerManager
@@ -55,6 +55,7 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 			logger.Debugj(map[string]interface{}{"message": "call to move next track", "sessionID": sessionID})
 			waitTimer.Stop()
 			triggerAfterTrackEnd.MakeIsTimerExpiredTrue()
+
 			session, err := s.sessionRepo.FindByIDForUpdate(ctx, sessionID)
 			if err != nil {
 				logger.Errorj(map[string]interface{}{
@@ -72,8 +73,13 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 				})
 				return
 			}
+
 			nextTrack, err := s.handleTrackEnd(ctx, sessionID)
 			if err != nil {
+				if errors.Is(err, entity.ErrSessionPlayingDifferentTrack) {
+					logger.Infoj(map[string]interface{}{"message": "handleTrackEnd detects interrupt", "sessionID": sessionID, "error": err.Error()})
+					return
+				}
 				logger.Errorj(map[string]interface{}{"message": "handleTrackEnd with error", "sessionID": sessionID, "error": err.Error()})
 				return
 			}
@@ -81,7 +87,8 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 				logger.Infoj(map[string]interface{}{"message": "no next track", "sessionID": sessionID})
 				return
 			}
-			s.setNewTimerOnWaitTimer(waitTimer, waitTimeAfterHandleSkipTrack)
+
+			waitTimer = time.NewTimer(waitTimeAfterHandleSkipTrack)
 			currentOperation = operationNextTrack
 
 		case <-triggerAfterTrackEnd.ExpireCh():
@@ -89,6 +96,10 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 			logger.Debugj(map[string]interface{}{"message": "trigger expired", "sessionID": sessionID})
 			nextTrack, err := s.handleTrackEnd(ctx, sessionID)
 			if err != nil {
+				if errors.Is(err, entity.ErrSessionPlayingDifferentTrack) {
+					logger.Infoj(map[string]interface{}{"message": "handleTrackEnd detects interrupt", "sessionID": sessionID, "error": err.Error()})
+					return
+				}
 				logger.Errorj(map[string]interface{}{"message": "handleTrackEnd with error", "sessionID": sessionID, "error": err.Error()})
 				return
 			}
@@ -96,20 +107,10 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 				logger.Infoj(map[string]interface{}{"message": "no next track", "sessionID": sessionID})
 				return
 			}
-			s.setNewTimerOnWaitTimer(waitTimer, waitTimeAfterHandleTrackEnd)
+			waitTimer = time.NewTimer(waitTimeAfterHandleTrackEnd)
 			currentOperation = operationNextTrack
 		}
 	}
-}
-
-func (s *SessionTimerUseCase) setNewTimerOnWaitTimer(timer *time.Timer, d time.Duration) {
-	if !timer.Stop() {
-		select {
-		case <-timer.C:
-		default:
-		}
-	}
-	timer.Reset(d)
 }
 
 func (s *SessionTimerUseCase) handleWaitTimerExpired(ctx context.Context, sessionID string, triggerAfterTrackEnd *entity.SyncCheckTimer, currentOperation currentOperation) error {
@@ -126,7 +127,7 @@ func (s *SessionTimerUseCase) handleWaitTimerExpired(ctx context.Context, sessio
 		return fmt.Errorf("failed to get currently playing info")
 	}
 
-	sess, err := s.sessionRepo.FindByID(ctx, sessionID)
+	sess, err := s.sessionRepo.FindByIDForUpdate(ctx, sessionID)
 	if err != nil {
 		logger.Errorj(map[string]interface{}{
 			"message":   "handleWaitTimerExpired: failed to get session",
@@ -137,11 +138,6 @@ func (s *SessionTimerUseCase) handleWaitTimerExpired(ctx context.Context, sessio
 	}
 
 	if err := sess.IsPlayingCorrectTrack(playingInfo); err != nil {
-		logger.Infoj(map[string]interface{}{
-			"message":   "session playing different track detect on handleWaitTimerExpired",
-			"sessionID": sessionID,
-			"error":     err.Error(),
-		})
 		s.handleInterrupt(sess)
 		if err := s.sessionRepo.Update(ctx, sess); err != nil {
 			logger.Errorj(map[string]interface{}{

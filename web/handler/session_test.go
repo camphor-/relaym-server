@@ -981,6 +981,7 @@ func TestUserHandler_NextTrack(t *testing.T) {
 			userID:              "userID",
 			addToTimerSessionID: "sessionID",
 			prepareMockPlayerCliFn: func(m *mock_spotify.MockPlayer) {
+				m.EXPECT().GoNextTrack(gomock.Any(), "deviceID").Return(nil)
 			},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
 				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(

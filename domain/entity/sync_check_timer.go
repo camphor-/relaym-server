@@ -61,27 +61,9 @@ func (s *SyncCheckTimer) DisableNextCh() {
 	}
 }
 
-// closeNextCh はNextChの送信待ちでブロックされている物も含めて全ての値を取り出し、closeします
-func (s *SyncCheckTimer) closeNextCh() {
-	for {
-		select {
-		case <-s.nextCh:
-			time.Sleep(1 * time.Millisecond)
-		default:
-			close(s.nextCh)
-			return
-		}
-	}
-}
-
 // MakeIsTimerExpiredTrue はisTimerExpiredをtrueに変更します
-// また、timerが確実にExpiredしていることを保証します、これの呼び出し時にExpiredしてないtimerはexpiredされます
 // <- s.ExpireCh でtimerから値を受け取った際に呼び出してください
 func (s *SyncCheckTimer) MakeIsTimerExpiredTrue() {
-	s.SetDuration(0)
-	if !s.timer.Stop() {
-		<-s.timer.C
-	}
 	s.isTimerExpired = true
 }
 
@@ -136,11 +118,12 @@ func (m *SyncCheckTimerManager) CreateExpiredTimer(sessionID string) *SyncCheckT
 
 	logger.Debugj(map[string]interface{}{"message": "create timer", "sessionID": sessionID})
 
-	if _, ok := m.timers[sessionID]; ok {
+	if existing, ok := m.timers[sessionID]; ok {
 		// 本来ならStopのGoDocコメントにある通り、<-t.Cとして、チャネルが空になっていることを確認すべきだが、
 		// ExpireCh()の呼び出し側で受け取っているので問題ない。
 		logger.Debugj(map[string]interface{}{"message": "timer has already exists", "sessionID": sessionID})
-		m.DeleteTimer(sessionID)
+		existing.timer.Stop()
+		close(existing.stopCh)
 	}
 	timer := newSyncCheckTimer()
 	m.timers[sessionID] = timer
@@ -158,8 +141,7 @@ func (m *SyncCheckTimerManager) DeleteTimer(sessionID string) {
 
 	if timer, ok := m.timers[sessionID]; ok {
 		close(timer.stopCh)
-		close(timer.enableNextCh)
-		timer.closeNextCh()
+		close(timer.nextCh)
 		delete(m.timers, sessionID)
 		return
 	}
@@ -196,16 +178,18 @@ func (m *SyncCheckTimerManager) SendToNextCh(sessionID string) {
 		}
 		logger.Debugj(map[string]interface{}{"message": "timer existed and NextCh disable", "sessionID": sessionID})
 		// isNextChEnableがfalseの時はskip処理の途中なので、再度isNextChEnableになるまで待つ
-		for range timer.enableNextCh {
-			logger.Debugj(map[string]interface{}{"message": "timer NextCh be enable", "sessionID": sessionID})
-			m.mu.Lock()
-			timer.DisableNextCh()
-			timer.nextCh <- struct{}{}
-			m.mu.Unlock()
-			return
+		for {
+			select {
+			case <-timer.enableNextCh:
+				m.mu.Lock()
+				timer.DisableNextCh()
+				timer.nextCh <- struct{}{}
+				m.mu.Unlock()
+				return
+			}
 		}
-		return
 	}
+
 	logger.Debugj(map[string]interface{}{"message": "timer not existed on SendToNextCh", "sessionID": sessionID})
 }
 
