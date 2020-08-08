@@ -15,6 +15,7 @@ type SyncCheckTimer struct {
 	isTimerExpired bool
 	stopCh         chan struct{}
 	nextCh         chan struct{}
+	mutexForNextCh sync.Mutex
 }
 
 // ExpireCh は指定設定された秒数経過したことを送るチャネルを返します。
@@ -30,6 +31,32 @@ func (s *SyncCheckTimer) StopCh() <-chan struct{} {
 // NextCh は次の曲への遷移の指示を送るチャネルを返します。
 func (s *SyncCheckTimer) NextCh() <-chan struct{} {
 	return s.nextCh
+}
+
+func (s *SyncCheckTimer) LockNextCh() {
+	logger := log.New()
+	s.mutexForNextCh.Lock()
+	logger.Debugj(map[string]interface{}{"message": "next ch locked success"})
+}
+
+func (s *SyncCheckTimer) UnlockNextCh() {
+	logger := log.New()
+	s.mutexForNextCh.Unlock()
+	logger.Debugj(map[string]interface{}{"message": "next ch unlocked success"})
+	// UnlockがUnlock待ちになってるlockに通知されるのを待つ
+	time.Sleep(10 * time.Millisecond)
+}
+
+// closeNextCh はNextChを安全にcloseします
+func (s *SyncCheckTimer) closeNextCh() {
+	for {
+		select {
+		case <-s.nextCh:
+		default:
+			close(s.nextCh)
+			return
+		}
+	}
 }
 
 // MakeIsTimerExpiredTrue はisTimerExpiredをtrueに変更します
@@ -110,7 +137,7 @@ func (m *SyncCheckTimerManager) DeleteTimer(sessionID string) {
 
 	if timer, ok := m.timers[sessionID]; ok {
 		close(timer.stopCh)
-		close(timer.nextCh)
+		timer.closeNextCh()
 		delete(m.timers, sessionID)
 		return
 	}
@@ -130,25 +157,25 @@ func (m *SyncCheckTimerManager) GetTimer(sessionID string) (*SyncCheckTimer, boo
 }
 
 // SendToNextCh は与えられたセッションのタイマーのNextChに通知を送ります
-func (m *SyncCheckTimerManager) SendToNextCh(sessionID string) error {
+// goroutineで実行されることを想定しています
+func (m *SyncCheckTimerManager) SendToNextCh(sessionID string) {
 	logger := log.New()
-	m.mu.Lock()
-	defer m.mu.Unlock()
 
 	logger.Debugj(map[string]interface{}{"message": "call next ch", "sessionID": sessionID})
 
 	if timer, ok := m.timers[sessionID]; ok {
-		// skipを連打された時に送信ブロックが発生する可能性がある
+		timer.LockNextCh()
 		select {
 		case timer.nextCh <- struct{}{}:
-			return nil
+			logger.Debugj(map[string]interface{}{"message": "nextCh unlocked and send to nextCh", "sessionID": sessionID})
+			return
 		default:
-			return fmt.Errorf("timer existed, but channel's capacity is full")
+			logger.Debugj(map[string]interface{}{"message": "nextCh unlocked but can't send to nextCh", "sessionID": sessionID})
+			return
 		}
 	}
 
 	logger.Debugj(map[string]interface{}{"message": "timer not existed on SendToNextCh", "sessionID": sessionID})
-	return fmt.Errorf("timer not existed")
 }
 
 // IsTimerExpired は与えられたセッションのisTimerExpiredの値を返します
