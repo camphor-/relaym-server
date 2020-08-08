@@ -136,12 +136,11 @@ func (m *SyncCheckTimerManager) CreateExpiredTimer(sessionID string) *SyncCheckT
 
 	logger.Debugj(map[string]interface{}{"message": "create timer", "sessionID": sessionID})
 
-	if existing, ok := m.timers[sessionID]; ok {
+	if _, ok := m.timers[sessionID]; ok {
 		// 本来ならStopのGoDocコメントにある通り、<-t.Cとして、チャネルが空になっていることを確認すべきだが、
 		// ExpireCh()の呼び出し側で受け取っているので問題ない。
 		logger.Debugj(map[string]interface{}{"message": "timer has already exists", "sessionID": sessionID})
-		existing.timer.Stop()
-		close(existing.stopCh)
+		m.DeleteTimer(sessionID)
 	}
 	timer := newSyncCheckTimer()
 	m.timers[sessionID] = timer

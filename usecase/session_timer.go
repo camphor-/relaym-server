@@ -126,7 +126,7 @@ func (s *SessionTimerUseCase) handleWaitTimerExpired(ctx context.Context, sessio
 		return fmt.Errorf("failed to get currently playing info")
 	}
 
-	sess, err := s.sessionRepo.FindByIDForUpdate(ctx, sessionID)
+	sess, err := s.sessionRepo.FindByID(ctx, sessionID)
 	if err != nil {
 		logger.Errorj(map[string]interface{}{
 			"message":   "handleWaitTimerExpired: failed to get session",
