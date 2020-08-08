@@ -61,9 +61,26 @@ func (s *SyncCheckTimer) DisableNextCh() {
 	}
 }
 
+func (s *SyncCheckTimer) closeNextCh() {
+	for {
+		select {
+		case <-s.nextCh:
+			time.Sleep(1 * time.Millisecond)
+		default:
+			close(s.nextCh)
+			return
+		}
+	}
+}
+
 // MakeIsTimerExpiredTrue はisTimerExpiredをtrueに変更します
+// また、timerが確実にExpiredしていることを保証します、これの呼び出し時にExpiredしてないtimerはexpiredされます
 // <- s.ExpireCh でtimerから値を受け取った際に呼び出してください
 func (s *SyncCheckTimer) MakeIsTimerExpiredTrue() {
+	s.SetDuration(0)
+	if !s.timer.Stop() {
+		<-s.timer.C
+	}
 	s.isTimerExpired = true
 }
 
@@ -141,7 +158,7 @@ func (m *SyncCheckTimerManager) DeleteTimer(sessionID string) {
 
 	if timer, ok := m.timers[sessionID]; ok {
 		close(timer.stopCh)
-		close(timer.nextCh)
+		close(timer.enableNextCh)
 		delete(m.timers, sessionID)
 		return
 	}
@@ -180,11 +197,15 @@ func (m *SyncCheckTimerManager) SendToNextCh(sessionID string) {
 		// isNextChEnableがfalseの時はskip処理の途中なので、再度isNextChEnableになるまで待つ
 		for {
 			select {
-			case <-timer.enableNextCh:
-				m.mu.Lock()
-				timer.DisableNextCh()
-				timer.nextCh <- struct{}{}
-				m.mu.Unlock()
+			case _, ok := <-timer.enableNextCh:
+				logger.Debugj(map[string]interface{}{"message": "timer NextCh be enable", "sessionID": sessionID})
+				if ok {
+					m.mu.Lock()
+					timer.DisableNextCh()
+					timer.nextCh <- struct{}{}
+					m.mu.Unlock()
+					return
+				}
 				return
 			}
 		}
