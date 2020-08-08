@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/camphor-/relaym-server/log"
+
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/event"
 	"github.com/camphor-/relaym-server/domain/repository"
@@ -116,6 +118,7 @@ func (s *SessionUseCase) SetDevice(ctx context.Context, sessionID string, device
 
 // GetSession は指定されたidからsessionの情報を返します
 func (s *SessionUseCase) GetSession(ctx context.Context, sessionID string) (*entity.SessionWithUser, []*entity.Track, *entity.CurrentPlayingInfo, error) {
+	logger := log.New()
 	session, err := s.sessionRepo.FindByIDForUpdate(ctx, sessionID)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("FindByID sessionID=%s: %w", sessionID, err)
@@ -156,6 +159,11 @@ func (s *SessionUseCase) GetSession(ctx context.Context, sessionID string) (*ent
 	}
 
 	if err := session.IsPlayingCorrectTrack(cpi); err != nil {
+		logger.Infoj(map[string]interface{}{
+			"message":   "session playing different track detect on get session",
+			"sessionID": sessionID,
+			"error":     err.Error(),
+		})
 		s.timerUC.deleteTimer(session.ID)
 		s.timerUC.handleInterrupt(session)
 
