@@ -61,6 +61,7 @@ func (s *SyncCheckTimer) DisableNextCh() {
 	}
 }
 
+// closeNextCh はNextChの送信待ちでブロックされている物も含めて全ての値を取り出し、closeします
 func (s *SyncCheckTimer) closeNextCh() {
 	for {
 		select {
@@ -159,6 +160,7 @@ func (m *SyncCheckTimerManager) DeleteTimer(sessionID string) {
 	if timer, ok := m.timers[sessionID]; ok {
 		close(timer.stopCh)
 		close(timer.enableNextCh)
+		timer.closeNextCh()
 		delete(m.timers, sessionID)
 		return
 	}
@@ -198,8 +200,8 @@ func (m *SyncCheckTimerManager) SendToNextCh(sessionID string) {
 		for {
 			select {
 			case _, ok := <-timer.enableNextCh:
-				logger.Debugj(map[string]interface{}{"message": "timer NextCh be enable", "sessionID": sessionID})
 				if ok {
+					logger.Debugj(map[string]interface{}{"message": "timer NextCh be enable", "sessionID": sessionID})
 					m.mu.Lock()
 					timer.DisableNextCh()
 					timer.nextCh <- struct{}{}
