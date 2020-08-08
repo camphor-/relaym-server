@@ -93,11 +93,12 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 
 func (s *SessionTimerUseCase) handleWaitTimerExpired(ctx context.Context, sessionID string, triggerAfterTrackEnd *entity.SyncCheckTimer, currentOperation currentOperation) error {
 	logger := log.New()
+	logger.Debugj(map[string]interface{}{"message": "currentOperation", "currentOperation": currentOperation})
 
 	playingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
 	if err != nil {
 		logger.Errorj(map[string]interface{}{
-			"message":   "startTrackEndTrigger: failed to get currently playing info",
+			"message":   "handleWaitTimerExpired: failed to get currently playing info",
 			"sessionID": sessionID,
 			"error":     err.Error(),
 		})
@@ -107,7 +108,7 @@ func (s *SessionTimerUseCase) handleWaitTimerExpired(ctx context.Context, sessio
 	sess, err := s.sessionRepo.FindByID(ctx, sessionID)
 	if err != nil {
 		logger.Errorj(map[string]interface{}{
-			"message":   "startTrackEndTrigger: failed to get session",
+			"message":   "handleWaitTimerExpired: failed to get session",
 			"sessionID": sessionID,
 			"error":     err.Error(),
 		})
@@ -118,7 +119,7 @@ func (s *SessionTimerUseCase) handleWaitTimerExpired(ctx context.Context, sessio
 		s.handleInterrupt(sess)
 		if err := s.sessionRepo.Update(ctx, sess); err != nil {
 			logger.Errorj(map[string]interface{}{
-				"message":   "startTrackEndTrigger: failed to update session after handleInterrupt",
+				"message":   "handleWaitTimerExpired: failed to update session after IsPlayingCorrectTrack and handleInterrupt",
 				"sessionID": sessionID,
 				"error":     err.Error(),
 			})
@@ -127,7 +128,20 @@ func (s *SessionTimerUseCase) handleWaitTimerExpired(ctx context.Context, sessio
 		return fmt.Errorf("session interrupt")
 	}
 
-	logger.Debugj(map[string]interface{}{"message": "currentOperation", "currentOperation": currentOperation})
+	track := sess.TrackURIShouldBeAddedWhenHandleTrackEnd()
+	if track != "" {
+		if err := s.playerCli.Enqueue(ctx, track, sess.DeviceID); err != nil {
+			s.handleInterrupt(sess)
+			if err := s.sessionRepo.Update(ctx, sess); err != nil {
+				logger.Errorj(map[string]interface{}{
+					"message":   "handleWaitTimerExpired: failed to update session after Enqueue and handleInterrupt",
+					"sessionID": sessionID,
+					"error":     err.Error(),
+				})
+				return fmt.Errorf("failed to enqueue track")
+			}
+		}
+	}
 
 	switch currentOperation {
 	case operationNextTrack:
@@ -208,19 +222,6 @@ func (s *SessionTimerUseCase) handleTrackEndTx(sessionID string) func(ctx contex
 				nextTrack: false,
 				err:       nil,
 			}, nil
-		}
-
-		track := sess.TrackURIShouldBeAddedWhenHandleTrackEnd()
-		if track != "" {
-			// TODO: Spotifyアプリを閉じた後、ずっとRelaymを開かないとINTERRUPTにならずにここまでたどり着いて
-			// active device not foundになってしまう
-			// そのときstateはPLAYのままなので表示がバグる
-			if err := s.playerCli.Enqueue(ctx, track, sess.DeviceID); err != nil {
-				return &handleTrackEndResponse{
-					nextTrack: false,
-					err:       fmt.Errorf("call add queue api trackURI=%s: %w", track, err),
-				}, nil
-			}
 		}
 
 		logger.Debugj(map[string]interface{}{"message": "next track", "sessionID": sess.ID, "queueHead": sess.QueueHead})
