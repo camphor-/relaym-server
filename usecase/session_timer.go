@@ -74,10 +74,6 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 			}
 			nextTrack, err := s.handleTrackEnd(ctx, sessionID)
 			if err != nil {
-				if errors.Is(err, entity.ErrSessionPlayingDifferentTrack) {
-					logger.Infoj(map[string]interface{}{"message": "handleTrackEnd detects interrupt", "sessionID": sessionID, "error": err.Error()})
-					return
-				}
 				logger.Errorj(map[string]interface{}{"message": "handleTrackEnd with error", "sessionID": sessionID, "error": err.Error()})
 				return
 			}
@@ -93,10 +89,6 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 			logger.Debugj(map[string]interface{}{"message": "trigger expired", "sessionID": sessionID})
 			nextTrack, err := s.handleTrackEnd(ctx, sessionID)
 			if err != nil {
-				if errors.Is(err, entity.ErrSessionPlayingDifferentTrack) {
-					logger.Infoj(map[string]interface{}{"message": "handleTrackEnd detects interrupt", "sessionID": sessionID, "error": err.Error()})
-					return
-				}
 				logger.Errorj(map[string]interface{}{"message": "handleTrackEnd with error", "sessionID": sessionID, "error": err.Error()})
 				return
 			}
