@@ -54,7 +54,6 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 					s.setNewTimerOnWaitTimer(waitTimer, waitTimeAfterHandleSkipTrack)
 					isRetryOnce = true
 				} else {
-					isRetryOnce = false
 					return
 				}
 			} else {
