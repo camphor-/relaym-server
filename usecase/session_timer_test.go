@@ -539,7 +539,7 @@ func TestSessionTimerUseCase_handleWaitTimerExpiredTx(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:             "NextTrackの時にSpotifyとの同期が取れていないとoperationRetryに変更され、エラーは返さない",
+			name:             "NextTrackの時にSpotifyとの同期が取れていないとoperationRetryNextTrackに変更され、エラーは返さない",
 			sessionID:        "sessionID",
 			currentOperation: "NextTrack",
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
@@ -605,7 +605,7 @@ func TestSessionTimerUseCase_handleWaitTimerExpiredTx(t *testing.T) {
 		{
 			name:             "Retryの時にSpotifyとの同期が取れていないとエラーが返り、handleInterruptが飛ぶ",
 			sessionID:        "sessionID",
-			currentOperation: "Retry",
+			currentOperation: "RetryNextTrack",
 			prepareMockPlayerFn: func(m *mock_spotify.MockPlayer) {
 				m.EXPECT().CurrentlyPlaying(gomock.Any()).Return(&entity.CurrentPlayingInfo{
 					Playing:  true,
