@@ -16,6 +16,7 @@ type SyncCheckTimer struct {
 	stopCh         chan struct{}
 	nextCh         chan struct{}
 	mutexForNextCh sync.Mutex
+	isMutexLocked  bool
 }
 
 // ExpireCh は指定設定された秒数経過したことを送るチャネルを返します。
@@ -36,15 +37,21 @@ func (s *SyncCheckTimer) NextCh() <-chan struct{} {
 func (s *SyncCheckTimer) LockNextCh() {
 	logger := log.New()
 	s.mutexForNextCh.Lock()
+	s.isMutexLocked = true
 	logger.Debugj(map[string]interface{}{"message": "next ch locked success"})
 }
 
 func (s *SyncCheckTimer) UnlockNextCh() {
 	logger := log.New()
-	s.mutexForNextCh.Unlock()
-	logger.Debugj(map[string]interface{}{"message": "next ch unlocked success"})
-	// UnlockがUnlock待ちになってるlockに通知されるのを待つ
-	time.Sleep(10 * time.Millisecond)
+	// unlock of unlocked mutex を確実に防ぎたい
+	if s.isMutexLocked {
+		s.mutexForNextCh.Unlock()
+		s.isMutexLocked = false
+		logger.Debugj(map[string]interface{}{"message": "next ch unlocked success"})
+		// UnlockがUnlock待ちになってるlockに通知されるのを待つ
+		time.Sleep(10 * time.Millisecond)
+	}
+	logger.Debugj(map[string]interface{}{"message": "next ch already unlocked"})
 }
 
 // closeNextCh はNextChを安全にcloseします
@@ -79,6 +86,7 @@ func newSyncCheckTimer() *SyncCheckTimer {
 		nextCh:         make(chan struct{}, 1),
 		isTimerExpired: true,
 		timer:          timer,
+		isMutexLocked:  false,
 	}
 }
 
@@ -137,8 +145,8 @@ func (m *SyncCheckTimerManager) DeleteTimer(sessionID string) {
 
 	if timer, ok := m.timers[sessionID]; ok {
 		close(timer.stopCh)
-		timer.closeNextCh()
 		delete(m.timers, sessionID)
+		timer.closeNextCh()
 		return
 	}
 
@@ -165,14 +173,20 @@ func (m *SyncCheckTimerManager) SendToNextCh(sessionID string) {
 
 	if timer, ok := m.timers[sessionID]; ok {
 		timer.LockNextCh()
-		select {
-		case timer.nextCh <- struct{}{}:
-			logger.Debugj(map[string]interface{}{"message": "nextCh unlocked and send to nextCh", "sessionID": sessionID})
-			return
-		default:
-			logger.Debugj(map[string]interface{}{"message": "nextCh unlocked but can't send to nextCh", "sessionID": sessionID})
-			return
+		// closeした後のnextChに送信することを確実に防ぐために存在チェック
+		if _, ok := m.GetTimer(sessionID); ok {
+			select {
+			case timer.nextCh <- struct{}{}:
+				logger.Debugj(map[string]interface{}{"message": "nextCh unlocked and send to nextCh", "sessionID": sessionID})
+				return
+			default:
+				logger.Debugj(map[string]interface{}{"message": "nextCh unlocked but can't send to nextCh", "sessionID": sessionID})
+				return
+			}
 		}
+		timer.UnlockNextCh()
+		logger.Debugj(map[string]interface{}{"message": "timer unlocked but timer doesn't exist", "sessionID": sessionID})
+		return
 	}
 
 	logger.Debugj(map[string]interface{}{"message": "timer not existed on SendToNextCh", "sessionID": sessionID})
