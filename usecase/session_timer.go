@@ -14,7 +14,7 @@ import (
 )
 
 var waitTimeAfterHandleTrackEnd = 7 * time.Second
-var waitTimeAfterHandleSkipTrack = 400 * time.Millisecond
+var waitTimeAfterHandleSkipTrack = 500 * time.Millisecond
 
 type SessionTimerUseCase struct {
 	tm          *entity.SyncCheckTimerManager
@@ -62,6 +62,15 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 					"message":   "failed to get session",
 					"sessionID": sessionID,
 					"error":     err.Error(),
+				})
+				triggerAfterTrackEnd.UnlockNextCh()
+				return
+			}
+			if session.StateType != entity.Play {
+				logger.Errorj(map[string]interface{}{
+					"message":   "stateType must be play",
+					"sessionID": sessionID,
+					"stateType": session.StateType,
 				})
 				triggerAfterTrackEnd.UnlockNextCh()
 				return
@@ -141,7 +150,7 @@ func (s *SessionTimerUseCase) handleWaitTimerExpired(ctx context.Context, sessio
 
 	if err := sess.IsPlayingCorrectTrack(playingInfo); err != nil {
 		logger.Infoj(map[string]interface{}{
-			"message": "session should be playing but not playing from handleWaitTimerExpired",
+			"message": "IsPlayingCorrectTrack failed from handleWaitTimerExpired",
 		})
 		s.handleInterrupt(sess)
 		if err := s.sessionRepo.Update(ctx, sess); err != nil {
