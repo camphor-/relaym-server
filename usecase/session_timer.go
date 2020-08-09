@@ -118,86 +118,100 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 }
 
 func (s *SessionTimerUseCase) handleWaitTimerExpired(ctx context.Context, sessionID string, triggerAfterTrackEnd *entity.SyncCheckTimer, currentOperation currentOperation) error {
+	_, err := s.sessionRepo.DoInTx(ctx, s.handleWaitTimerExpiredTx(sessionID, triggerAfterTrackEnd, currentOperation))
 
-	defer func() {
-		if currentOperation == operationNextTrack {
-			triggerAfterTrackEnd.UnlockNextCh()
-		}
-	}()
+	return err
+}
+func (s *SessionTimerUseCase) handleWaitTimerExpiredTx(sessionID string, triggerAfterTrackEnd *entity.SyncCheckTimer, currentOperation currentOperation) func(ctx context.Context) (interface{}, error) {
+	return func(ctx context.Context) (_ interface{}, returnErr error) {
+		logger := log.New()
+		logger.Debugj(map[string]interface{}{"message": "currentOperation", "currentOperation": currentOperation})
 
-	logger := log.New()
-	logger.Debugj(map[string]interface{}{"message": "currentOperation", "currentOperation": currentOperation})
-
-	playingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
-	if err != nil {
-		logger.Errorj(map[string]interface{}{
-			"message":   "handleWaitTimerExpired: failed to get currently playing info",
-			"sessionID": sessionID,
-			"error":     err.Error(),
-		})
-		return fmt.Errorf("failed to get currently playing info")
-	}
-
-	sess, err := s.sessionRepo.FindByID(ctx, sessionID)
-	if err != nil {
-		logger.Errorj(map[string]interface{}{
-			"message":   "handleWaitTimerExpired: failed to get session",
-			"sessionID": sessionID,
-			"error":     err.Error(),
-		})
-		return fmt.Errorf("failed to get session from repo")
-	}
-
-	if err := sess.IsPlayingCorrectTrack(playingInfo); err != nil {
-		logger.Infoj(map[string]interface{}{
-			"message": "IsPlayingCorrectTrack failed from handleWaitTimerExpired",
-		})
-		s.handleInterrupt(sess)
-		if err := s.sessionRepo.Update(ctx, sess); err != nil {
+		playingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
+		if err != nil {
 			logger.Errorj(map[string]interface{}{
-				"message":   "handleWaitTimerExpired: failed to update session after IsPlayingCorrectTrack and handleInterrupt",
+				"message":   "handleWaitTimerExpired: failed to get currently playing info",
 				"sessionID": sessionID,
 				"error":     err.Error(),
 			})
-			return fmt.Errorf("failed to update session")
+			return nil, fmt.Errorf("failed to get currently playing info")
 		}
-		return fmt.Errorf("session interrupt")
-	}
 
-	track := sess.TrackURIShouldBeAddedWhenHandleTrackEnd()
-	if track != "" {
-		if err := s.playerCli.Enqueue(ctx, track, sess.DeviceID); err != nil {
+		sess, err := s.sessionRepo.FindByIDForUpdate(ctx, sessionID)
+		if err != nil {
+			logger.Errorj(map[string]interface{}{
+				"message":   "handleWaitTimerExpired: failed to get session",
+				"sessionID": sessionID,
+				"error":     err.Error(),
+			})
+			return nil, fmt.Errorf("failed to get session from repo")
+		}
+
+		defer func() {
+			if err := s.sessionRepo.Update(ctx, sess); err != nil {
+				if returnErr != nil {
+					returnErr = fmt.Errorf("update session id=%s: %v: %w", sess.ID, err, returnErr)
+				} else {
+					returnErr = fmt.Errorf("update session id=%s: %w", sess.ID, err)
+				}
+			}
+
+			if currentOperation == operationNextTrack {
+				triggerAfterTrackEnd.UnlockNextCh()
+			}
+		}()
+
+		if err := sess.IsPlayingCorrectTrack(playingInfo); err != nil {
+			logger.Infoj(map[string]interface{}{
+				"message": "IsPlayingCorrectTrack failed from handleWaitTimerExpired",
+			})
 			s.handleInterrupt(sess)
 			if err := s.sessionRepo.Update(ctx, sess); err != nil {
 				logger.Errorj(map[string]interface{}{
-					"message":   "handleWaitTimerExpired: failed to update session after Enqueue and handleInterrupt",
+					"message":   "handleWaitTimerExpired: failed to update session after IsPlayingCorrectTrack and handleInterrupt",
 					"sessionID": sessionID,
 					"error":     err.Error(),
 				})
-				return fmt.Errorf("failed to enqueue track")
+				return nil, fmt.Errorf("failed to update session")
+			}
+			return nil, fmt.Errorf("session interrupt")
+		}
+
+		track := sess.TrackURIShouldBeAddedWhenHandleTrackEnd()
+		if track != "" {
+			if err := s.playerCli.Enqueue(ctx, track, sess.DeviceID); err != nil {
+				s.handleInterrupt(sess)
+				if err := s.sessionRepo.Update(ctx, sess); err != nil {
+					logger.Errorj(map[string]interface{}{
+						"message":   "handleWaitTimerExpired: failed to update session after Enqueue and handleInterrupt",
+						"sessionID": sessionID,
+						"error":     err.Error(),
+					})
+					return nil, fmt.Errorf("failed to enqueue track")
+				}
 			}
 		}
-	}
 
-	switch currentOperation {
-	case operationNextTrack:
-		s.pusher.Push(&event.PushMessage{
-			SessionID: sess.ID,
-			Msg:       entity.NewEventNextTrack(sess.QueueHead),
+		switch currentOperation {
+		case operationNextTrack:
+			s.pusher.Push(&event.PushMessage{
+				SessionID: sess.ID,
+				Msg:       entity.NewEventNextTrack(sess.QueueHead),
+			})
+		}
+
+		// ぴったしのタイマーをセットすると、Spotifyでは次の曲の再生が始まってるのにRelaym側では次の曲に進んでおらず、
+		// INTERRUPTになってしまう
+		remainDuration := playingInfo.Remain() - 2*time.Second
+
+		logger.Infoj(map[string]interface{}{
+			"message": "start timer", "sessionID": sessionID, "remainDuration": remainDuration.String(),
 		})
+
+		triggerAfterTrackEnd.SetDuration(remainDuration)
+
+		return nil, nil
 	}
-
-	// ぴったしのタイマーをセットすると、Spotifyでは次の曲の再生が始まってるのにRelaym側では次の曲に進んでおらず、
-	// INTERRUPTになってしまう
-	remainDuration := playingInfo.Remain() - 2*time.Second
-
-	logger.Infoj(map[string]interface{}{
-		"message": "start timer", "sessionID": sessionID, "remainDuration": remainDuration.String(),
-	})
-
-	triggerAfterTrackEnd.SetDuration(remainDuration)
-
-	return nil
 }
 
 // handleTrackEnd はある一曲の再生が終わったときの処理を行います。

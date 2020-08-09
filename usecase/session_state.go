@@ -28,7 +28,7 @@ func NewSessionStateUseCase(sessionRepo repository.Session, playerCli spotify.Pl
 
 // NextTrack は指定されたidのsessionを次の曲に進めます
 func (s *SessionStateUseCase) NextTrack(ctx context.Context, sessionID string) error {
-	session, err := s.sessionRepo.FindByID(ctx, sessionID)
+	session, err := s.sessionRepo.FindByIDForUpdate(ctx, sessionID)
 	if err != nil {
 		return fmt.Errorf("find session id=%s: %w", sessionID, err)
 	}
@@ -131,7 +131,7 @@ func (s *SessionStateUseCase) nextTrackInStop(ctx context.Context, session *enti
 
 // ChangeSessionState は与えられたセッションのstateを操作します。
 func (s *SessionStateUseCase) ChangeSessionState(ctx context.Context, sessionID string, st entity.StateType) error {
-	session, err := s.sessionRepo.FindByID(ctx, sessionID)
+	session, err := s.sessionRepo.FindByIDForUpdate(ctx, sessionID)
 	if err != nil {
 		return fmt.Errorf("find session id=%s: %w", sessionID, err)
 	}
