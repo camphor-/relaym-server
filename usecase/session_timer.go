@@ -35,38 +35,28 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 	logger := log.New()
 	logger.Debugj(map[string]interface{}{"message": "start track end trigger", "sessionID": sessionID})
 
-	// 曲の再生を待つ
-	waitTimer := time.NewTimer(5 * time.Second)
-	currentOperation := operationPlay
-
 	triggerAfterTrackEnd := s.tm.CreateExpiredTimer(sessionID)
 
-	//ErrSessionPlayingDifferentTrack の際は反映が遅れている場合があるので、waitTimeAfterHandleSkipTrack分待ってもう一度だけ試す。
-	isRetryOnce := false
+	currentOperation := operationPlay
+	manager := s.createStartTrackEndTriggerManager(currentOperation)
+	// 曲の再生を待つ
+	manager.setNewTimerOnWaitTimer(5 * time.Second)
 
 	for {
 		select {
-		case <-waitTimer.C:
+		case <-manager.waitTimer.C:
 			logger.Infoj(map[string]interface{}{"message": "waitTimer expired", "sessionID": sessionID})
-			if err := s.handleWaitTimerExpired(ctx, sessionID, triggerAfterTrackEnd, currentOperation); err != nil {
-				if errors.Is(err, entity.ErrSessionPlayingDifferentTrack) && !isRetryOnce {
-					logger.Infoj(map[string]interface{}{"message": "session playing different track, so, retry once", "sessionID": sessionID})
-					s.setNewTimerOnWaitTimer(waitTimer, waitTimeAfterHandleSkipTrack)
-					isRetryOnce = true
-				} else {
-					return
-				}
-			} else {
-				isRetryOnce = false
+			if err := s.handleWaitTimerExpired(ctx, sessionID, triggerAfterTrackEnd, manager); err != nil {
+				return
 			}
 		case <-triggerAfterTrackEnd.StopCh():
 			logger.Infoj(map[string]interface{}{"message": "stop timer", "sessionID": sessionID})
-			waitTimer.Stop()
+			manager.stopWaitTimer()
 			return
 
 		case <-triggerAfterTrackEnd.NextCh():
 			logger.Debugj(map[string]interface{}{"message": "call to move next track", "sessionID": sessionID})
-			waitTimer.Stop()
+			manager.stopWaitTimer()
 			triggerAfterTrackEnd.MakeIsTimerExpiredTrue()
 			session, err := s.sessionRepo.FindByIDForUpdate(ctx, sessionID)
 			if err != nil {
@@ -108,9 +98,9 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 				return
 			}
 
-			s.setNewTimerOnWaitTimer(waitTimer, waitTimeAfterHandleSkipTrack)
+			manager.setNewTimerOnWaitTimer(waitTimeAfterHandleSkipTrack)
 			logger.Debugj(map[string]interface{}{"message": "reset waitTimer"})
-			currentOperation = operationNextTrack
+			manager.setCurrentOperation(operationNextTrack)
 
 		case <-triggerAfterTrackEnd.ExpireCh():
 			triggerAfterTrackEnd.MakeIsTimerExpiredTrue()
@@ -124,22 +114,22 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 				logger.Infoj(map[string]interface{}{"message": "no next track", "sessionID": sessionID})
 				return
 			}
-			s.setNewTimerOnWaitTimer(waitTimer, waitTimeAfterHandleTrackEnd)
+			manager.setNewTimerOnWaitTimer(waitTimeAfterHandleTrackEnd)
 			logger.Debugj(map[string]interface{}{"message": "reset waitTimer"})
-			currentOperation = operationNextTrack
+			manager.setCurrentOperation(operationNextTrack)
 		}
 	}
 }
 
-func (s *SessionTimerUseCase) handleWaitTimerExpired(ctx context.Context, sessionID string, triggerAfterTrackEnd *entity.SyncCheckTimer, currentOperation currentOperation) error {
-	_, err := s.sessionRepo.DoInTx(ctx, s.handleWaitTimerExpiredTx(sessionID, triggerAfterTrackEnd, currentOperation))
+func (s *SessionTimerUseCase) handleWaitTimerExpired(ctx context.Context, sessionID string, triggerAfterTrackEnd *entity.SyncCheckTimer, manager *startTrackEndTriggerManager) error {
+	_, err := s.sessionRepo.DoInTx(ctx, s.handleWaitTimerExpiredTx(sessionID, triggerAfterTrackEnd, manager))
 
 	return err
 }
-func (s *SessionTimerUseCase) handleWaitTimerExpiredTx(sessionID string, triggerAfterTrackEnd *entity.SyncCheckTimer, currentOperation currentOperation) func(ctx context.Context) (interface{}, error) {
+func (s *SessionTimerUseCase) handleWaitTimerExpiredTx(sessionID string, triggerAfterTrackEnd *entity.SyncCheckTimer, manager *startTrackEndTriggerManager) func(ctx context.Context) (interface{}, error) {
 	return func(ctx context.Context) (_ interface{}, returnErr error) {
 		logger := log.New()
-		logger.Debugj(map[string]interface{}{"message": "currentOperation", "currentOperation": currentOperation})
+		logger.Debugj(map[string]interface{}{"message": "currentOperation", "currentOperation": manager.currentOperation})
 
 		playingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
 		if err != nil {
@@ -170,12 +160,22 @@ func (s *SessionTimerUseCase) handleWaitTimerExpiredTx(sessionID string, trigger
 				}
 			}
 
-			if currentOperation == operationNextTrack {
+			if manager.currentOperation == operationNextTrack {
 				triggerAfterTrackEnd.UnlockNextCh()
 			}
 		}()
 
 		if err := sess.IsPlayingCorrectTrack(playingInfo); err != nil {
+			// NextTrackの時はエラーを返さず、Retryする
+			if manager.currentOperation == operationNextTrack {
+				logger.Infoj(map[string]interface{}{
+					"message": "IsPlayingCorrectTrack failed from handleWaitTimerExpired, so retry",
+				})
+				manager.setNewTimerOnWaitTimer(waitTimeAfterHandleSkipTrack)
+				manager.setCurrentOperation(operationRetryNextTrack)
+				return nil, nil
+			}
+
 			logger.Infoj(map[string]interface{}{
 				"message": "IsPlayingCorrectTrack failed from handleWaitTimerExpired",
 			})
@@ -206,13 +206,17 @@ func (s *SessionTimerUseCase) handleWaitTimerExpiredTx(sessionID string, trigger
 
 		triggerAfterTrackEnd.SetDuration(remainDuration)
 
-		switch currentOperation {
+		switch manager.currentOperation {
 		case operationNextTrack:
 			s.pusher.Push(&event.PushMessage{
 				SessionID: sess.ID,
 				Msg:       entity.NewEventNextTrack(sess.QueueHead),
 			})
-			//time.Sleep(100 * time.Millisecond)
+		case operationRetryNextTrack:
+			s.pusher.Push(&event.PushMessage{
+				SessionID: sess.ID,
+				Msg:       entity.NewEventNextTrack(sess.QueueHead),
+			})
 		}
 
 		return nil, nil
@@ -308,18 +312,6 @@ func (s *SessionTimerUseCase) handleInterrupt(sess *entity.Session) {
 	})
 }
 
-func (s *SessionTimerUseCase) setNewTimerOnWaitTimer(timer *time.Timer, d time.Duration) {
-	logger := log.New()
-	if !timer.Stop() {
-		select {
-		case <-timer.C:
-		default:
-			logger.Debugj(map[string]interface{}{"message": "timer has already stopped and popped from channel"})
-		}
-	}
-	timer.Reset(d)
-}
-
 func (s *SessionTimerUseCase) existsTimer(sessionID string) bool {
 	_, exists := s.tm.GetTimer(sessionID)
 	return exists
@@ -345,6 +337,47 @@ type handleTrackEndResponse struct {
 type currentOperation string
 
 const (
-	operationPlay      currentOperation = "play"
-	operationNextTrack currentOperation = "NextTrack"
+	operationPlay           currentOperation = "play"
+	operationNextTrack      currentOperation = "NextTrack"
+	operationRetryNextTrack currentOperation = "RetryNextTrack"
 )
+
+type startTrackEndTriggerManager struct {
+	currentOperation currentOperation
+	waitTimer        *time.Timer
+}
+
+func (s *SessionTimerUseCase) createStartTrackEndTriggerManager(currentOperation currentOperation) *startTrackEndTriggerManager {
+	timer := time.NewTimer(0)
+	//Expiredしたtimerを作成する
+	if !timer.Stop() {
+		<-timer.C
+	}
+
+	startTrackEndTriggerManager := &startTrackEndTriggerManager{
+		currentOperation: currentOperation,
+		waitTimer:        timer,
+	}
+	return startTrackEndTriggerManager
+}
+
+func (s *startTrackEndTriggerManager) stopWaitTimer() {
+	s.waitTimer.Stop()
+}
+
+func (s *startTrackEndTriggerManager) setNewTimerOnWaitTimer(d time.Duration) {
+	logger := log.New()
+	timer := s.waitTimer
+	if !timer.Stop() {
+		select {
+		case <-timer.C:
+		default:
+			logger.Debugj(map[string]interface{}{"message": "timer has already stopped and popped from channel"})
+		}
+	}
+	timer.Reset(d)
+}
+
+func (s *startTrackEndTriggerManager) setCurrentOperation(operation currentOperation) {
+	s.currentOperation = operation
+}
