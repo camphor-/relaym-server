@@ -44,6 +44,7 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 	for {
 		select {
 		case <-waitTimer.C:
+			logger.Infoj(map[string]interface{}{"message": "waitTimer expired", "sessionID": sessionID})
 			if err := s.handleWaitTimerExpired(ctx, sessionID, triggerAfterTrackEnd, currentOperation); err != nil {
 				return
 			}
@@ -97,6 +98,7 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 			}
 
 			s.setNewTimerOnWaitTimer(waitTimer, waitTimeAfterHandleSkipTrack)
+			logger.Debugj(map[string]interface{}{"message": "reset waitTimer"})
 			currentOperation = operationNextTrack
 
 		case <-triggerAfterTrackEnd.ExpireCh():
@@ -112,6 +114,7 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 				return
 			}
 			s.setNewTimerOnWaitTimer(waitTimer, waitTimeAfterHandleTrackEnd)
+			logger.Debugj(map[string]interface{}{"message": "reset waitTimer"})
 			currentOperation = operationNextTrack
 		}
 	}
@@ -182,14 +185,6 @@ func (s *SessionTimerUseCase) handleWaitTimerExpiredTx(sessionID string, trigger
 			}
 		}
 
-		switch currentOperation {
-		case operationNextTrack:
-			s.pusher.Push(&event.PushMessage{
-				SessionID: sess.ID,
-				Msg:       entity.NewEventNextTrack(sess.QueueHead),
-			})
-		}
-
 		// ぴったしのタイマーをセットすると、Spotifyでは次の曲の再生が始まってるのにRelaym側では次の曲に進んでおらず、
 		// INTERRUPTになってしまう
 		remainDuration := playingInfo.Remain() - 2*time.Second
@@ -199,6 +194,15 @@ func (s *SessionTimerUseCase) handleWaitTimerExpiredTx(sessionID string, trigger
 		})
 
 		triggerAfterTrackEnd.SetDuration(remainDuration)
+
+		switch currentOperation {
+		case operationNextTrack:
+			s.pusher.Push(&event.PushMessage{
+				SessionID: sess.ID,
+				Msg:       entity.NewEventNextTrack(sess.QueueHead),
+			})
+			//time.Sleep(100 * time.Millisecond)
+		}
 
 		return nil, nil
 	}
