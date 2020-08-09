@@ -166,29 +166,19 @@ func (s *SessionTimerUseCase) handleWaitTimerExpiredTx(sessionID string, trigger
 				"message": "IsPlayingCorrectTrack failed from handleWaitTimerExpired",
 			})
 			s.handleInterrupt(sess)
-			if err := s.sessionRepo.Update(ctx, sess); err != nil {
-				logger.Errorj(map[string]interface{}{
-					"message":   "handleWaitTimerExpired: failed to update session after IsPlayingCorrectTrack and handleInterrupt",
-					"sessionID": sessionID,
-					"error":     err.Error(),
-				})
-				return nil, fmt.Errorf("failed to update session")
-			}
 			return nil, fmt.Errorf("session interrupt")
 		}
 
 		track := sess.TrackURIShouldBeAddedWhenHandleTrackEnd()
 		if track != "" {
 			if err := s.playerCli.Enqueue(ctx, track, sess.DeviceID); err != nil {
+				logger.Errorj(map[string]interface{}{
+					"message":   "handleWaitTimerExpired: failed to enqueue tracks",
+					"sessionID": sessionID,
+					"error":     err.Error(),
+				})
 				s.handleInterrupt(sess)
-				if err := s.sessionRepo.Update(ctx, sess); err != nil {
-					logger.Errorj(map[string]interface{}{
-						"message":   "handleWaitTimerExpired: failed to update session after Enqueue and handleInterrupt",
-						"sessionID": sessionID,
-						"error":     err.Error(),
-					})
-					return nil, fmt.Errorf("failed to enqueue track")
-				}
+				return nil, fmt.Errorf("failed to enqueue tracks")
 			}
 		}
 
