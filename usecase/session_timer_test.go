@@ -320,7 +320,7 @@ func TestSessionTimerUseCase_handleTrackEndTx(t *testing.T) {
 	}
 }
 
-func TestSessionTimerUseCase_handleWaitTimerExpired(t *testing.T) {
+func TestSessionTimerUseCase_handleWaitTimerExpiredTx(t *testing.T) {
 	tests := []struct {
 		name                     string
 		sessionID                string
@@ -362,7 +362,7 @@ func TestSessionTimerUseCase_handleWaitTimerExpired(t *testing.T) {
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "name",
 					CreatorID: "creatorID",
@@ -377,6 +377,21 @@ func TestSessionTimerUseCase_handleWaitTimerExpired(t *testing.T) {
 					AllowToControlByOthers: false,
 					ProgressWhenPaused:     0,
 				}, nil)
+				m.EXPECT().Update(gomock.Any(), &entity.Session{
+					ID:        "sessionID",
+					Name:      "name",
+					CreatorID: "creatorID",
+					DeviceID:  "deviceID",
+					StateType: "PLAY",
+					QueueHead: 1,
+					QueueTracks: []*entity.QueueTrack{
+						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+						{Index: 1, URI: "spotify:track:06QTSGUEgcmKwiEJ0IMPig"},
+					},
+					ExpiredAt:              time.Time{},
+					AllowToControlByOthers: false,
+					ProgressWhenPaused:     0,
+				}).Return(nil)
 			},
 			wantErr: false,
 		},
@@ -416,7 +431,7 @@ func TestSessionTimerUseCase_handleWaitTimerExpired(t *testing.T) {
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "name",
 					CreatorID: "creatorID",
@@ -431,6 +446,21 @@ func TestSessionTimerUseCase_handleWaitTimerExpired(t *testing.T) {
 					AllowToControlByOthers: false,
 					ProgressWhenPaused:     0,
 				}, nil)
+				m.EXPECT().Update(gomock.Any(), &entity.Session{
+					ID:        "sessionID",
+					Name:      "name",
+					CreatorID: "creatorID",
+					DeviceID:  "deviceID",
+					StateType: "PLAY",
+					QueueHead: 1,
+					QueueTracks: []*entity.QueueTrack{
+						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+						{Index: 1, URI: "spotify:track:06QTSGUEgcmKwiEJ0IMPig"},
+					},
+					ExpiredAt:              time.Time{},
+					AllowToControlByOthers: false,
+					ProgressWhenPaused:     0,
+				}).Return(nil)
 			},
 			wantErr: false,
 		},
@@ -471,7 +501,7 @@ func TestSessionTimerUseCase_handleWaitTimerExpired(t *testing.T) {
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "name",
 					CreatorID: "creatorID",
@@ -488,6 +518,23 @@ func TestSessionTimerUseCase_handleWaitTimerExpired(t *testing.T) {
 					AllowToControlByOthers: false,
 					ProgressWhenPaused:     0,
 				}, nil)
+				m.EXPECT().Update(gomock.Any(), &entity.Session{
+					ID:        "sessionID",
+					Name:      "name",
+					CreatorID: "creatorID",
+					DeviceID:  "deviceID",
+					StateType: "PLAY",
+					QueueHead: 1,
+					QueueTracks: []*entity.QueueTrack{
+						{Index: 0, URI: "spotify:track:5uQ0vKy2973Y9IUCd1wMEF"},
+						{Index: 1, URI: "spotify:track:06QTSGUEgcmKwiEJ0IMPig"},
+						{Index: 2, URI: "spotify:track:track2"},
+						{Index: 3, URI: "spotify:track:track3"},
+					},
+					ExpiredAt:              time.Time{},
+					AllowToControlByOthers: false,
+					ProgressWhenPaused:     0,
+				}).Return(nil)
 			},
 			wantErr: false,
 		},
@@ -527,7 +574,7 @@ func TestSessionTimerUseCase_handleWaitTimerExpired(t *testing.T) {
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "name",
 					CreatorID: "creatorID",
@@ -589,7 +636,7 @@ func TestSessionTimerUseCase_handleWaitTimerExpired(t *testing.T) {
 				triggerAfterTrackEnd.LockNextCh()
 			}
 
-			if err := s.handleWaitTimerExpired(context.Background(), tt.sessionID, triggerAfterTrackEnd, tt.currentOperation); (err != nil) != tt.wantErr {
+			if _, err := s.handleWaitTimerExpiredTx(tt.sessionID, triggerAfterTrackEnd, tt.currentOperation)(context.Background()); (err != nil) != tt.wantErr {
 				t.Errorf("handleWaitTimerExpired() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})

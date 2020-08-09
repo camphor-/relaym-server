@@ -851,7 +851,7 @@ func TestUserHandler_NextTrack(t *testing.T) {
 			addToTimerSessionID:    "sessionID",
 			prepareMockPlayerCliFn: func(m *mock_spotify.MockPlayer) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(
 					&entity.Session{
 						ID:        "sessionID",
 						Name:      "name",
@@ -917,7 +917,7 @@ func TestUserHandler_NextTrack(t *testing.T) {
 			addToTimerSessionID:    "sessionID",
 			prepareMockPlayerCliFn: func(m *mock_spotify.MockPlayer) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(
 					&entity.Session{
 						ID:        "sessionID",
 						Name:      "name",
@@ -955,7 +955,7 @@ func TestUserHandler_NextTrack(t *testing.T) {
 			addToTimerSessionID:    "sessionID",
 			prepareMockPlayerCliFn: func(m *mock_spotify.MockPlayer) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(
 					&entity.Session{
 						ID:                     "sessionID",
 						Name:                   "name",
@@ -982,7 +982,7 @@ func TestUserHandler_NextTrack(t *testing.T) {
 			addToTimerSessionID:    "sessionID",
 			prepareMockPlayerCliFn: func(m *mock_spotify.MockPlayer) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(
 					&entity.Session{
 						ID:                     "sessionID",
 						Name:                   "name",
@@ -1009,7 +1009,7 @@ func TestUserHandler_NextTrack(t *testing.T) {
 			addToTimerSessionID:    "sessionID",
 			prepareMockPlayerCliFn: func(m *mock_spotify.MockPlayer) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(
 					&entity.Session{
 						ID:                     "sessionID",
 						Name:                   "name",
@@ -1039,7 +1039,7 @@ func TestUserHandler_NextTrack(t *testing.T) {
 				m.EXPECT().Pause(gomock.Any(), "deviceID").Return(nil)
 			},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(
 					&entity.Session{
 						ID:        "sessionID",
 						Name:      "name",
@@ -1109,7 +1109,7 @@ func TestUserHandler_NextTrack(t *testing.T) {
 				m.EXPECT().Enqueue(gomock.Any(), "spotify:track:track_uri4", "deviceID").Return(nil)
 			},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(
 					&entity.Session{
 						ID:        "sessionID",
 						Name:      "name",

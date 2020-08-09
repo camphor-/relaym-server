@@ -54,7 +54,7 @@ func TestSessionHandler_State(t *testing.T) {
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "session_name",
 					CreatorID: "creator_id",
@@ -86,7 +86,7 @@ func TestSessionHandler_State(t *testing.T) {
 				m.EXPECT().Push(&event.PushMessage{SessionID: "sessionID", Msg: entity.EventPlay})
 			},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "session_name",
 					CreatorID: "creator_id",
@@ -176,7 +176,7 @@ func TestSessionHandler_State_PLAY(t *testing.T) {
 				m.EXPECT().Push(&event.PushMessage{SessionID: "sessionID", Msg: entity.EventPlay})
 			},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "session_name",
 					CreatorID: "creator_id",
@@ -218,7 +218,7 @@ func TestSessionHandler_State_PLAY(t *testing.T) {
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "session_name",
 					CreatorID: "creator_id",
@@ -254,7 +254,7 @@ func TestSessionHandler_State_PLAY(t *testing.T) {
 				})
 			},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "session_name",
 					CreatorID: "creator_id",
@@ -298,7 +298,7 @@ func TestSessionHandler_State_PLAY(t *testing.T) {
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:                     "sessionID",
 					Name:                   "session_name",
 					CreatorID:              "creator_id",
@@ -322,7 +322,7 @@ func TestSessionHandler_State_PLAY(t *testing.T) {
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "session_name",
 					CreatorID: "creator_id",
@@ -346,7 +346,7 @@ func TestSessionHandler_State_PLAY(t *testing.T) {
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "notFoundSessionID").Return(nil, entity.ErrSessionNotFound)
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "notFoundSessionID").Return(nil, entity.ErrSessionNotFound)
 			},
 			wantErr:  true,
 			wantCode: http.StatusNotFound,
@@ -358,7 +358,7 @@ func TestSessionHandler_State_PLAY(t *testing.T) {
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{StateType: entity.Archived}, nil)
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{StateType: entity.Archived}, nil)
 			},
 			wantErr:  true,
 			wantCode: http.StatusBadRequest,
@@ -420,7 +420,7 @@ func TestSessionHandler_State_PAUSE(t *testing.T) {
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:                     "sessionID",
 					Name:                   "session_name",
 					CreatorID:              "creator_id",
@@ -461,7 +461,7 @@ func TestSessionHandler_State_PAUSE(t *testing.T) {
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:                     "sessionID",
 					Name:                   "session_name",
 					CreatorID:              "creator_id",
@@ -501,7 +501,7 @@ func TestSessionHandler_State_PAUSE(t *testing.T) {
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:                     "sessionID",
 					Name:                   "session_name",
 					CreatorID:              "creator_id",
@@ -541,7 +541,7 @@ func TestSessionHandler_State_PAUSE(t *testing.T) {
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:                     "sessionID",
 					Name:                   "session_name",
 					CreatorID:              "creator_id",
@@ -574,7 +574,7 @@ func TestSessionHandler_State_PAUSE(t *testing.T) {
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{StateType: entity.Stop}, nil)
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{StateType: entity.Stop}, nil)
 			},
 			wantErr:  true,
 			wantCode: http.StatusBadRequest,
@@ -586,7 +586,7 @@ func TestSessionHandler_State_PAUSE(t *testing.T) {
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{StateType: entity.Archived}, nil)
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{StateType: entity.Archived}, nil)
 			},
 			wantErr:  true,
 			wantCode: http.StatusBadRequest,
@@ -644,7 +644,7 @@ func TestSessionHandler_State_STOP(t *testing.T) {
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "session_name",
 					CreatorID: "creator_id",
@@ -698,7 +698,7 @@ func TestSessionHandler_State_STOP(t *testing.T) {
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{StateType: entity.Pause, CreatorID: "creator_id"}, nil)
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{StateType: entity.Pause, CreatorID: "creator_id"}, nil)
 			},
 			wantErr:  true,
 			wantCode: http.StatusBadRequest,
@@ -711,7 +711,7 @@ func TestSessionHandler_State_STOP(t *testing.T) {
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{StateType: entity.Play, CreatorID: "creator_id"}, nil)
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{StateType: entity.Play, CreatorID: "creator_id"}, nil)
 			},
 			wantErr:  true,
 			wantCode: http.StatusBadRequest,
@@ -724,7 +724,7 @@ func TestSessionHandler_State_STOP(t *testing.T) {
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{StateType: entity.Pause, CreatorID: "creator_id"}, nil)
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{StateType: entity.Pause, CreatorID: "creator_id"}, nil)
 			},
 			wantErr:  true,
 			wantCode: http.StatusBadRequest,
@@ -737,7 +737,7 @@ func TestSessionHandler_State_STOP(t *testing.T) {
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{StateType: entity.Stop, CreatorID: "creator_id"}, nil)
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{StateType: entity.Stop, CreatorID: "creator_id"}, nil)
 			},
 			wantErr:  false,
 			wantCode: http.StatusAccepted,
@@ -797,7 +797,7 @@ func TestSessionHandler_State_ARCHIVED(t *testing.T) {
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "session_name",
 					CreatorID: "creator_id",
@@ -837,7 +837,7 @@ func TestSessionHandler_State_ARCHIVED(t *testing.T) {
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "session_name",
 					CreatorID: "creator_id",
@@ -877,7 +877,7 @@ func TestSessionHandler_State_ARCHIVED(t *testing.T) {
 			},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "session_name",
 					CreatorID: "creator_id",
@@ -915,7 +915,7 @@ func TestSessionHandler_State_ARCHIVED(t *testing.T) {
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "session_name",
 					CreatorID: "creator_id",
@@ -940,7 +940,7 @@ func TestSessionHandler_State_ARCHIVED(t *testing.T) {
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
 			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(&entity.Session{
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(&entity.Session{
 					ID:        "sessionID",
 					Name:      "session_name",
 					CreatorID: "creator_id",
