@@ -310,10 +310,12 @@ func (s *SessionTimerUseCase) handleInterrupt(sess *entity.Session) {
 }
 
 func (s *SessionTimerUseCase) setNewTimerOnWaitTimer(timer *time.Timer, d time.Duration) {
+	logger := log.New()
 	if !timer.Stop() {
 		select {
 		case <-timer.C:
 		default:
+			logger.Debugj(map[string]interface{}{"message": "timer has already stopped and popped from channel"})
 		}
 	}
 	timer.Reset(d)
