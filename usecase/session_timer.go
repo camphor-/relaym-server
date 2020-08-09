@@ -69,7 +69,7 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 				return
 			}
 			if session.StateType != entity.Play {
-				logger.Errorj(map[string]interface{}{
+				logger.Infoj(map[string]interface{}{
 					"message":   "stateType must be play",
 					"sessionID": sessionID,
 					"stateType": session.StateType,
