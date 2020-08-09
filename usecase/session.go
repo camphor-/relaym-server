@@ -160,7 +160,7 @@ func (s *SessionUseCase) GetSession(ctx context.Context, sessionID string) (*ent
 
 	if err := session.IsPlayingCorrectTrack(cpi); err != nil {
 		logger.Infoj(map[string]interface{}{
-			"message": "session should be playing but not playing from handleWaitTimerExpired",
+			"message": "IsPlayingCorrectTrack failed from getSession",
 		})
 		s.timerUC.deleteTimer(session.ID)
 		s.timerUC.handleInterrupt(session)
