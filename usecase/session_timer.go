@@ -41,12 +41,24 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 
 	triggerAfterTrackEnd := s.tm.CreateExpiredTimer(sessionID)
 
+	//ErrSessionPlayingDifferentTrack の際は反映が遅れている場合があるので、waitTimeAfterHandleSkipTrack分待ってもう一度だけ試す。
+	isRetryOnce := false
+
 	for {
 		select {
 		case <-waitTimer.C:
 			logger.Infoj(map[string]interface{}{"message": "waitTimer expired", "sessionID": sessionID})
 			if err := s.handleWaitTimerExpired(ctx, sessionID, triggerAfterTrackEnd, currentOperation); err != nil {
-				return
+				if errors.Is(err, entity.ErrSessionPlayingDifferentTrack) && !isRetryOnce {
+					logger.Infoj(map[string]interface{}{"message": "session playing different track, so, retry once", "sessionID": sessionID})
+					s.setNewTimerOnWaitTimer(waitTimer, waitTimeAfterHandleSkipTrack)
+					isRetryOnce = true
+				} else {
+					isRetryOnce = false
+					return
+				}
+			} else {
+				isRetryOnce = false
 			}
 		case <-triggerAfterTrackEnd.StopCh():
 			logger.Infoj(map[string]interface{}{"message": "stop timer", "sessionID": sessionID})
