@@ -99,7 +99,7 @@ func (s *Session) IsCreator(userID string) bool {
 func (s *Session) GoNextTrack() error {
 	s.SetProgressWhenPaused(0 * time.Second)
 	if len(s.QueueTracks) <= s.QueueHead+1 {
-		s.QueueHead++ // https://github.com/camphor-/relaym-server/blob/master/docs/definition.md#%E7%8F%BE%E5%9C%A8%E5%AF%BE%E8%B1%A1%E3%81%AE%E6%9B%B2%E3%81%AE%E3%82%A4%E3%83%B3%E3%83%87%E3%83%83%E3%82%AF%E3%82%B9-head
+		s.QueueHead = len(s.QueueTracks) // https://github.com/camphor-/relaym-server/blob/master/docs/definition.md#%E7%8F%BE%E5%9C%A8%E5%AF%BE%E8%B1%A1%E3%81%AE%E6%9B%B2%E3%81%AE%E3%82%A4%E3%83%B3%E3%83%87%E3%83%83%E3%82%AF%E3%82%B9-head
 		s.StateType = Stop
 		return ErrSessionAllTracksFinished
 	}
