@@ -167,7 +167,7 @@ func (s *SessionTimerUseCase) handleTrackEnd(ctx context.Context, sessionID stri
 	return false, nil
 }
 
-// handleTrackEnd はある一曲の再生が終わったときの処理を行います。
+// handleNext は曲がスキップされたときの処理を行います。
 func (s *SessionTimerUseCase) handleNext(ctx context.Context, sessionID string) (bool, error) {
 	triggerAfterTrackEndResponse, err := s.sessionRepo.DoInTx(ctx, s.handleNextTx(sessionID))
 	if v, ok := triggerAfterTrackEndResponse.(*handleTrackEndResponse); ok {
@@ -204,18 +204,8 @@ func (s *SessionTimerUseCase) handleTrackEndTx(sessionID string) func(ctx contex
 			}
 		}()
 
-		// 曲の再生中にArchivedになった場合
 		if sess.StateType == entity.Archived {
-
-			s.pusher.Push(&event.PushMessage{
-				SessionID: sess.ID,
-				Msg:       entity.EventArchived,
-			})
-
-			return &handleTrackEndResponse{
-				nextTrack: false,
-				err:       nil,
-			}, nil
+			return s.handleArchiveInTransaction(sessionID)
 		}
 
 		if err := sess.GoNextTrack(); err != nil && errors.Is(err, entity.ErrSessionAllTracksFinished) {
@@ -226,20 +216,9 @@ func (s *SessionTimerUseCase) handleTrackEndTx(sessionID string) func(ctx contex
 			}, nil
 		}
 
-		track := sess.TrackURIShouldBeAddedWhenHandleTrackEnd()
-		if track != "" {
-			if err := s.playerCli.Enqueue(ctx, track, sess.DeviceID); err != nil {
-				s.handleInterrupt(sess)
-				if err := s.sessionRepo.Update(ctx, sess); err != nil {
-					logger.Errorj(map[string]interface{}{
-						"message":   "handleWaitTimerExpired: failed to update session after Enqueue and handleInterrupt",
-						"sessionID": sessionID,
-						"error":     err.Error(),
-					})
-					return &handleTrackEndResponse{err: err}, fmt.Errorf("failed to enqueue track")
-				}
-				return &handleTrackEndResponse{nextTrack: false, err: nil}, nil
-			}
+		res, err := s.enqueueTrackInTransaction(ctx, sess)
+		if res != nil {
+			return res, err
 		}
 
 		logger.Debugj(map[string]interface{}{"message": "next track", "sessionID": sess.ID, "queueHead": sess.QueueHead})
@@ -248,7 +227,7 @@ func (s *SessionTimerUseCase) handleTrackEndTx(sessionID string) func(ctx contex
 	}
 }
 
-// handleTrackEndTx はINTERRUPTになってerrorを帰す場合もトランザクションをコミットして欲しいので、
+// handleNextTx はINTERRUPTになってerrorを帰す場合もトランザクションをコミットして欲しいので、
 // アプリケーションエラーはhandleTrackEndResponseのフィールドで返すようにしてerrorの返り値はnilにしている
 func (s *SessionTimerUseCase) handleNextTx(sessionID string) func(ctx context.Context) (interface{}, error) {
 	logger := log.New()
@@ -272,18 +251,8 @@ func (s *SessionTimerUseCase) handleNextTx(sessionID string) func(ctx context.Co
 			return &handleTrackEndResponse{nextTrack: false}, fmt.Errorf("GoNextTrack: %w", err)
 		}
 
-		// 曲の再生中にArchivedになった場合
 		if sess.StateType == entity.Archived {
-
-			s.pusher.Push(&event.PushMessage{
-				SessionID: sess.ID,
-				Msg:       entity.EventArchived,
-			})
-
-			return &handleTrackEndResponse{
-				nextTrack: false,
-				err:       nil,
-			}, nil
+			return s.handleArchiveInTransaction(sessionID)
 		}
 
 		if err := sess.GoNextTrack(); err != nil && errors.Is(err, entity.ErrSessionAllTracksFinished) {
@@ -294,26 +263,48 @@ func (s *SessionTimerUseCase) handleNextTx(sessionID string) func(ctx context.Co
 			}, nil
 		}
 
-		track := sess.TrackURIShouldBeAddedWhenHandleTrackEnd()
-		if track != "" {
-			if err := s.playerCli.Enqueue(ctx, track, sess.DeviceID); err != nil {
-				s.handleInterrupt(sess)
-				if err := s.sessionRepo.Update(ctx, sess); err != nil {
-					logger.Errorj(map[string]interface{}{
-						"message":   "handleWaitTimerExpired: failed to update session after Enqueue and handleInterrupt",
-						"sessionID": sessionID,
-						"error":     err.Error(),
-					})
-					return &handleTrackEndResponse{err: err}, fmt.Errorf("failed to enqueue track")
-				}
-				return &handleTrackEndResponse{nextTrack: false, err: nil}, nil
-			}
+		res, err := s.enqueueTrackInTransaction(ctx, sess)
+		if res != nil {
+			return res, err
 		}
 
 		logger.Debugj(map[string]interface{}{"message": "next track", "sessionID": sess.ID, "queueHead": sess.QueueHead})
 
 		return &handleTrackEndResponse{nextTrack: true, err: nil}, nil
 	}
+}
+
+func (s *SessionTimerUseCase) handleArchiveInTransaction(sessionID string) (*handleTrackEndResponse, error) {
+	s.pusher.Push(&event.PushMessage{
+		SessionID: sessionID,
+		Msg:       entity.EventArchived,
+	})
+
+	return &handleTrackEndResponse{
+		nextTrack: false,
+		err:       nil,
+	}, nil
+}
+
+func (s *SessionTimerUseCase) enqueueTrackInTransaction(ctx context.Context, sess *entity.Session) (*handleTrackEndResponse, error) {
+	logger := log.New()
+
+	track := sess.TrackURIShouldBeAddedWhenHandleTrackEnd()
+	if track != "" {
+		if err := s.playerCli.Enqueue(ctx, track, sess.DeviceID); err != nil {
+			s.handleInterrupt(sess)
+			if err := s.sessionRepo.Update(ctx, sess); err != nil {
+				logger.Errorj(map[string]interface{}{
+					"message":   "handleWaitTimerExpired: failed to update session after Enqueue and handleInterrupt",
+					"sessionID": sess.ID,
+					"error":     err.Error(),
+				})
+				return &handleTrackEndResponse{err: err}, fmt.Errorf("failed to enqueue track")
+			}
+			return &handleTrackEndResponse{nextTrack: false, err: nil}, nil
+		}
+	}
+	return nil, nil
 }
 
 // handleAllTrackFinish はキューの全ての曲の再生が終わったときの処理を行います。
