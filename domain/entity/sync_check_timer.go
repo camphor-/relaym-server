@@ -49,7 +49,7 @@ func newSyncCheckTimer() *SyncCheckTimer {
 
 	return &SyncCheckTimer{
 		stopCh:         make(chan struct{}, 2),
-		nextCh:         make(chan struct{}, 1),
+		nextCh:         make(chan struct{}, 10),
 		isTimerExpired: true,
 		timer:          timer,
 	}
@@ -63,6 +63,14 @@ func (s *SyncCheckTimer) SetDuration(d time.Duration) {
 
 	s.isTimerExpired = false
 	s.timer.Reset(d)
+}
+
+// sendToNextTrackNotToExceedCap は チャネルのキャパシティを超えないようにしながら、nextChに構造体を送ります。
+// キャパシティを超えるとチャネルにメッセージが送られないので、API Rate Limitの役割を果たしています。
+func (s *SyncCheckTimer) sendToNextTrackNotToExceedCap() {
+	if len(s.nextCh) < cap(s.nextCh) {
+		s.nextCh <- struct{}{}
+	}
 }
 
 // SyncCheckTimerManager はSpotifyとの同期チェック用のタイマーを一括して管理する構造体です。
@@ -137,7 +145,7 @@ func (m *SyncCheckTimerManager) SendToNextCh(sessionID string) error {
 	logger.Debugj(map[string]interface{}{"message": "call next ch", "sessionID": sessionID})
 
 	if timer, ok := m.timers[sessionID]; ok {
-		timer.nextCh <- struct{}{}
+		timer.sendToNextTrackNotToExceedCap()
 		return nil
 	}
 
