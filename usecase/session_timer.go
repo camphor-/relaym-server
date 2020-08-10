@@ -15,6 +15,7 @@ import (
 
 var waitTimeAfterHandleTrackEnd = 7 * time.Second
 var waitTimeAfterHandleSkipTrack = 500 * time.Millisecond
+var waitTimeRetry = 1 * time.Second
 
 type SessionTimerUseCase struct {
 	tm          *entity.SyncCheckTimerManager
@@ -46,7 +47,11 @@ func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionI
 		select {
 		case <-manager.waitTimer.C:
 			logger.Infoj(map[string]interface{}{"message": "waitTimer expired", "sessionID": sessionID})
-			if err := s.handleWaitTimerExpired(ctx, sessionID, triggerAfterTrackEnd, manager); err != nil {
+			err := s.handleWaitTimerExpired(ctx, sessionID, triggerAfterTrackEnd, manager)
+			if manager.currentOperation != operationRetryNextTrack {
+				triggerAfterTrackEnd.UnlockNextCh()
+			}
+			if err != nil {
 				return
 			}
 		case <-triggerAfterTrackEnd.StopCh():
@@ -131,16 +136,6 @@ func (s *SessionTimerUseCase) handleWaitTimerExpiredTx(sessionID string, trigger
 		logger := log.New()
 		logger.Debugj(map[string]interface{}{"message": "currentOperation", "currentOperation": manager.currentOperation})
 
-		playingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
-		if err != nil {
-			logger.Errorj(map[string]interface{}{
-				"message":   "handleWaitTimerExpired: failed to get currently playing info",
-				"sessionID": sessionID,
-				"error":     err.Error(),
-			})
-			return nil, fmt.Errorf("failed to get currently playing info")
-		}
-
 		sess, err := s.sessionRepo.FindByIDForUpdate(ctx, sessionID)
 		if err != nil {
 			logger.Errorj(map[string]interface{}{
@@ -159,11 +154,17 @@ func (s *SessionTimerUseCase) handleWaitTimerExpiredTx(sessionID string, trigger
 					returnErr = fmt.Errorf("update session id=%s: %w", sess.ID, err)
 				}
 			}
-
-			if manager.currentOperation == operationNextTrack || manager.currentOperation == operationRetryNextTrack {
-				triggerAfterTrackEnd.UnlockNextCh()
-			}
 		}()
+
+		playingInfo, err := s.playerCli.CurrentlyPlaying(ctx)
+		if err != nil {
+			logger.Errorj(map[string]interface{}{
+				"message":   "handleWaitTimerExpired: failed to get currently playing info",
+				"sessionID": sessionID,
+				"error":     err.Error(),
+			})
+			return nil, fmt.Errorf("failed to get currently playing info")
+		}
 
 		if err := sess.IsPlayingCorrectTrack(playingInfo); err != nil {
 			// NextTrackの時はエラーを返さず、Retryする
@@ -171,7 +172,7 @@ func (s *SessionTimerUseCase) handleWaitTimerExpiredTx(sessionID string, trigger
 				logger.Infoj(map[string]interface{}{
 					"message": "IsPlayingCorrectTrack failed from handleWaitTimerExpired, so retry",
 				})
-				manager.setNewTimerOnWaitTimer(waitTimeAfterHandleSkipTrack)
+				manager.setNewTimerOnWaitTimer(waitTimeRetry)
 				manager.setCurrentOperation(operationRetryNextTrack)
 				return nil, nil
 			}
@@ -218,6 +219,9 @@ func (s *SessionTimerUseCase) handleWaitTimerExpiredTx(sessionID string, trigger
 				Msg:       entity.NewEventNextTrack(sess.QueueHead),
 			})
 		}
+
+		// 処理が正常に終了
+		manager.setCurrentOperation(operationWait)
 
 		return nil, nil
 	}
@@ -337,9 +341,14 @@ type handleTrackEndResponse struct {
 type currentOperation string
 
 const (
-	operationPlay           currentOperation = "play"
-	operationNextTrack      currentOperation = "NextTrack"
+	// operationPlay はPlaybackの処理を行っています
+	operationPlay currentOperation = "play"
+	// operationNextTrack は曲の終了、もしくはSkipの処理を行っています
+	operationNextTrack currentOperation = "NextTrack"
+	// operationRetryNextTrack はNextTrackの処理をRetryしています
 	operationRetryNextTrack currentOperation = "RetryNextTrack"
+	// operationWait は処理を受け付けている状態です
+	operationWait currentOperation = "Wait"
 )
 
 type startTrackEndTriggerManager struct {
