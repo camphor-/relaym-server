@@ -828,7 +828,8 @@ func TestUserHandler_GetActiveDevices(t *testing.T) {
 	}
 }
 
-func TestUserHandler_NextTrack(t *testing.T) {
+// 正常系のテストケースはトランザクションの中を確かめる必要があるので、 usecase/session_state_test.go で行っている
+func TestSessionHandler_NextTrack(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -845,79 +846,13 @@ func TestUserHandler_NextTrack(t *testing.T) {
 		wantCode                 int
 	}{
 		{
-			name:                   "STOPかつ次の曲が存在する時に次の曲にSTOPのまま遷移,202",
-			sessionID:              "sessionID",
-			userID:                 "userID",
-			addToTimerSessionID:    "sessionID",
-			prepareMockPlayerCliFn: func(m *mock_spotify.MockPlayer) {},
-			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(
-					&entity.Session{
-						ID:        "sessionID",
-						Name:      "name",
-						CreatorID: "creatorID",
-						DeviceID:  "deviceID",
-						StateType: "STOP",
-						QueueHead: 0,
-						QueueTracks: []*entity.QueueTrack{
-							{
-								Index:     0,
-								URI:       "spotify:track:track_uri1",
-								SessionID: "sessionID",
-							},
-							{
-								Index:     1,
-								URI:       "spotify:track:track_uri2",
-								SessionID: "sessionID",
-							},
-						},
-						ExpiredAt:              time.Time{},
-						AllowToControlByOthers: true,
-						ProgressWhenPaused:     0,
-					}, nil)
-				m.EXPECT().Update(gomock.Any(), &entity.Session{
-					ID:        "sessionID",
-					Name:      "name",
-					CreatorID: "creatorID",
-					DeviceID:  "deviceID",
-					StateType: "STOP",
-					QueueHead: 1,
-					QueueTracks: []*entity.QueueTrack{
-						{
-							Index:     0,
-							URI:       "spotify:track:track_uri1",
-							SessionID: "sessionID",
-						},
-						{
-							Index:     1,
-							URI:       "spotify:track:track_uri2",
-							SessionID: "sessionID",
-						},
-					},
-					ExpiredAt:              time.Time{},
-					AllowToControlByOthers: true,
-					ProgressWhenPaused:     0,
-				}).Return(nil)
-			},
-			prepareMockPusherFn: func(m *mock_event.MockPusher) {
-				m.EXPECT().Push(&event.PushMessage{
-					SessionID: "sessionID",
-					Msg:       entity.NewEventNextTrack(1),
-				})
-			},
-			prepareMockTrackCliFn: func(m *mock_spotify.MockTrackClient) {},
-			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
-			wantErr:               false,
-			wantCode:              http.StatusAccepted,
-		},
-		{
 			name:                   "STOPかつ次の曲が存在しない時にErrNextQueueTrackNotFound,400",
 			sessionID:              "sessionID",
 			userID:                 "userID",
 			addToTimerSessionID:    "sessionID",
 			prepareMockPlayerCliFn: func(m *mock_spotify.MockPlayer) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(
 					&entity.Session{
 						ID:        "sessionID",
 						Name:      "name",
@@ -941,6 +876,7 @@ func TestUserHandler_NextTrack(t *testing.T) {
 						AllowToControlByOthers: true,
 						ProgressWhenPaused:     0,
 					}, nil)
+				m.EXPECT().DoInTx(gomock.Any(), gomock.Any()).Return(nil, entity.ErrNextQueueTrackNotFound)
 			},
 			prepareMockPusherFn:   func(m *mock_event.MockPusher) {},
 			prepareMockTrackCliFn: func(m *mock_spotify.MockTrackClient) {},
@@ -955,7 +891,7 @@ func TestUserHandler_NextTrack(t *testing.T) {
 			addToTimerSessionID:    "sessionID",
 			prepareMockPlayerCliFn: func(m *mock_spotify.MockPlayer) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(
 					&entity.Session{
 						ID:                     "sessionID",
 						Name:                   "name",
@@ -981,10 +917,9 @@ func TestUserHandler_NextTrack(t *testing.T) {
 			userID:              "userID",
 			addToTimerSessionID: "sessionID",
 			prepareMockPlayerCliFn: func(m *mock_spotify.MockPlayer) {
-				m.EXPECT().GoNextTrack(gomock.Any(), "deviceID").Return(nil)
 			},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(
 					&entity.Session{
 						ID:                     "sessionID",
 						Name:                   "name",
@@ -1011,7 +946,7 @@ func TestUserHandler_NextTrack(t *testing.T) {
 			addToTimerSessionID:    "sessionID",
 			prepareMockPlayerCliFn: func(m *mock_spotify.MockPlayer) {},
 			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(
+				m.EXPECT().FindByIDForUpdate(gomock.Any(), "sessionID").Return(
 					&entity.Session{
 						ID:                     "sessionID",
 						Name:                   "name",
@@ -1031,165 +966,6 @@ func TestUserHandler_NextTrack(t *testing.T) {
 			wantErr:               true,
 			wantCode:              http.StatusBadRequest,
 		},
-		{
-			name:                "Pauseかつ次の曲が存在すると次の曲に遷移し、202",
-			sessionID:           "sessionID",
-			userID:              "userID",
-			addToTimerSessionID: "sessionID",
-			prepareMockPlayerCliFn: func(m *mock_spotify.MockPlayer) {
-				m.EXPECT().GoNextTrack(gomock.Any(), "deviceID").Return(nil)
-				m.EXPECT().Pause(gomock.Any(), "deviceID").Return(nil)
-			},
-			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(
-					&entity.Session{
-						ID:        "sessionID",
-						Name:      "name",
-						CreatorID: "creatorID",
-						DeviceID:  "deviceID",
-						StateType: "PAUSE",
-						QueueHead: 0,
-						QueueTracks: []*entity.QueueTrack{
-							{
-								Index:     0,
-								URI:       "spotify:track:track_uri1",
-								SessionID: "sessionID",
-							},
-							{
-								Index:     1,
-								URI:       "spotify:track:track_uri2",
-								SessionID: "sessionID",
-							},
-						},
-						ExpiredAt:              time.Time{},
-						AllowToControlByOthers: true,
-						ProgressWhenPaused:     0,
-					}, nil)
-				m.EXPECT().Update(gomock.Any(), &entity.Session{
-					ID:        "sessionID",
-					Name:      "name",
-					CreatorID: "creatorID",
-					DeviceID:  "deviceID",
-					StateType: "PAUSE",
-					QueueHead: 1,
-					QueueTracks: []*entity.QueueTrack{
-						{
-							Index:     0,
-							URI:       "spotify:track:track_uri1",
-							SessionID: "sessionID",
-						},
-						{
-							Index:     1,
-							URI:       "spotify:track:track_uri2",
-							SessionID: "sessionID",
-						},
-					},
-					ExpiredAt:              time.Time{},
-					AllowToControlByOthers: true,
-					ProgressWhenPaused:     0,
-				})
-			},
-			prepareMockPusherFn: func(m *mock_event.MockPusher) {
-				m.EXPECT().Push(&event.PushMessage{
-					SessionID: "sessionID",
-					Msg:       entity.NewEventNextTrack(1),
-				})
-			},
-			prepareMockTrackCliFn: func(m *mock_spotify.MockTrackClient) {},
-			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
-			wantErr:               false,
-			wantCode:              http.StatusAccepted,
-		},
-		{
-			name:                "Pauseかつ次の曲が3曲存在すると次の曲に遷移し、三曲先がEnqueueされ、202",
-			sessionID:           "sessionID",
-			userID:              "userID",
-			addToTimerSessionID: "sessionID",
-			prepareMockPlayerCliFn: func(m *mock_spotify.MockPlayer) {
-				m.EXPECT().GoNextTrack(gomock.Any(), "deviceID").Return(nil)
-				m.EXPECT().Pause(gomock.Any(), "deviceID").Return(nil)
-				m.EXPECT().Enqueue(gomock.Any(), "spotify:track:track_uri4", "deviceID").Return(nil)
-			},
-			prepareMockSessionRepoFn: func(m *mock_repository.MockSession) {
-				m.EXPECT().FindByID(gomock.Any(), "sessionID").Return(
-					&entity.Session{
-						ID:        "sessionID",
-						Name:      "name",
-						CreatorID: "creatorID",
-						DeviceID:  "deviceID",
-						StateType: "PAUSE",
-						QueueHead: 0,
-						QueueTracks: []*entity.QueueTrack{
-							{
-								Index:     0,
-								URI:       "spotify:track:track_uri1",
-								SessionID: "sessionID",
-							},
-							{
-								Index:     1,
-								URI:       "spotify:track:track_uri2",
-								SessionID: "sessionID",
-							},
-							{
-								Index:     2,
-								URI:       "spotify:track:track_uri3",
-								SessionID: "sessionID",
-							},
-							{
-								Index:     3,
-								URI:       "spotify:track:track_uri4",
-								SessionID: "sessionID",
-							},
-						},
-						ExpiredAt:              time.Time{},
-						AllowToControlByOthers: true,
-						ProgressWhenPaused:     0,
-					}, nil)
-				m.EXPECT().Update(gomock.Any(), &entity.Session{
-					ID:        "sessionID",
-					Name:      "name",
-					CreatorID: "creatorID",
-					DeviceID:  "deviceID",
-					StateType: "PAUSE",
-					QueueHead: 1,
-					QueueTracks: []*entity.QueueTrack{
-						{
-							Index:     0,
-							URI:       "spotify:track:track_uri1",
-							SessionID: "sessionID",
-						},
-						{
-							Index:     1,
-							URI:       "spotify:track:track_uri2",
-							SessionID: "sessionID",
-						},
-						{
-							Index:     2,
-							URI:       "spotify:track:track_uri3",
-							SessionID: "sessionID",
-						},
-						{
-							Index:     3,
-							URI:       "spotify:track:track_uri4",
-							SessionID: "sessionID",
-						},
-					},
-					ExpiredAt:              time.Time{},
-					AllowToControlByOthers: true,
-					ProgressWhenPaused:     0,
-				})
-			},
-			prepareMockPusherFn: func(m *mock_event.MockPusher) {
-				m.EXPECT().Push(&event.PushMessage{
-					SessionID: "sessionID",
-					Msg:       entity.NewEventNextTrack(1),
-				})
-			},
-			prepareMockTrackCliFn: func(m *mock_spotify.MockTrackClient) {},
-			prepareMockUserRepoFn: func(m *mock_repository.MockUser) {},
-			wantErr:               false,
-			wantCode:              http.StatusAccepted,
-		},
 	}
 
 	for _, tt := range tests {
@@ -1198,7 +974,7 @@ func TestUserHandler_NextTrack(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPut, "/", nil)
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
-			c.SetPath("/sessions/:id/devices")
+			c.SetPath("/sessions/:id/next")
 			c.SetParamNames("id")
 			c.SetParamValues(tt.sessionID)
 			c = setToContext(c, tt.userID, nil)

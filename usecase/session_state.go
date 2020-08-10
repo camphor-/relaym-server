@@ -70,7 +70,16 @@ func (s *SessionStateUseCase) nextTrackInPlay(ctx context.Context, sessionID str
 
 // nextTrackInPause はsessionのstateがPAUSEの時のnextTrackの処理を行います
 func (s *SessionStateUseCase) nextTrackInPause(ctx context.Context, sessionID string) error {
-	_, err := s.sessionRepo.DoInTx(ctx, func(ctx context.Context) (interface{}, error) {
+	_, err := s.sessionRepo.DoInTx(ctx, s.nextTrackInPauseTx(sessionID))
+	if err != nil {
+		return fmt.Errorf("nextTrackInPause transaction: %w", err)
+	}
+
+	return nil
+}
+
+func (s *SessionStateUseCase) nextTrackInPauseTx(sessionID string) func(ctx context.Context) (interface{}, error) {
+	return func(ctx context.Context) (interface{}, error) {
 		session, err := s.sessionRepo.FindByIDForUpdate(ctx, sessionID)
 		if err != nil {
 			return nil, fmt.Errorf("find session: %w", err)
@@ -108,18 +117,22 @@ func (s *SessionStateUseCase) nextTrackInPause(ctx context.Context, sessionID st
 			Msg:       entity.NewEventNextTrack(session.QueueHead),
 		})
 		return nil, nil
-	})
-	if err != nil {
-		return fmt.Errorf("nextTrackInPause transaction: %w", err)
 	}
-
-	return nil
 }
 
 // nextTrackInStop はsessionのstateがSTOPの時のnextTrackの処理を行います
 // stopToPlayで曲がResetされ、再度Spotifyのキューに積まれるため、Enqueueを行っていません
 func (s *SessionStateUseCase) nextTrackInStop(ctx context.Context, sessionID string) error {
-	_, err := s.sessionRepo.DoInTx(ctx, func(ctx context.Context) (interface{}, error) {
+	_, err := s.sessionRepo.DoInTx(ctx, s.nextTrackInStopTx(sessionID))
+	if err != nil {
+		return fmt.Errorf("nextTrackInStop transaction: %w", err)
+	}
+
+	return nil
+}
+
+func (s *SessionStateUseCase) nextTrackInStopTx(sessionID string) func(ctx context.Context) (interface{}, error) {
+	return func(ctx context.Context) (interface{}, error) {
 		session, err := s.sessionRepo.FindByIDForUpdate(ctx, sessionID)
 		if err != nil {
 			return nil, fmt.Errorf("find session :%w", err)
@@ -146,12 +159,7 @@ func (s *SessionStateUseCase) nextTrackInStop(ctx context.Context, sessionID str
 		})
 
 		return nil, nil
-	})
-	if err != nil {
-		return fmt.Errorf("nextTrackInStop transaction: %w", err)
 	}
-
-	return nil
 }
 
 // ChangeSessionState は与えられたセッションのstateを操作します。
