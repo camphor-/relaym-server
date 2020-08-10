@@ -160,7 +160,7 @@ func (s *SessionTimerUseCase) handleWaitTimerExpiredTx(sessionID string, trigger
 				}
 			}
 
-			if manager.currentOperation == operationNextTrack {
+			if manager.currentOperation == operationNextTrack || manager.currentOperation == operationRetryNextTrack {
 				triggerAfterTrackEnd.UnlockNextCh()
 			}
 		}()
