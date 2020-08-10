@@ -44,11 +44,11 @@ func (s *SessionStateUseCase) NextTrack(ctx context.Context, sessionID string) e
 			return fmt.Errorf("go next track in play session id=%s: %w", session.ID, err)
 		}
 	case entity.Pause:
-		if err = s.nextTrackInPause(ctx, session); err != nil {
+		if err = s.nextTrackInPause(ctx, sessionID); err != nil {
 			return fmt.Errorf("go next track in pause session id=%s: %w", session.ID, err)
 		}
 	case entity.Stop:
-		if err = s.nextTrackInStop(ctx, session); err != nil {
+		if err = s.nextTrackInStop(ctx, sessionID); err != nil {
 			return fmt.Errorf("go next track in stop session id=%s: %w", session.ID, err)
 		}
 	case entity.Archived:
@@ -73,66 +73,87 @@ func (s *SessionStateUseCase) nextTrackInPlay(ctx context.Context, session *enti
 }
 
 // nextTrackInPause はsessionのstateがPAUSEの時のnextTrackの処理を行います
-func (s *SessionStateUseCase) nextTrackInPause(ctx context.Context, session *entity.Session) error {
-	if err := s.playerCli.GoNextTrack(ctx, session.DeviceID); err != nil {
-		return fmt.Errorf("GoNextTrack: %w", err)
-	}
+func (s *SessionStateUseCase) nextTrackInPause(ctx context.Context, sessionID string) error {
+	_, err := s.sessionRepo.DoInTx(ctx, func(ctx context.Context) (interface{}, error) {
+		session, err := s.sessionRepo.FindByIDForUpdate(ctx, sessionID)
+		if err != nil {
+			return nil, fmt.Errorf("find session: %w", err)
+		}
+		if err := s.playerCli.GoNextTrack(ctx, session.DeviceID); err != nil {
+			return nil, fmt.Errorf("GoNextTrack: %w", err)
+		}
 
-	if err := session.GoNextTrack(); err != nil && errors.Is(err, entity.ErrSessionAllTracksFinished) {
-		s.timerUC.handleAllTrackFinish(session)
+		if err := session.GoNextTrack(); err != nil && errors.Is(err, entity.ErrSessionAllTracksFinished) {
+			s.timerUC.handleAllTrackFinish(session)
+			if err := s.sessionRepo.Update(ctx, session); err != nil {
+				return nil, fmt.Errorf("update session id=%s: %w", session.ID, err)
+			}
+			return nil, nil
+		}
+
+		// GoNextTrackだけだと次の曲の再生が始まってしまう
+		if err := s.playerCli.Pause(ctx, session.DeviceID); err != nil {
+			return nil, fmt.Errorf("call pause api: %w", err)
+		}
+
 		if err := s.sessionRepo.Update(ctx, session); err != nil {
-			return fmt.Errorf("update session id=%s: %w", session.ID, err)
+			return nil, fmt.Errorf("update session id=%s: %w", session.ID, err)
 		}
-		return nil
-	}
 
-	// GoNextTrackだけだと次の曲の再生が始まってしまう
-	if err := s.playerCli.Pause(ctx, session.DeviceID); err != nil {
-		return fmt.Errorf("call pause api: %w", err)
-	}
-
-	if err := s.sessionRepo.Update(ctx, session); err != nil {
-		return fmt.Errorf("update session id=%s: %w", session.ID, err)
-	}
-
-	track := session.TrackURIShouldBeAddedWhenHandleTrackEnd()
-	if track != "" {
-		if err := s.playerCli.Enqueue(ctx, track, session.DeviceID); err != nil {
-			return fmt.Errorf("enqueue error session id=%s: %w", session.ID, err)
+		track := session.TrackURIShouldBeAddedWhenHandleTrackEnd()
+		if track != "" {
+			if err := s.playerCli.Enqueue(ctx, track, session.DeviceID); err != nil {
+				return nil, fmt.Errorf("enqueue error session id=%s: %w", session.ID, err)
+			}
 		}
-	}
 
-	s.pusher.Push(&event.PushMessage{
-		SessionID: session.ID,
-		Msg:       entity.NewEventNextTrack(session.QueueHead),
+		s.pusher.Push(&event.PushMessage{
+			SessionID: session.ID,
+			Msg:       entity.NewEventNextTrack(session.QueueHead),
+		})
+		return nil, nil
 	})
+	if err != nil {
+		return fmt.Errorf("nextTrackInPause transaction: %w", err)
+	}
 
 	return nil
 }
 
 // nextTrackInStop はsessionのstateがSTOPの時のnextTrackの処理を行います
 // stopToPlayで曲がResetされ、再度Spotifyのキューに積まれるため、Enqueueを行っていません
-func (s *SessionStateUseCase) nextTrackInStop(ctx context.Context, session *entity.Session) error {
-	if !session.IsNextTrackExistWhenStateIsStop() {
-		return fmt.Errorf("nextTrackInStop: %w", entity.ErrNextQueueTrackNotFound)
-	}
-
-	if err := session.GoNextTrack(); err != nil && errors.Is(err, entity.ErrSessionAllTracksFinished) {
-		s.timerUC.handleAllTrackFinish(session)
-		if err := s.sessionRepo.Update(ctx, session); err != nil {
-			return fmt.Errorf("update session id=%s: %w", session.ID, err)
+func (s *SessionStateUseCase) nextTrackInStop(ctx context.Context, sessionID string) error {
+	_, err := s.sessionRepo.DoInTx(ctx, func(ctx context.Context) (interface{}, error) {
+		session, err := s.sessionRepo.FindByIDForUpdate(ctx, sessionID)
+		if err != nil {
+			return nil, fmt.Errorf("find session :%w", err)
 		}
-		return nil
-	}
+		if !session.IsNextTrackExistWhenStateIsStop() {
+			return nil, fmt.Errorf("nextTrackInStop: %w", entity.ErrNextQueueTrackNotFound)
+		}
 
-	if err := s.sessionRepo.Update(ctx, session); err != nil {
-		return fmt.Errorf("update session id=%s: %w", session.ID, err)
-	}
+		if err := session.GoNextTrack(); err != nil && errors.Is(err, entity.ErrSessionAllTracksFinished) {
+			s.timerUC.handleAllTrackFinish(session)
+			if err := s.sessionRepo.Update(ctx, session); err != nil {
+				return nil, fmt.Errorf("update session id=%s: %w", session.ID, err)
+			}
+			return nil, nil
+		}
 
-	s.pusher.Push(&event.PushMessage{
-		SessionID: session.ID,
-		Msg:       entity.NewEventNextTrack(session.QueueHead),
+		if err := s.sessionRepo.Update(ctx, session); err != nil {
+			return nil, fmt.Errorf("update session id=%s: %w", session.ID, err)
+		}
+
+		s.pusher.Push(&event.PushMessage{
+			SessionID: sessionID,
+			Msg:       entity.NewEventNextTrack(session.QueueHead),
+		})
+
+		return nil, nil
 	})
+	if err != nil {
+		return fmt.Errorf("nextTrackInStop transaction: %w", err)
+	}
 
 	return nil
 }
