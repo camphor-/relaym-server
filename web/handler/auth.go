@@ -3,10 +3,8 @@ package handler
 import (
 	"net/http"
 
-	"github.com/camphor-/relaym-server/log"
-
 	"github.com/camphor-/relaym-server/config"
-
+	"github.com/camphor-/relaym-server/log"
 	"github.com/camphor-/relaym-server/usecase"
 	"github.com/labstack/echo/v4"
 )
@@ -67,6 +65,11 @@ func (h *AuthHandler) Callback(c echo.Context) error {
 		return c.Redirect(http.StatusFound, h.frontendURL+"?err=spotifyAuthFailed")
 	}
 
+	sameSite := http.SameSiteNoneMode
+	if config.IsLocal() {
+		sameSite = http.SameSiteLaxMode
+	}
+
 	c.SetCookie(&http.Cookie{
 		Name:     "session",
 		Value:    sessionID,
@@ -74,7 +77,7 @@ func (h *AuthHandler) Callback(c echo.Context) error {
 		MaxAge:   sevenDays,
 		Secure:   !config.IsLocal(),
 		HttpOnly: true,
-		SameSite: http.SameSiteNoneMode,
+		SameSite: sameSite,
 	})
 
 	return c.Redirect(http.StatusFound, redirectURL)
