@@ -49,3 +49,10 @@ deploy-prod:
 	$(ENV_PROD) docker-compose -f docker/docker-compose.deps.base.yml -f docker/docker-compose.deps.prod.yml -p prod up -d
 	$(ENV_PROD) ENV_FILE=$(ENV_PROD_FILE) docker-compose -f docker/docker-compose.base.yml -f docker/docker-compose.prod.yml -p prod stop
 	$(ENV_PROD) ENV_FILE=$(ENV_PROD_FILE) docker-compose -f docker/docker-compose.base.yml -f docker/docker-compose.prod.yml -p prod up -d
+
+.PHONY: deploy-dev-from-github-action
+deploy-dev-from-github-action:
+	docker-compose --context konoe -f docker/docker-compose.dev.yml pull
+	$(ENV_DEV) docker-compose --context konoe -f docker/docker-compose.deps.base.yml -f docker/docker-compose.deps.dev.yml -p dev up -d
+	$(ENV_DEV) ENV_FILE=$(ENV_DEV_FILE) docker-compose --context konoe -f docker/docker-compose.base.yml -f docker/docker-compose.dev.yml -p dev stop
+	$(ENV_DEV) ENV_FILE=$(ENV_DEV_FILE) docker-compose --context konoe -f docker/docker-compose.base.yml -f docker/docker-compose.dev.yml -p dev up -d
