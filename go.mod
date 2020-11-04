@@ -1,6 +1,6 @@
 module github.com/camphor-/relaym-server
 
-go 1.14
+go 1.15
 
 require (
 	github.com/go-gorp/gorp/v3 v3.0.2
