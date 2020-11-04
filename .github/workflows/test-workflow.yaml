@@ -1,0 +1,15 @@
+name: test-workflow
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Get dependencies
+      run: |
+        echo "Hello from folked repository"
