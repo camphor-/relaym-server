@@ -12,4 +12,5 @@ jobs:
     steps:
     - name: Get dependencies
       run: |
-        echo "Hello from folked repository"
+        echo "Hello from folked repository ${ secrets.HOGE }"
+        
