@@ -12,5 +12,8 @@ jobs:
     steps:
     - name: Get dependencies
       run: |
+        if [ -z "${{ secrets.HOGE }}" ]; then
+        echo "empty"
+        fi
         echo "Hello from folked repository ${{ secrets.HOGE }}"
         
