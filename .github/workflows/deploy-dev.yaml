@@ -60,9 +60,9 @@ jobs:
       - name: deploy relaym-server-dev
         run: |
           docker pull registry.camph.net/relaym-server-dev:latest
-          docker-compose --context konoe-host -f docker/docker-compose.deps.base.yml -f docker/docker-compose.deps.dev.yml -p dev up -d
-          docker-compose --context konoe-host -f docker/docker-compose.base.yml -f docker/docker-compose.dev.yml -p dev stop
-          docker-compose --context konoe-host -f docker/docker-compose.base.yml -f docker/docker-compose.dev.yml -p dev up -d
+          docker-compose --context konoe -f docker/docker-compose.deps.base.yml -f docker/docker-compose.deps.dev.yml -p dev up -d
+          docker-compose --context konoe -f docker/docker-compose.base.yml -f docker/docker-compose.dev.yml -p dev stop
+          docker-compose --context konoe -f docker/docker-compose.base.yml -f docker/docker-compose.dev.yml -p dev up -d
         env:
           ENV: ${{ secrets.DEV_ENV }}
           DB_DATABASE: ${{ secrets.DEV_DATABASE }}
