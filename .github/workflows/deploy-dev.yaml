@@ -1,26 +1,36 @@
-name: Deploy dev environment
+name: Build and Deploy dev environment
 
 on:
   push:
     branches:
       - master
+      - githubaction-build-and-deploy #TODO: delete
     paths-ignore:
     - 'docs/**'
-    
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Publish Docker
-        uses: elgohr/Publish-Docker-Github-Action@2.12
-        with:
-          name: relaym-server-dev
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-          registry: registry.camph.net
-          dockerfile: docker/Dockerfile
-      - name: Notify to Rundeck
-        uses: wei/curl@v1.1.1
-        with:
-          args: https://${{ secrets.RUNDECK_DOMAIN }}/api/1/job/${{ secrets.RUNDECK_JOB_ID }}/run?authtoken=${{ secrets.RUNDECK_TOKEN }} -X POST
+
+  jobs:
+    build:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Set up Docker Buildx
+          uses: docker/setup-buildx-action@v1
+        - name: Login to Docker Registry
+          uses: docker/login-action@v1
+          with:
+            registry: registry.camph.net
+            username: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
+            password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+        - name: Check out
+          uses: actions/checkout@v2
+        - name: Build and push
+          uses: docker/build-push-action@v2
+          with:
+            push: true
+            tags: registry.camph.net/relaym-server-dev:latest
+            context: .
+            file: ./docker/Dockerfile
+        - name: Notify to Slack
+          uses: craftech-io/slack-action@v1
+          with:
+            slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          if: failure()
