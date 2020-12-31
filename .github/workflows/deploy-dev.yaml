@@ -34,3 +34,44 @@ jobs:
         with:
           slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
         if: failure()
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.KONOE_SSH_KEY }}
+          name: id_rsa
+          known_hosts: ${{ secrets.KONOE_KNOWN_HOSTS }}
+      - name: Login to Docker Registry
+        uses: docker/login-action@v1
+        with:
+          registry: registry.camph.net
+          username: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
+          password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+      - name: Check out
+        uses: actions/checkout@v2
+      - name: deploy
+        run: |
+          make deploy-dev
+        env:
+          ENV: ${{ secrets.DEV_ENV }}
+          DB_DATABASE: ${{ secrets.DEV_DATABASE }}
+          DB_USER: ${{ secrets.DEV_DB_USER }}
+          DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD }}
+          DB_ROOT_PASSWORD: ${{ secrets.DEV_DB_ROOT_PASSWORD }}
+          DB_HOST: ${{ secrets.DEV_DB_HOST }}
+          DB_PORT: ${{ secrets.DEV_DB_PORT }}
+          SPOTIFY_REDIRECT_URL: ${{ secrets.DEV_SPOTIFY_REDIRECT_URL }}
+          PORT: ${{ secrets.DEV_PORT }}
+          SPOTIFY_CLIENT_ID: ${{ secrets.DEV_SPOTIFY_CLIENT_ID }}
+          SPOTIFY_CLIENT_SECRET: ${{ secrets.DEV_SPOTIFY_CLIENT_SECRET }}
+          CORS_ALLOW_ORIGIN: ${{ secrets.DEV_CORS_ALLOW_ORIGIN }}
+          FRONTEND_URL: ${{ secrets.DEV_FRONTEND_URL }}
+      - name: Notify to Slack
+        uses: craftech-io/slack-action@v1
+        with:
+          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: always()
