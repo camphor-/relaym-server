@@ -36,13 +36,6 @@ run-db-local:
 generate:
 	go generate ./...
 
-.PHONY: deploy-dev
-deploy-dev:
-	docker pull registry.camph.net/relaym-server-dev:latest
-	docker-compose -f docker/docker-compose.deps.base.yml -f docker/docker-compose.deps.dev.yml -p dev up -d
-	docker-compose -f docker/docker-compose.base.yml -f docker/docker-compose.dev.yml -p dev stop
-	docker-compose -f docker/docker-compose.base.yml -f docker/docker-compose.dev.yml -p dev up -d
-
 .PHONY: deploy-prod
 deploy-prod:
 	docker pull registry.camph.net/relaym-server-prod:latest
