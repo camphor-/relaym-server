@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - githubaction-build-and-deploy #TODO: delete
     paths-ignore:
     - 'docs/**'
 
