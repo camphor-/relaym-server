@@ -65,7 +65,7 @@ jobs:
           docker-compose --context konoe -f docker/docker-compose.base.yml -f docker/docker-compose.dev.yml -p dev up -d
         env:
           ENV: ${{ secrets.DEV_ENV }}
-          DB_DATABASE: ${{ secrets.DEV_DATABASE }}
+          DB_DATABASE: ${{ secrets.DEV_DB_DATABASE }}
           DB_USER: ${{ secrets.DEV_DB_USER }}
           DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD }}
           DB_ROOT_PASSWORD: ${{ secrets.DEV_DB_ROOT_PASSWORD }}
