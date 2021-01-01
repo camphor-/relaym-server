@@ -5,8 +5,6 @@ services:
     container_name: relaym-server-dev
     networks:
       - microservices
-    ports:
-      - 127.0.0.1:8091:${PORT}
 networks:
   microservices:
     external: true
