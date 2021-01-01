@@ -1,8 +1,20 @@
 version: "3.7"
 services:
   relaym-server:
-    env_file:
-      - ../${ENV_FILE}
+    environment:
+      - ENV
+      - DB_DATABASE
+      - DB_USER
+      - DB_PASSWORD
+      - DB_ROOT_PASSWORD
+      - DB_HOST
+      - DB_PORT
+      - SPOTIFY_REDIRECT_URL
+      - PORT
+      - SPOTIFY_CLIENT_ID
+      - SPOTIFY_CLIENT_SECRET
+      - CORS_ALLOW_ORIGIN
+      - FRONTEND_URL
     restart: always
     tty: true
     networks:
