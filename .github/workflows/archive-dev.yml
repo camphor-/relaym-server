@@ -1,0 +1,18 @@
+name: archive sessions dev
+on:
+  schedule:
+    - cron: "0 20 * * *" # 04:00 JST (20:00 UTC)
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: call API for archive
+        run: "curl -X POST https://$DEV_HOST/api/v3/batch/archive -H 'X-CSRF-Token: relaym'"
+        env:
+          DEV_HOST: ${{ secrets.DEV_API_HOST }}
+      - name: Notify to Slack
+        uses: craftech-io/slack-action@v1
+        with:
+          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: failure()

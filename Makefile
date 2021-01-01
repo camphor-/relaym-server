@@ -1,9 +1,5 @@
 ENV_LOCAL_FILE := env.local
 ENV_LOCAL = $(shell cat $(ENV_LOCAL_FILE))
-ENV_DEV_FILE := env.dev
-ENV_DEV = $(shell cat $(ENV_DEV_FILE))
-ENV_PROD_FILE := env.prod
-ENV_PROD = $(shell cat $(ENV_PROD_FILE))
 ENV_TEST_FILE := env.test
 ENV_TEST = $(shell cat $(ENV_TEST_FILE))
 
