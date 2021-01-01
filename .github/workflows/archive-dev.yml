@@ -12,7 +12,7 @@ jobs:
       - name: install cURL
         run:  apt-get install curl
       - name: call API for archive
-        run:  curl -X POST https://$DEV_HOST/api/v3/batch/archive -H "X-CSRF-Token: relaym"
+        run: "curl -X POST https://$DEV_HOST/api/v3/batch/archive -H 'X-CSRF-Token: relaym'"
         env:
           DEV_HOST: ${{ secrets.DEV_API_HOST }}
       - name: Notify to Slack
