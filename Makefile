@@ -36,9 +36,3 @@ run-db-local:
 generate:
 	go generate ./...
 
-.PHONY: deploy-prod
-deploy-prod:
-	docker pull registry.camph.net/relaym-server-prod:latest
-	$(ENV_PROD) docker-compose -f docker/docker-compose.deps.base.yml -f docker/docker-compose.deps.prod.yml -p prod up -d
-	$(ENV_PROD) ENV_FILE=$(ENV_PROD_FILE) docker-compose -f docker/docker-compose.base.yml -f docker/docker-compose.prod.yml -p prod stop
-	$(ENV_PROD) ENV_FILE=$(ENV_PROD_FILE) docker-compose -f docker/docker-compose.base.yml -f docker/docker-compose.prod.yml -p prod up -d
