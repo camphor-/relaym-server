@@ -1,0 +1,19 @@
+name: archive sessions prod
+on:
+  schedule:
+    - cron: "0 20 * * *" # 04:00 JST (20:00 UTC)
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: install cURL
+        run:  sudo apt-get install curl
+      - name: call API for archive
+        run: "curl -X POST https://relaym-api.camph.net/api/v3/batch/archive -H 'X-CSRF-Token: relaym'"
+      - name: Notify to Slack
+        uses: craftech-io/slack-action@v1
+        with:
+          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: failure()
+

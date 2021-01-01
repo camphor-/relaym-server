@@ -1,8 +1,5 @@
 name: archive sessions dev
 on:
-  push:
-    branchs:
-      - githubaction-batch
   schedule:
     - cron: "0 20 * * *" # 04:00 JST (20:00 UTC)
 
