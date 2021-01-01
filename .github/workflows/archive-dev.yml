@@ -12,7 +12,7 @@ jobs:
       - name: install cURL
         run:  apt-get install curl
       - name: call API for archive
-        run:  curl -X POST 'https://${{ secrets.DEV_API_HOST }}/api/v3/batch/archive' -H 'X-CSRF-Token: relaym'
+        run:  curl -X POST https://${{ secrets.DEV_API_HOST }}/api/v3/batch/archive -H 'X-CSRF-Token: relaym'
       - name: Notify to Slack
         uses: craftech-io/slack-action@v1
         with:
