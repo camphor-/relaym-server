@@ -30,6 +30,17 @@ mysql: [Warning] Using a password on the command line interface can be insecure.
 +---+
 ```
 
+### M1 mac
+
+M1 macでは`--platform linux/amd64`を指定して事前に`docker pull`をする必要がある場合があります。
+
+> ARM64 アーキテクチャー向けのイメージがすべて利用可能となっているわけではありません。 Intel イメージの実行には、エミュレーションのもとで--platform linux/amd64をつけて実行することが必要です。 特に mysql イメージは ARM64 向けには利用できません。 これに対する当面の対処としては mariadb イメージを利用してください。
+https://matsuand.github.io/docs.docker.jp.onthefly/docker-for-mac/apple-silicon/
+
+```bash
+docker pull --platform linux/amd64 mysql:8.0
+```
+
 ## マイグレーション
 
 1. skeemaをインストール
