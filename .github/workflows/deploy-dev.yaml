@@ -2,10 +2,6 @@ name: Build and Deploy dev environment
 
 on:
   push:
-    branches:
-      - master
-    paths-ignore:
-    - 'docs/**'
 
 jobs:
   build:
