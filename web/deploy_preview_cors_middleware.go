@@ -18,7 +18,7 @@ type deployPreviewCorsMiddleware struct {
 
 func newDeployPreviewCorsMiddleware(allowHeaders []string, allowCredentials bool) *deployPreviewCorsMiddleware {
 	return &deployPreviewCorsMiddleware{
-		re:               regexp.MustCompile("https://deploy-preview-[0-9]+--relaym.netlify.app"),
+		re:               regexp.MustCompile("^https://deploy-preview-[0-9]+--relaym.netlify.app$"),
 		allowHeaders:     allowHeaders,
 		allowCredentials: allowCredentials,
 	}

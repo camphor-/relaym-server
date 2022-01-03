@@ -22,6 +22,11 @@ func Test_deployPreviewCorsMiddleware_IsDeployPreviewOrigin(t *testing.T) {
 			origin: "https://deploy-preview-191--relaym2.netlify.app",
 			want:   false,
 		},
+		{
+			name:   "前後に変な文字が入ってもfalse",
+			origin: "https://evil.example.com/https://deploy-preview-191--relaym.netlify.app/hoge",
+			want:   false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
