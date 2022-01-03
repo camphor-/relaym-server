@@ -13,18 +13,33 @@ func Test_deployPreviewCorsMiddleware_IsDeployPreviewOrigin(t *testing.T) {
 		want   bool
 	}{
 		{
-			name:   "正しいデプロイプレビューのURLならtrue",
+			name:   "Netlify: 正しいデプロイプレビューのURLならtrue",
 			origin: "https://deploy-preview-191--relaym.netlify.app",
 			want:   true,
 		},
 		{
-			name:   "別ののURLならfalse",
+			name:   "Netlify: 別ののURLならfalse",
 			origin: "https://deploy-preview-191--relaym2.netlify.app",
 			want:   false,
 		},
 		{
-			name:   "前後に変な文字が入ってもfalse",
+			name:   "Netlify: 前後に変な文字が入ってもfalse",
 			origin: "https://evil.example.com/https://deploy-preview-191--relaym.netlify.app/hoge",
+			want:   false,
+		},
+		{
+			name:   "Cloudflare Pages: 正しいデプロイプレビューのURLならtrue",
+			origin: "https://5c927597.relaym.pages.dev",
+			want:   true,
+		},
+		{
+			name:   "Cloudflare Pages: 別ののURLならfalse",
+			origin: "https://5c927597.relaym2.pages.dev",
+			want:   false,
+		},
+		{
+			name:   "Cloudflare Pages: 前後に変な文字が入ってもfalse",
+			origin: "https://evil.example.com/https://5c927597.relaym2.pages.dev/hoge",
 			want:   false,
 		},
 	}
