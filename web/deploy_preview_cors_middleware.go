@@ -20,7 +20,7 @@ func newDeployPreviewCorsMiddleware(allowHeaders []string, allowCredentials bool
 	return &deployPreviewCorsMiddleware{
 		allowOriginRegexps: []*regexp.Regexp{
 			regexp.MustCompile(`^https://deploy-preview-[0-9]+--relaym\.netlify\.app$`),
-			regexp.MustCompile(`^https://.+\.relaym.pages\.dev$`),
+			regexp.MustCompile(`^https://.+\.relaym\.pages\.dev$`),
 		},
 		allowHeaders:     allowHeaders,
 		allowCredentials: allowCredentials,
