@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/go-gorp/gorp/v3 v3.0.2
-	github.com/go-sql-driver/mysql v1.5.0
+	github.com/go-sql-driver/mysql v1.6.0
 	github.com/golang/mock v1.5.0
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/google/go-cmp v0.5.5
