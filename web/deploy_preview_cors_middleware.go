@@ -11,14 +11,17 @@ import (
 )
 
 type deployPreviewCorsMiddleware struct {
-	re               *regexp.Regexp
-	allowHeaders     []string
-	allowCredentials bool
+	allowOriginRegexps []*regexp.Regexp
+	allowHeaders       []string
+	allowCredentials   bool
 }
 
 func newDeployPreviewCorsMiddleware(allowHeaders []string, allowCredentials bool) *deployPreviewCorsMiddleware {
 	return &deployPreviewCorsMiddleware{
-		re:               regexp.MustCompile("https://deploy-preview-[0-9]+--relaym.netlify.app"),
+		allowOriginRegexps: []*regexp.Regexp{
+			regexp.MustCompile(`^https://deploy-preview-[0-9]+--relaym\.netlify\.app$`),
+			regexp.MustCompile(`^https://.+\.relaym\.pages\.dev$`),
+		},
 		allowHeaders:     allowHeaders,
 		allowCredentials: allowCredentials,
 	}
@@ -82,5 +85,10 @@ func (m *deployPreviewCorsMiddleware) addAllowOriginForOption(next echo.HandlerF
 }
 
 func (m *deployPreviewCorsMiddleware) IsDeployPreviewOrigin(origin string) bool {
-	return m.re.MatchString(origin)
+	for _, re := range m.allowOriginRegexps {
+		if re.MatchString(origin) {
+			return true
+		}
+	}
+	return false
 }
