@@ -43,6 +43,9 @@ func (m *deployPreviewCorsMiddleware) addAllowOrigin(next echo.HandlerFunc) echo
 
 		if req.Method != http.MethodOptions {
 			res.Header().Set(echo.HeaderAccessControlAllowOrigin, origin)
+			if m.allowCredentials {
+				res.Header().Set(echo.HeaderAccessControlAllowCredentials, "true")
+			}
 			return next(c)
 		}
 		return next(c)
