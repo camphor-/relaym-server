@@ -13,7 +13,7 @@ import (
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/service"
 
-	"github.com/zmb3/spotify"
+	"github.com/zmb3/spotify/v2"
 )
 
 // CurrentlyPlaying は現在の再生状況を取得するAPIです。
@@ -22,8 +22,8 @@ func (c *Client) CurrentlyPlaying(ctx context.Context) (*entity.CurrentPlayingIn
 	if !ok {
 		return nil, errors.New("token not found")
 	}
-	cli := c.auth.NewClient(token)
-	ps, err := cli.PlayerState()
+	cli := spotify.New(c.auth.Client(ctx, token))
+	ps, err := cli.PlayerState(ctx)
 	if convErr := c.convertPlayerError(err); convErr != nil {
 		return nil, fmt.Errorf("spotify api: currently playing: %w", convErr)
 	}
@@ -51,7 +51,7 @@ func (c *Client) GoNextTrack(ctx context.Context, deviceID string) error {
 	if !ok {
 		return errors.New("token not found")
 	}
-	cli := c.auth.NewClient(token)
+	cli := spotify.New(c.auth.Client(ctx, token))
 
 	opt := &spotify.PlayOptions{DeviceID: nil}
 	if deviceID != "" {
@@ -59,7 +59,7 @@ func (c *Client) GoNextTrack(ctx context.Context, deviceID string) error {
 		opt = &spotify.PlayOptions{DeviceID: &spotifyID}
 	}
 
-	err := cli.NextOpt(opt)
+	err := cli.NextOpt(ctx, opt)
 	if convErr := c.convertPlayerError(err); convErr != nil {
 		return fmt.Errorf("spotify api: next: %w", convErr)
 	}
@@ -74,7 +74,7 @@ func (c *Client) DeleteAllTracksInQueue(ctx context.Context, deviceID string, tr
 	if !ok {
 		return errors.New("token not found")
 	}
-	cli := c.auth.NewClient(token)
+	cli := spotify.New(c.auth.Client(ctx, token))
 
 	// PlayWithTracksで「再生待ち」を0曲にする
 	if err := c.PlayWithTracks(ctx, deviceID, []string{trackURI}); err != nil {
@@ -90,7 +90,7 @@ func (c *Client) DeleteAllTracksInQueue(ctx context.Context, deviceID string, tr
 	skipOnceTime := 3
 	sleepTime := 300 * time.Millisecond
 	for i := 1; ; i++ {
-		err := cli.NextOpt(opt)
+		err := cli.NextOpt(ctx, opt)
 		if convErr := c.convertPlayerError(err); convErr != nil {
 			return fmt.Errorf("spotify api: next: %w", convErr)
 		}
@@ -120,7 +120,7 @@ func (c *Client) Play(ctx context.Context, deviceID string) error {
 	if !ok {
 		return errors.New("token not found")
 	}
-	cli := c.auth.NewClient(token)
+	cli := spotify.New(c.auth.Client(ctx, token))
 
 	opt := &spotify.PlayOptions{DeviceID: nil}
 	if deviceID != "" {
@@ -128,7 +128,7 @@ func (c *Client) Play(ctx context.Context, deviceID string) error {
 		opt = &spotify.PlayOptions{DeviceID: &spotifyID}
 	}
 
-	err := cli.PlayOpt(opt)
+	err := cli.PlayOpt(ctx, opt)
 	if convErr := c.convertPlayerError(err); convErr != nil {
 		return fmt.Errorf("spotify api: play or resume: %w", convErr)
 	}
@@ -144,7 +144,7 @@ func (c *Client) PlayWithTracks(ctx context.Context, deviceID string, trackURIs 
 	if !ok {
 		return errors.New("token not found")
 	}
-	cli := c.auth.NewClient(token)
+	cli := spotify.New(c.auth.Client(ctx, token))
 
 	opt := &spotify.PlayOptions{DeviceID: nil, URIs: c.toURIs(trackURIs)}
 	if deviceID != "" {
@@ -152,7 +152,7 @@ func (c *Client) PlayWithTracks(ctx context.Context, deviceID string, trackURIs 
 		opt = &spotify.PlayOptions{DeviceID: &spotifyID, URIs: c.toURIs(trackURIs)}
 	}
 
-	err := cli.PlayOpt(opt)
+	err := cli.PlayOpt(ctx, opt)
 	if convErr := c.convertPlayerError(err); convErr != nil {
 		return fmt.Errorf("spotify api: play or resume: %w", convErr)
 	}
@@ -168,7 +168,7 @@ func (c *Client) PlayWithTracksAndPosition(ctx context.Context, deviceID string,
 	if !ok {
 		return errors.New("token not found")
 	}
-	cli := c.auth.NewClient(token)
+	cli := spotify.New(c.auth.Client(ctx, token))
 
 	opt := &spotify.PlayOptions{DeviceID: nil, URIs: c.toURIs(trackURIs), PositionMs: int(position.Milliseconds())}
 	if deviceID != "" {
@@ -176,7 +176,7 @@ func (c *Client) PlayWithTracksAndPosition(ctx context.Context, deviceID string,
 		opt = &spotify.PlayOptions{DeviceID: &spotifyID, URIs: c.toURIs(trackURIs)}
 	}
 
-	err := cli.PlayOpt(opt)
+	err := cli.PlayOpt(ctx, opt)
 	if convErr := c.convertPlayerError(err); convErr != nil {
 		return fmt.Errorf("spotify api: play or resume: %w", convErr)
 	}
@@ -192,14 +192,14 @@ func (c *Client) Pause(ctx context.Context, deviceID string) error {
 	if !ok {
 		return errors.New("token not found")
 	}
-	cli := c.auth.NewClient(token)
+	cli := spotify.New(c.auth.Client(ctx, token))
 
 	opt := &spotify.PlayOptions{DeviceID: nil}
 	if deviceID != "" {
 		spotifyID := spotify.ID(deviceID)
 		opt = &spotify.PlayOptions{DeviceID: &spotifyID}
 	}
-	err := cli.PauseOpt(opt)
+	err := cli.PauseOpt(ctx, opt)
 	if convErr := c.convertPlayerError(err); convErr != nil {
 		return fmt.Errorf("spotify api: pause: %w", convErr)
 	}
@@ -217,14 +217,14 @@ func (c *Client) Enqueue(ctx context.Context, trackURI string, deviceID string) 
 	if !ok {
 		return errors.New("token not found")
 	}
-	cli := c.auth.NewClient(token)
+	cli := spotify.New(c.auth.Client(ctx, token))
 
 	opt := &spotify.PlayOptions{DeviceID: nil}
 	if deviceID != "" {
 		spotifyID := spotify.ID(deviceID)
 		opt = &spotify.PlayOptions{DeviceID: &spotifyID}
 	}
-	err := cli.QueueSongOpt(spotify.ID(trackID), opt)
+	err := cli.QueueSongOpt(ctx, spotify.ID(trackID), opt)
 	if convErr := c.convertPlayerError(err); convErr != nil {
 		return fmt.Errorf("spotify api: add queue: %w", convErr)
 	}
@@ -240,7 +240,7 @@ func (c *Client) SetRepeatMode(ctx context.Context, on bool, deviceID string) er
 	if !ok {
 		return errors.New("token not found")
 	}
-	cli := c.auth.NewClient(token)
+	cli := spotify.New(c.auth.Client(ctx, token))
 
 	state := "off"
 	if on {
@@ -253,7 +253,7 @@ func (c *Client) SetRepeatMode(ctx context.Context, on bool, deviceID string) er
 		opt = &spotify.PlayOptions{DeviceID: &spotifyID}
 	}
 
-	if err := cli.RepeatOpt(state, opt); c.convertPlayerError(err) != nil {
+	if err := cli.RepeatOpt(ctx, state, opt); c.convertPlayerError(err) != nil {
 		return fmt.Errorf("spotify api: set repeat mode: %w", c.convertPlayerError(err))
 	}
 	return nil
@@ -268,14 +268,14 @@ func (c *Client) SetShuffleMode(ctx context.Context, on bool, deviceID string) e
 	if !ok {
 		return errors.New("token not found")
 	}
-	cli := c.auth.NewClient(token)
+	cli := spotify.New(c.auth.Client(ctx, token))
 
 	opt := &spotify.PlayOptions{DeviceID: nil}
 	if deviceID != "" {
 		spotifyID := spotify.ID(deviceID)
 		opt = &spotify.PlayOptions{DeviceID: &spotifyID}
 	}
-	if err := cli.ShuffleOpt(on, opt); c.convertPlayerError(err) != nil {
+	if err := cli.ShuffleOpt(ctx, on, opt); c.convertPlayerError(err) != nil {
 		return fmt.Errorf("spotify api: set repeat mode: %w", c.convertPlayerError(err))
 	}
 	return nil

@@ -56,3 +56,23 @@ func GetTokenFromContext(ctx context.Context) (*oauth2.Token, bool) {
 	token, ok := v.(*oauth2.Token)
 	return token, ok
 }
+
+// NewContextFromContext は既存のContextに含まれるトークンなどをコピーした上で、新しいContextを生成します。
+// これは、goroutine内のループなど、HTTPリクエスト終了後も生き残って欲しいContextを作るのに使われます。
+func NewContextFromContext(prevCtx context.Context) context.Context {
+	ctx := context.Background()
+	userId, ok := GetUserIDFromContext(prevCtx)
+	if ok {
+		ctx = SetUserIDToContext(ctx, userId)
+	}
+	creatorId, ok := GetCreatorIDFromContext(prevCtx)
+	if ok {
+		ctx = SetCreatorIDToContext(ctx, creatorId)
+	}
+	token, ok := GetTokenFromContext(prevCtx)
+	if ok {
+		ctx = SetTokenToContext(ctx, token)
+	}
+	return ctx
+
+}

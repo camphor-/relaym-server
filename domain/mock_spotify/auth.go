@@ -5,35 +5,52 @@
 package mock_spotify
 
 import (
+	context "context"
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	oauth2 "golang.org/x/oauth2"
-	reflect "reflect"
 )
 
-// MockAuth is a mock of Auth interface
+// MockAuth is a mock of Auth interface.
 type MockAuth struct {
 	ctrl     *gomock.Controller
 	recorder *MockAuthMockRecorder
 }
 
-// MockAuthMockRecorder is the mock recorder for MockAuth
+// MockAuthMockRecorder is the mock recorder for MockAuth.
 type MockAuthMockRecorder struct {
 	mock *MockAuth
 }
 
-// NewMockAuth creates a new mock instance
+// NewMockAuth creates a new mock instance.
 func NewMockAuth(ctrl *gomock.Controller) *MockAuth {
 	mock := &MockAuth{ctrl: ctrl}
 	mock.recorder = &MockAuthMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockAuth) EXPECT() *MockAuthMockRecorder {
 	return m.recorder
 }
 
-// GetAuthURL mocks base method
+// Exchange mocks base method.
+func (m *MockAuth) Exchange(ctx context.Context, code string) (*oauth2.Token, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Exchange", ctx, code)
+	ret0, _ := ret[0].(*oauth2.Token)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Exchange indicates an expected call of Exchange.
+func (mr *MockAuthMockRecorder) Exchange(ctx, code interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Exchange", reflect.TypeOf((*MockAuth)(nil).Exchange), ctx, code)
+}
+
+// GetAuthURL mocks base method.
 func (m *MockAuth) GetAuthURL(state string) string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAuthURL", state)
@@ -41,38 +58,23 @@ func (m *MockAuth) GetAuthURL(state string) string {
 	return ret0
 }
 
-// GetAuthURL indicates an expected call of GetAuthURL
+// GetAuthURL indicates an expected call of GetAuthURL.
 func (mr *MockAuthMockRecorder) GetAuthURL(state interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuthURL", reflect.TypeOf((*MockAuth)(nil).GetAuthURL), state)
 }
 
-// Exchange mocks base method
-func (m *MockAuth) Exchange(code string) (*oauth2.Token, error) {
+// Refresh mocks base method.
+func (m *MockAuth) Refresh(ctx context.Context, token *oauth2.Token) (*oauth2.Token, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Exchange", code)
+	ret := m.ctrl.Call(m, "Refresh", ctx, token)
 	ret0, _ := ret[0].(*oauth2.Token)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Exchange indicates an expected call of Exchange
-func (mr *MockAuthMockRecorder) Exchange(code interface{}) *gomock.Call {
+// Refresh indicates an expected call of Refresh.
+func (mr *MockAuthMockRecorder) Refresh(ctx, token interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Exchange", reflect.TypeOf((*MockAuth)(nil).Exchange), code)
-}
-
-// Refresh mocks base method
-func (m *MockAuth) Refresh(token *oauth2.Token) (*oauth2.Token, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Refresh", token)
-	ret0, _ := ret[0].(*oauth2.Token)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Refresh indicates an expected call of Refresh
-func (mr *MockAuthMockRecorder) Refresh(token interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Refresh", reflect.TypeOf((*MockAuth)(nil).Refresh), token)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Refresh", reflect.TypeOf((*MockAuth)(nil).Refresh), ctx, token)
 }

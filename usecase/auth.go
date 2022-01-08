@@ -52,12 +52,13 @@ func (u *AuthUseCase) Authorization(state, code string) (string, string, error) 
 		return "", "", fmt.Errorf("find temp state state=%s: %w", state, err)
 	}
 
-	token, err := u.authCli.Exchange(code)
+	ctx := context.Background()
+	token, err := u.authCli.Exchange(ctx, code)
 	if err != nil {
 		return storedState.RedirectURL, "", fmt.Errorf("exchange and get oauth2 token: %w", err)
 	}
 
-	ctx := service.SetTokenToContext(context.Background(), token)
+	ctx = service.SetTokenToContext(ctx, token)
 	userID, err := u.createUserIfNotExists(ctx)
 	if err != nil {
 		return storedState.RedirectURL, "", fmt.Errorf("get or create user: %w", err)
@@ -129,7 +130,8 @@ func (u *AuthUseCase) RefreshAccessToken(userID string, token *oauth2.Token) (*o
 	if token.Valid() {
 		return token, nil
 	}
-	newToken, err := u.authCli.Refresh(token)
+	ctx := context.Background()
+	newToken, err := u.authCli.Refresh(ctx, token)
 	if err != nil {
 		return nil, fmt.Errorf("refresh access token through spotify client: %w", err)
 	}

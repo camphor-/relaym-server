@@ -5,41 +5,42 @@
 package mock_event
 
 import (
+	reflect "reflect"
+
 	event "github.com/camphor-/relaym-server/domain/event"
 	gomock "github.com/golang/mock/gomock"
-	reflect "reflect"
 )
 
-// MockPusher is a mock of Pusher interface
+// MockPusher is a mock of Pusher interface.
 type MockPusher struct {
 	ctrl     *gomock.Controller
 	recorder *MockPusherMockRecorder
 }
 
-// MockPusherMockRecorder is the mock recorder for MockPusher
+// MockPusherMockRecorder is the mock recorder for MockPusher.
 type MockPusherMockRecorder struct {
 	mock *MockPusher
 }
 
-// NewMockPusher creates a new mock instance
+// NewMockPusher creates a new mock instance.
 func NewMockPusher(ctrl *gomock.Controller) *MockPusher {
 	mock := &MockPusher{ctrl: ctrl}
 	mock.recorder = &MockPusherMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockPusher) EXPECT() *MockPusherMockRecorder {
 	return m.recorder
 }
 
-// Push mocks base method
+// Push mocks base method.
 func (m *MockPusher) Push(pushMsg *event.PushMessage) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "Push", pushMsg)
 }
 
-// Push indicates an expected call of Push
+// Push indicates an expected call of Push.
 func (mr *MockPusherMockRecorder) Push(pushMsg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Push", reflect.TypeOf((*MockPusher)(nil).Push), pushMsg)

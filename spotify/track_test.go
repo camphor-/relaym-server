@@ -43,7 +43,7 @@ func TestClient_GetTracksFromURI(t *testing.T) {
 				RefreshToken: os.Getenv("SPOTIFY_REFRESH_TOKEN_FOR_TEST"),
 				Expiry:       time.Now(),
 			}
-			token, err := c.Refresh(token)
+			token, err := c.Refresh(context.Background(), token)
 			if err != nil {
 				t.Fatal(err)
 			}
