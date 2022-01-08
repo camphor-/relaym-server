@@ -45,6 +45,7 @@ func (u *AuthUseCase) GetAuthURL(redirectURL string) (string, error) {
 
 // Authorization はcodeを使って認可をチェックします。
 // 認可に成功した場合はフロントエンドのリダイレクトURLとセッションIDを返します。
+// リダイレクトURLは空である可能性がある点に注意してください。
 func (u *AuthUseCase) Authorization(state, code string) (string, string, error) {
 	storedState, err := u.repo.FindStateByState(state)
 	if err != nil {
@@ -53,22 +54,22 @@ func (u *AuthUseCase) Authorization(state, code string) (string, string, error) 
 
 	token, err := u.authCli.Exchange(code)
 	if err != nil {
-		return "", "", fmt.Errorf("exchange and get oauth2 token: %w", err)
+		return storedState.RedirectURL, "", fmt.Errorf("exchange and get oauth2 token: %w", err)
 	}
 
 	ctx := service.SetTokenToContext(context.Background(), token)
 	userID, err := u.createUserIfNotExists(ctx)
 	if err != nil {
-		return "", "", fmt.Errorf("get or create user: %w", err)
+		return storedState.RedirectURL, "", fmt.Errorf("get or create user: %w", err)
 	}
 
 	if err := u.repo.StoreORUpdateToken(userID, token); err != nil {
-		return "", "", fmt.Errorf("store or update oauth token though repo userID=%s: %w", userID, err)
+		return storedState.RedirectURL, "", fmt.Errorf("store or update oauth token though repo userID=%s: %w", userID, err)
 	}
 
 	sessionID := uuid.New().String()
 	if err := u.repo.StoreSession(sessionID, userID); err != nil {
-		return "", "", fmt.Errorf("store session sessionID=%s userID=%s : %w", sessionID, userID, err)
+		return storedState.RedirectURL, "", fmt.Errorf("store session sessionID=%s userID=%s : %w", sessionID, userID, err)
 	}
 
 	// Stateを削除するのが失敗してもログインは成功しているので、エラーを返さない

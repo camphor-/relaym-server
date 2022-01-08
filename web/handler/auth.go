@@ -27,13 +27,13 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	logger := log.New()
 
 	redirectURL := c.QueryParam("redirect_url")
-	if redirectURL == "" {
+	if redirectURL == "" || !config.IsReliableOrigin(redirectURL) {
 		redirectURL = h.frontendURL
 	}
 	url, err := h.authUC.GetAuthURL(redirectURL)
 	if err != nil {
 		logger.Errorj(map[string]interface{}{"message": "failed to get auth url", "error": err.Error()})
-		return c.Redirect(http.StatusFound, h.frontendURL+"?err=spotifyAuthFailed")
+		return c.Redirect(http.StatusFound, redirectURL+"?err=spotifyAuthFailed")
 	}
 
 	return c.Redirect(http.StatusFound, url)
@@ -62,7 +62,10 @@ func (h *AuthHandler) Callback(c echo.Context) error {
 	redirectURL, sessionID, err := h.authUC.Authorization(state, code)
 	if err != nil {
 		logger.Errorj(map[string]interface{}{"message": "spotify auth failed", "error": err.Error()})
-		return c.Redirect(http.StatusFound, h.frontendURL+"?err=spotifyAuthFailed")
+		if redirectURL == "" {
+			return c.Redirect(http.StatusFound, h.frontendURL+"?err=spotifyAuthFailed")
+		}
+		return c.Redirect(http.StatusFound, redirectURL+"?err=spotifyAuthFailed")
 	}
 
 	sameSite := http.SameSiteNoneMode
