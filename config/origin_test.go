@@ -21,7 +21,7 @@ func Test_origin_IsReliableOrigin(t *testing.T) {
 			want:   true,
 		},
 		{
-			name:   "Cloudflare Pages: 別ののURLならfalse",
+			name:   "Cloudflare Pages: 別のURLならfalse",
 			origin: "https://5c927597.relaym2.pages.dev",
 			env:    "dev",
 			want:   false,
