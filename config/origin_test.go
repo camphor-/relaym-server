@@ -33,6 +33,12 @@ func Test_origin_IsReliableOrigin(t *testing.T) {
 			want:   false,
 		},
 		{
+			name:   "Cloudflare Pages: クエリパラメータで回避しようとしてもfalse",
+			origin: "https://evil.com?hoge=5c927597.relaym.pages.dev",
+			env:    "dev",
+			want:   false,
+		},
+		{
 			name:   "ローカル環境は何でも良い",
 			origin: "http://relaym.local:3000",
 			env:    "local",
@@ -54,7 +60,7 @@ func Test_origin_IsReliableOrigin(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-		t.Parallel()
+			t.Parallel()
 			originalEnv := os.Getenv("ENV")
 			os.Setenv("ENV", tt.env)
 			defer func() {

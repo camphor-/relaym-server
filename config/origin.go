@@ -20,6 +20,6 @@ func isReliableOrigin(url string) bool {
 }
 
 func isReliableOriginDev(url string) bool {
-	re := regexp.MustCompile(`^https://.+\.relaym\.pages\.dev$`)
+	re := regexp.MustCompile(`^https://[a-zA-Z0-9-_]+\.relaym\.pages\.dev$`)
 	return re.MatchString(url)
 }
