@@ -59,7 +59,7 @@ func Test_origin_IsReliableOrigin(t *testing.T) {
 				os.Setenv("ENV", originalEnv)
 			}()
 			if got := IsReliableOrigin(tt.origin); got != tt.want {
-				t.Errorf("IsDeployPreviewOrigin() = %v, want %v", got, tt.want)
+				t.Errorf("IsReliableOrigin() = %v, want %v", got, tt.want)
 			}
 		})
 	}
