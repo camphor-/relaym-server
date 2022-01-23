@@ -186,7 +186,7 @@ func TestAuthMiddleware_Authenticate(t *testing.T) {
 				}).Return(nil)
 			},
 			prepareAuthCli: func(c *mock_spotify.MockAuth) {
-				c.EXPECT().Refresh(&oauth2.Token{
+				c.EXPECT().Refresh(gomock.Any(), &oauth2.Token{
 					AccessToken:  "access_token",
 					TokenType:    "Bearer",
 					RefreshToken: "refresh_token",

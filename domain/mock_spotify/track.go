@@ -6,50 +6,36 @@ package mock_spotify
 
 import (
 	context "context"
+	reflect "reflect"
+
 	entity "github.com/camphor-/relaym-server/domain/entity"
 	gomock "github.com/golang/mock/gomock"
-	reflect "reflect"
 )
 
-// MockTrackClient is a mock of TrackClient interface
+// MockTrackClient is a mock of TrackClient interface.
 type MockTrackClient struct {
 	ctrl     *gomock.Controller
 	recorder *MockTrackClientMockRecorder
 }
 
-// MockTrackClientMockRecorder is the mock recorder for MockTrackClient
+// MockTrackClientMockRecorder is the mock recorder for MockTrackClient.
 type MockTrackClientMockRecorder struct {
 	mock *MockTrackClient
 }
 
-// NewMockTrackClient creates a new mock instance
+// NewMockTrackClient creates a new mock instance.
 func NewMockTrackClient(ctrl *gomock.Controller) *MockTrackClient {
 	mock := &MockTrackClient{ctrl: ctrl}
 	mock.recorder = &MockTrackClientMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockTrackClient) EXPECT() *MockTrackClientMockRecorder {
 	return m.recorder
 }
 
-// Search mocks base method
-func (m *MockTrackClient) Search(ctx context.Context, q string) ([]*entity.Track, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Search", ctx, q)
-	ret0, _ := ret[0].([]*entity.Track)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Search indicates an expected call of Search
-func (mr *MockTrackClientMockRecorder) Search(ctx, q interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Search", reflect.TypeOf((*MockTrackClient)(nil).Search), ctx, q)
-}
-
-// GetTracksFromURI mocks base method
+// GetTracksFromURI mocks base method.
 func (m *MockTrackClient) GetTracksFromURI(ctx context.Context, trackURIs []string) ([]*entity.Track, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetTracksFromURI", ctx, trackURIs)
@@ -58,8 +44,23 @@ func (m *MockTrackClient) GetTracksFromURI(ctx context.Context, trackURIs []stri
 	return ret0, ret1
 }
 
-// GetTracksFromURI indicates an expected call of GetTracksFromURI
+// GetTracksFromURI indicates an expected call of GetTracksFromURI.
 func (mr *MockTrackClientMockRecorder) GetTracksFromURI(ctx, trackURIs interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTracksFromURI", reflect.TypeOf((*MockTrackClient)(nil).GetTracksFromURI), ctx, trackURIs)
+}
+
+// Search mocks base method.
+func (m *MockTrackClient) Search(ctx context.Context, q string) ([]*entity.Track, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Search", ctx, q)
+	ret0, _ := ret[0].([]*entity.Track)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Search indicates an expected call of Search.
+func (mr *MockTrackClientMockRecorder) Search(ctx, q interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Search", reflect.TypeOf((*MockTrackClient)(nil).Search), ctx, q)
 }

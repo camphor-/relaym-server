@@ -6,36 +6,37 @@ package mock_spotify
 
 import (
 	context "context"
-	entity "github.com/camphor-/relaym-server/domain/entity"
-	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 	time "time"
+
+	entity "github.com/camphor-/relaym-server/domain/entity"
+	gomock "github.com/golang/mock/gomock"
 )
 
-// MockPlayer is a mock of Player interface
+// MockPlayer is a mock of Player interface.
 type MockPlayer struct {
 	ctrl     *gomock.Controller
 	recorder *MockPlayerMockRecorder
 }
 
-// MockPlayerMockRecorder is the mock recorder for MockPlayer
+// MockPlayerMockRecorder is the mock recorder for MockPlayer.
 type MockPlayerMockRecorder struct {
 	mock *MockPlayer
 }
 
-// NewMockPlayer creates a new mock instance
+// NewMockPlayer creates a new mock instance.
 func NewMockPlayer(ctrl *gomock.Controller) *MockPlayer {
 	mock := &MockPlayer{ctrl: ctrl}
 	mock.recorder = &MockPlayerMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockPlayer) EXPECT() *MockPlayerMockRecorder {
 	return m.recorder
 }
 
-// CurrentlyPlaying mocks base method
+// CurrentlyPlaying mocks base method.
 func (m *MockPlayer) CurrentlyPlaying(ctx context.Context) (*entity.CurrentPlayingInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CurrentlyPlaying", ctx)
@@ -44,83 +45,13 @@ func (m *MockPlayer) CurrentlyPlaying(ctx context.Context) (*entity.CurrentPlayi
 	return ret0, ret1
 }
 
-// CurrentlyPlaying indicates an expected call of CurrentlyPlaying
+// CurrentlyPlaying indicates an expected call of CurrentlyPlaying.
 func (mr *MockPlayerMockRecorder) CurrentlyPlaying(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CurrentlyPlaying", reflect.TypeOf((*MockPlayer)(nil).CurrentlyPlaying), ctx)
 }
 
-// PlayWithTracksAndPosition mocks base method
-func (m *MockPlayer) PlayWithTracksAndPosition(ctx context.Context, deviceID string, trackURIs []string, position time.Duration) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PlayWithTracksAndPosition", ctx, deviceID, trackURIs, position)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// PlayWithTracksAndPosition indicates an expected call of PlayWithTracksAndPosition
-func (mr *MockPlayerMockRecorder) PlayWithTracksAndPosition(ctx, deviceID, trackURIs, position interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PlayWithTracksAndPosition", reflect.TypeOf((*MockPlayer)(nil).PlayWithTracksAndPosition), ctx, deviceID, trackURIs, position)
-}
-
-// Pause mocks base method
-func (m *MockPlayer) Pause(ctx context.Context, deviceID string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Pause", ctx, deviceID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Pause indicates an expected call of Pause
-func (mr *MockPlayerMockRecorder) Pause(ctx, deviceID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Pause", reflect.TypeOf((*MockPlayer)(nil).Pause), ctx, deviceID)
-}
-
-// Enqueue mocks base method
-func (m *MockPlayer) Enqueue(ctx context.Context, trackURI, deviceID string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Enqueue", ctx, trackURI, deviceID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Enqueue indicates an expected call of Enqueue
-func (mr *MockPlayerMockRecorder) Enqueue(ctx, trackURI, deviceID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Enqueue", reflect.TypeOf((*MockPlayer)(nil).Enqueue), ctx, trackURI, deviceID)
-}
-
-// SetRepeatMode mocks base method
-func (m *MockPlayer) SetRepeatMode(ctx context.Context, on bool, deviceID string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetRepeatMode", ctx, on, deviceID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// SetRepeatMode indicates an expected call of SetRepeatMode
-func (mr *MockPlayerMockRecorder) SetRepeatMode(ctx, on, deviceID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetRepeatMode", reflect.TypeOf((*MockPlayer)(nil).SetRepeatMode), ctx, on, deviceID)
-}
-
-// SetShuffleMode mocks base method
-func (m *MockPlayer) SetShuffleMode(ctx context.Context, on bool, deviceID string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetShuffleMode", ctx, on, deviceID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// SetShuffleMode indicates an expected call of SetShuffleMode
-func (mr *MockPlayerMockRecorder) SetShuffleMode(ctx, on, deviceID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetShuffleMode", reflect.TypeOf((*MockPlayer)(nil).SetShuffleMode), ctx, on, deviceID)
-}
-
-// DeleteAllTracksInQueue mocks base method
+// DeleteAllTracksInQueue mocks base method.
 func (m *MockPlayer) DeleteAllTracksInQueue(ctx context.Context, deviceID, trackURI string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteAllTracksInQueue", ctx, deviceID, trackURI)
@@ -128,13 +59,27 @@ func (m *MockPlayer) DeleteAllTracksInQueue(ctx context.Context, deviceID, track
 	return ret0
 }
 
-// DeleteAllTracksInQueue indicates an expected call of DeleteAllTracksInQueue
+// DeleteAllTracksInQueue indicates an expected call of DeleteAllTracksInQueue.
 func (mr *MockPlayerMockRecorder) DeleteAllTracksInQueue(ctx, deviceID, trackURI interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAllTracksInQueue", reflect.TypeOf((*MockPlayer)(nil).DeleteAllTracksInQueue), ctx, deviceID, trackURI)
 }
 
-// GoNextTrack mocks base method
+// Enqueue mocks base method.
+func (m *MockPlayer) Enqueue(ctx context.Context, trackURI, deviceID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Enqueue", ctx, trackURI, deviceID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Enqueue indicates an expected call of Enqueue.
+func (mr *MockPlayerMockRecorder) Enqueue(ctx, trackURI, deviceID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Enqueue", reflect.TypeOf((*MockPlayer)(nil).Enqueue), ctx, trackURI, deviceID)
+}
+
+// GoNextTrack mocks base method.
 func (m *MockPlayer) GoNextTrack(ctx context.Context, deviceID string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GoNextTrack", ctx, deviceID)
@@ -142,8 +87,64 @@ func (m *MockPlayer) GoNextTrack(ctx context.Context, deviceID string) error {
 	return ret0
 }
 
-// GoNextTrack indicates an expected call of GoNextTrack
+// GoNextTrack indicates an expected call of GoNextTrack.
 func (mr *MockPlayerMockRecorder) GoNextTrack(ctx, deviceID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GoNextTrack", reflect.TypeOf((*MockPlayer)(nil).GoNextTrack), ctx, deviceID)
+}
+
+// Pause mocks base method.
+func (m *MockPlayer) Pause(ctx context.Context, deviceID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Pause", ctx, deviceID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Pause indicates an expected call of Pause.
+func (mr *MockPlayerMockRecorder) Pause(ctx, deviceID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Pause", reflect.TypeOf((*MockPlayer)(nil).Pause), ctx, deviceID)
+}
+
+// PlayWithTracksAndPosition mocks base method.
+func (m *MockPlayer) PlayWithTracksAndPosition(ctx context.Context, deviceID string, trackURIs []string, position time.Duration) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PlayWithTracksAndPosition", ctx, deviceID, trackURIs, position)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PlayWithTracksAndPosition indicates an expected call of PlayWithTracksAndPosition.
+func (mr *MockPlayerMockRecorder) PlayWithTracksAndPosition(ctx, deviceID, trackURIs, position interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PlayWithTracksAndPosition", reflect.TypeOf((*MockPlayer)(nil).PlayWithTracksAndPosition), ctx, deviceID, trackURIs, position)
+}
+
+// SetRepeatMode mocks base method.
+func (m *MockPlayer) SetRepeatMode(ctx context.Context, on bool, deviceID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetRepeatMode", ctx, on, deviceID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetRepeatMode indicates an expected call of SetRepeatMode.
+func (mr *MockPlayerMockRecorder) SetRepeatMode(ctx, on, deviceID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetRepeatMode", reflect.TypeOf((*MockPlayer)(nil).SetRepeatMode), ctx, on, deviceID)
+}
+
+// SetShuffleMode mocks base method.
+func (m *MockPlayer) SetShuffleMode(ctx context.Context, on bool, deviceID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetShuffleMode", ctx, on, deviceID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetShuffleMode indicates an expected call of SetShuffleMode.
+func (mr *MockPlayerMockRecorder) SetShuffleMode(ctx, on, deviceID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetShuffleMode", reflect.TypeOf((*MockPlayer)(nil).SetShuffleMode), ctx, on, deviceID)
 }

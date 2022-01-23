@@ -216,7 +216,7 @@ func TestAuthHandler_Callback(t *testing.T) {
 				mock.EXPECT().Store(gomock.Any()).Return(nil)
 			},
 			prepareMockAuthSpoFn: func(mock *mock_spotify.MockAuth) {
-				mock.EXPECT().Exchange("code").Return(&oauth2.Token{
+				mock.EXPECT().Exchange(gomock.Any(), "code").Return(&oauth2.Token{
 					AccessToken:  "access_token",
 					TokenType:    "Bearer",
 					RefreshToken: "refresh_token",
@@ -261,7 +261,7 @@ func TestAuthHandler_Callback(t *testing.T) {
 				mock.EXPECT().Store(gomock.Any()).Return(nil)
 			},
 			prepareMockAuthSpoFn: func(mock *mock_spotify.MockAuth) {
-				mock.EXPECT().Exchange("code").Return(&oauth2.Token{
+				mock.EXPECT().Exchange(gomock.Any(), "code").Return(&oauth2.Token{
 					AccessToken:  "access_token",
 					TokenType:    "Bearer",
 					RefreshToken: "refresh_token",

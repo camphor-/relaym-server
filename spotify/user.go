@@ -6,7 +6,7 @@ import (
 
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/service"
-	"github.com/zmb3/spotify"
+	"github.com/zmb3/spotify/v2"
 )
 
 // GetMe は自分の情報をSpotify APIから取得します。
@@ -15,8 +15,8 @@ func (c *Client) GetMe(ctx context.Context) (*entity.SpotifyUser, error) {
 	if !ok {
 		return nil, fmt.Errorf("token not found")
 	}
-	cli := c.auth.NewClient(token)
-	user, err := cli.CurrentUser()
+	cli := spotify.New(c.auth.Client(ctx, token))
+	user, err := cli.CurrentUser(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("get private user through spotiry api: %w", err)
 	}
@@ -33,8 +33,8 @@ func (c *Client) GetActiveDevices(ctx context.Context) ([]*entity.Device, error)
 	if !ok {
 		return nil, fmt.Errorf("token not found")
 	}
-	cli := c.auth.NewClient(token)
-	devices, err := cli.PlayerDevices()
+	cli := spotify.New(c.auth.Client(ctx, token))
+	devices, err := cli.PlayerDevices(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("playerDevices information about available devices for the current user: %w", err)
 	}

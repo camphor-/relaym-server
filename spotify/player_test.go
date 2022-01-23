@@ -35,7 +35,7 @@ func TestClient_CurrentlyPlaying(t *testing.T) {
 				RefreshToken: os.Getenv("SPOTIFY_REFRESH_TOKEN_FOR_TEST"),
 				Expiry:       time.Now(),
 			}
-			token, err := c.Refresh(token)
+			token, err := c.Refresh(context.Background(), token)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -73,7 +73,7 @@ func TestClient_Play(t *testing.T) {
 				RefreshToken: os.Getenv("SPOTIFY_REFRESH_TOKEN_FOR_TEST"),
 				Expiry:       time.Now(),
 			}
-			token, err := c.Refresh(token)
+			token, err := c.Refresh(context.Background(), token)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -106,7 +106,7 @@ func TestClient_Pause(t *testing.T) {
 				RefreshToken: os.Getenv("SPOTIFY_REFRESH_TOKEN_FOR_TEST"),
 				Expiry:       time.Now(),
 			}
-			token, err := c.Refresh(token)
+			token, err := c.Refresh(context.Background(), token)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -141,7 +141,7 @@ func TestClient_Enqueue(t *testing.T) {
 				RefreshToken: os.Getenv("SPOTIFY_REFRESH_TOKEN_FOR_TEST"),
 				Expiry:       time.Now(),
 			}
-			token, err := c.Refresh(token)
+			token, err := c.Refresh(context.Background(), token)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -181,7 +181,7 @@ func TestClient_SetRepeatMode(t *testing.T) {
 				RefreshToken: os.Getenv("SPOTIFY_REFRESH_TOKEN_FOR_TEST"),
 				Expiry:       time.Now(),
 			}
-			token, err := c.Refresh(token)
+			token, err := c.Refresh(context.Background(), token)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -214,7 +214,7 @@ func TestClient_DeleteAllTracksInQueueTracks(t *testing.T) {
 				RefreshToken: os.Getenv("SPOTIFY_REFRESH_TOKEN_FOR_TEST"),
 				Expiry:       time.Now(),
 			}
-			token, err := c.Refresh(token)
+			token, err := c.Refresh(context.Background(), token)
 			if err != nil {
 				t.Fatal(err)
 			}

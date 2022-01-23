@@ -10,7 +10,7 @@ import (
 
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/service"
-	"github.com/zmb3/spotify"
+	"github.com/zmb3/spotify/v2"
 )
 
 // Search はSpotify APIを通して、与えられたクエリを用い音楽を検索します。
@@ -27,9 +27,8 @@ func (c *Client) Search(ctx context.Context, q string) ([]*entity.Track, error) 
 		return c.toTracks(result.Tracks.Tracks), nil
 	}
 
-	cli := c.auth.NewClient(token)
-	cli.AcceptLanguage = "ja,en;q=0.9"
-	result, err := cli.Search(q, spotify.SearchTypeTrack)
+	cli := spotify.New(c.auth.Client(ctx, token), spotify.WithAcceptLanguage("ja,en;q=0.9"))
+	result, err := cli.Search(ctx, q, spotify.SearchTypeTrack)
 	if err != nil {
 		return nil, fmt.Errorf("search q=%s: %w", q, err)
 	}
@@ -49,8 +48,7 @@ func (c *Client) GetTracksFromURI(ctx context.Context, trackURIs []string) ([]*e
 	if !ok {
 		return nil, fmt.Errorf("token not found")
 	}
-	cli := c.auth.NewClient(token)
-	cli.AcceptLanguage = "ja,en;q=0.9"
+	cli := spotify.New(c.auth.Client(ctx, token), spotify.WithAcceptLanguage("ja,en;q=0.9"))
 
 	ids := make([]spotify.ID, len(trackURIs))
 	for i, trackURI := range trackURIs {
@@ -78,7 +76,7 @@ func (c *Client) GetTracksFromURI(ctx context.Context, trackURIs []string) ([]*e
 			resultTracks = v
 		} else {
 			var err error
-			resultTracks, err = cli.GetTracks(idsForAPI...)
+			resultTracks, err = cli.GetTracks(ctx, idsForAPI)
 			if err != nil {
 				return nil, fmt.Errorf("get track uris=%s: %w", trackURIs, err)
 			}

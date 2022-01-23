@@ -9,6 +9,7 @@ import (
 	"github.com/camphor-/relaym-server/domain/entity"
 	"github.com/camphor-/relaym-server/domain/event"
 	"github.com/camphor-/relaym-server/domain/repository"
+	"github.com/camphor-/relaym-server/domain/service"
 	"github.com/camphor-/relaym-server/domain/spotify"
 	"github.com/camphor-/relaym-server/log"
 )
@@ -28,7 +29,8 @@ func NewSessionTimerUseCase(sessionRepo repository.Session, playerCli spotify.Pl
 }
 
 // startTrackEndTrigger は曲の終了やストップを検知してそれぞれの処理を実行します。 goroutineで実行されることを想定しています。
-func (s *SessionTimerUseCase) startTrackEndTrigger(ctx context.Context, sessionID string) {
+func (s *SessionTimerUseCase) startTrackEndTrigger(prevCtx context.Context, sessionID string) {
+	ctx := service.NewBackgroundContextFromContext(prevCtx)
 	logger := log.New()
 	logger.Debugj(map[string]interface{}{"message": "start track end trigger", "sessionID": sessionID})
 

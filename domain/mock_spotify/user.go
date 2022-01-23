@@ -6,50 +6,36 @@ package mock_spotify
 
 import (
 	context "context"
+	reflect "reflect"
+
 	entity "github.com/camphor-/relaym-server/domain/entity"
 	gomock "github.com/golang/mock/gomock"
-	reflect "reflect"
 )
 
-// MockUser is a mock of User interface
+// MockUser is a mock of User interface.
 type MockUser struct {
 	ctrl     *gomock.Controller
 	recorder *MockUserMockRecorder
 }
 
-// MockUserMockRecorder is the mock recorder for MockUser
+// MockUserMockRecorder is the mock recorder for MockUser.
 type MockUserMockRecorder struct {
 	mock *MockUser
 }
 
-// NewMockUser creates a new mock instance
+// NewMockUser creates a new mock instance.
 func NewMockUser(ctrl *gomock.Controller) *MockUser {
 	mock := &MockUser{ctrl: ctrl}
 	mock.recorder = &MockUserMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockUser) EXPECT() *MockUserMockRecorder {
 	return m.recorder
 }
 
-// GetMe mocks base method
-func (m *MockUser) GetMe(ctx context.Context) (*entity.SpotifyUser, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMe", ctx)
-	ret0, _ := ret[0].(*entity.SpotifyUser)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetMe indicates an expected call of GetMe
-func (mr *MockUserMockRecorder) GetMe(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMe", reflect.TypeOf((*MockUser)(nil).GetMe), ctx)
-}
-
-// GetActiveDevices mocks base method
+// GetActiveDevices mocks base method.
 func (m *MockUser) GetActiveDevices(ctx context.Context) ([]*entity.Device, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetActiveDevices", ctx)
@@ -58,8 +44,23 @@ func (m *MockUser) GetActiveDevices(ctx context.Context) ([]*entity.Device, erro
 	return ret0, ret1
 }
 
-// GetActiveDevices indicates an expected call of GetActiveDevices
+// GetActiveDevices indicates an expected call of GetActiveDevices.
 func (mr *MockUserMockRecorder) GetActiveDevices(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetActiveDevices", reflect.TypeOf((*MockUser)(nil).GetActiveDevices), ctx)
+}
+
+// GetMe mocks base method.
+func (m *MockUser) GetMe(ctx context.Context) (*entity.SpotifyUser, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMe", ctx)
+	ret0, _ := ret[0].(*entity.SpotifyUser)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMe indicates an expected call of GetMe.
+func (mr *MockUserMockRecorder) GetMe(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMe", reflect.TypeOf((*MockUser)(nil).GetMe), ctx)
 }

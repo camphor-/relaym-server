@@ -14,7 +14,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// CreatorTokenMiddlewareはSessionのCreatorがもつAccessTokenの管理を担当するミドルウェアを管理する構造体です。
+// CreatorTokenMiddleware はSessionのCreatorがもつAccessTokenの管理を担当するミドルウェアを管理する構造体です。
 type CreatorTokenMiddleware struct {
 	uc *usecase.AuthUseCase
 }
