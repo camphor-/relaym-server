@@ -30,7 +30,7 @@ func NewSessionTimerUseCase(sessionRepo repository.Session, playerCli spotify.Pl
 
 // startTrackEndTrigger は曲の終了やストップを検知してそれぞれの処理を実行します。 goroutineで実行されることを想定しています。
 func (s *SessionTimerUseCase) startTrackEndTrigger(prevCtx context.Context, sessionID string) {
-	ctx := service.NewContextFromContext(prevCtx)
+	ctx := service.NewBackgroundContextFromContext(prevCtx)
 	logger := log.New()
 	logger.Debugj(map[string]interface{}{"message": "start track end trigger", "sessionID": sessionID})
 
