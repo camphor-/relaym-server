@@ -38,7 +38,7 @@ jobs:
           slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
         if: failure()
       - name: Update k8s yaml
-        uses: actions/github-script@v5
+        uses: actions/github-script@v6
         with:
           github-token: ${{secrets.GH_PAT}}
           script: |
