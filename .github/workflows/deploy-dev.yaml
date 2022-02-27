@@ -48,8 +48,8 @@ jobs:
               workflow_id: 'update-image.yaml',
               ref: 'master',
               inputs: {
-                directory: 'books/base',
-                image: 'registry.camph.net/books:${{ steps.slug.outputs.sha }}'
+                directory: 'relaym-server-dev/base',
+                image: 'registry.camph.net/relaym-server-dev:${{ steps.slug.outputs.sha }}'
               }
             });
       - name: Notify to Slack
