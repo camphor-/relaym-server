@@ -9,7 +9,7 @@ require (
 	github.com/google/go-cmp v0.5.7
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.4.2
-	github.com/labstack/echo/v4 v4.6.3
+	github.com/labstack/echo/v4 v4.7.0
 	github.com/labstack/gommon v0.3.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/zmb3/spotify/v2 v2.0.1
