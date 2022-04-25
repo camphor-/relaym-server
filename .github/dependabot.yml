@@ -3,14 +3,12 @@ updates:
 - package-ecosystem: gomod
   directory: "/"
   schedule:
-    interval: weekly
-    time: "04:00"
+    interval: daily
     timezone: Japan
   open-pull-requests-limit: 10
 - package-ecosystem: github-actions
   directory: "/"
   schedule:
-    interval: weekly
-    time: "04:00"
+    interval: daily
     timezone: Japan
   open-pull-requests-limit: 10
