@@ -46,7 +46,7 @@ docker pull --platform linux/amd64 mysql:8.0
 1. skeemaをインストール
 
 ```bash
-$ GO111MODULE=off go get -u github.com/skeema/skeema
+make tools
 ```
 
 2. マイグレート
