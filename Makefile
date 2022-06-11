@@ -32,3 +32,7 @@ run-db-local:
 generate:
 	go generate ./...
 
+.PHONY: tools
+tools:
+	cat tools/tools.go | grep "_" | awk -F'"' '{print $$2}' | xargs -tI % go install %
+

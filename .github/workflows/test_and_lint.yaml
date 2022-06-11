@@ -43,7 +43,8 @@ jobs:
 
     - name: Get tools
       run: |
-        GO111MODULE=off go get -u github.com/skeema/skeema
+        make tools
+
     - name: migrate
       run: |
         $(go env GOPATH)/bin/skeema push local
