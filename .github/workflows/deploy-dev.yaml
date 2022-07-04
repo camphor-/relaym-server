@@ -20,7 +20,7 @@ jobs:
           username: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
           password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
       - name: Check out
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Get short SHA
         id: slug
         shell: bash
