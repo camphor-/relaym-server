@@ -13,7 +13,7 @@ require (
 	github.com/labstack/gommon v0.3.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/skeema/skeema v1.8.0
-	github.com/zmb3/spotify/v2 v2.2.1
+	github.com/zmb3/spotify/v2 v2.3.0
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
 )
 
