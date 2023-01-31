@@ -22,7 +22,7 @@ jobs:
       - name: Check out
         uses: actions/checkout@v3
       - name: Build and push
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4
         with:
           push: true
           tags: registry.camph.net/relaym-server-prod:latest
