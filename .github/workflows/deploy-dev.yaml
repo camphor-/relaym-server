@@ -26,7 +26,7 @@ jobs:
         shell: bash
         run: echo "::set-output name=sha::${GITHUB_SHA::7}"
       - name: Build and push
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4
         with:
           push: true
           tags: registry.camph.net/relaym-server-dev:${{ steps.slug.outputs.sha }}
